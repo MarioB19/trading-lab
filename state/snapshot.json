@@ -210,9 +210,11 @@
      "qty": 0.0
     }
    ],
-   "notes": [],
-   "status": "ok",
-   "last_run_utc": "2026-09-25 05:26"
+   "notes": [
+    "esta vela ya se oper\u00f3"
+   ],
+   "status": "skip",
+   "last_run_utc": "2026-09-25 12:05"
   },
   "stocks": {
    "label": "Acciones y ETFs",
@@ -373,13 +375,14 @@
     }
    ],
    "notes": [
-    "Alpaca paper no disponible (faltan ALPACA_KEY_ID / ALPACA_SECRET_KEY); uso el simulado interno"
+    "Alpaca paper no disponible (faltan ALPACA_KEY_ID / ALPACA_SECRET_KEY); uso el simulado interno",
+    "esta vela ya se oper\u00f3"
    ],
-   "status": "ok",
-   "last_run_utc": "2026-09-25 05:26"
+   "status": "skip",
+   "last_run_utc": "2026-09-25 12:05"
   }
  },
- "generated_utc": "2026-09-25 05:26",
+ "generated_utc": "2026-09-25 12:05",
  "mode": "paper",
  "research": {
   "generated": "2026-09-25 05:26 UTC",
