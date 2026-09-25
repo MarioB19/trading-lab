@@ -6,6 +6,8 @@ Bot de inversión diario para criptomonedas y acciones/ETFs. Cada estrategia se 
 
 ## Qué hace cada día
 
+**Tablero:** https://claude.ai/artifact/YLtHeryBpEfs882YJafAGG (privado; lee `state/` con tu conector de GitHub en claude.ai). Para regenerar la versión incluida: `python -m lab.dashboard`.
+
 A las **18:20 hora del centro de México** (00:20 UTC), GitHub Actions corre `python -m lab.bot`:
 
 1. Descarga los cierres del día: criptos de Kraken y ETFs de Yahoo Finance.
