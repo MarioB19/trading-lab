@@ -1,0 +1,58 @@
+# Configuración del bot multi-activo. Lo que no pongas aquí toma el valor de src/lab/bot.py.
+#
+# paper = nada con dinero real (default). live = dinero real; además exige la bandera --live
+# y CONFIRMO_DINERO_REAL=si. Los tres candados a la vez.
+mode: paper
+
+# Un precio que se mueve más de 40% en un día se trata como dato sospechoso: ese activo
+# solo se puede reducir, nunca comprar.
+max_price_jump: 0.40
+
+sleeves:
+  # ---------------------------------------------------------------- CRIPTOMONEDAS
+  crypto:
+    enabled: true
+    # tactical = portafolio por tendencia + momentum + paridad de riesgo + volatilidad objetivo.
+    # Validado fuera de muestra 2021-2026 (ver reports/multi_informe.md).
+    strategy: tactical
+    params:
+      top_k: 5              # máximo 5 criptos a la vez
+      vol_target: 0.40      # volatilidad anual objetivo del bloque (BTC suele tener 60-80%)
+      regime_asset: BTC     # si BTC no está en tendencia, no se compran altcoins
+      dd_brake: true        # freno: baja la exposición si el bloque cae >10% desde su máximo de 6 meses
+      max_weight: 0.40      # ninguna cripto pasa de 40% del bloque
+    # Criptos con par en USD en Bitso. La estrategia elige entre ellas cada día.
+    universe: [BTC, ETH, SOL, XRP, ADA, DOGE, LINK, AVAX, LTC, BCH, XLM, TRX, HBAR, NEAR, UNI, ATOM]
+    data: {source: ccxt, exchange: kraken, fallback_exchange: bitso}
+    quote: USD
+    paper_broker: sim       # simulado interno
+    live_broker: bitso      # real: Bitso, pares contra USD
+    capital: 300            # USD. El bot nunca maneja más que esto
+    fee: 0.001
+    slippage: 0.002
+    band: 0.02              # no mover un activo por menos de 2 puntos de peso
+    kill_drawdown: 0.45     # peor caída histórica de la estrategia: 38%. A 45% se apaga el bloque
+    max_order_value: 300
+    min_order_value: 5
+    benchmark: BTC
+
+  # ---------------------------------------------------------------- ACCIONES Y ETFs
+  stocks:
+    enabled: true
+    # passive = mezcla fija rebalanceada. La táctica (strategy: tactical) rindió 4.5% anual
+    # contra 9.9% de este 60/40 entre 2010 y 2026, así que queda apagada por evidencia.
+    strategy: passive
+    mix: {SPY: 0.6, IEF: 0.4}
+    universe: [SPY, QQQ, IWM, EFA, EEM, EWW, TLT, IEF, GLD, DBC, VNQ, XLK, XLF, XLE, XLV, XLI, XLP, XLU, XLY, XLB]
+    data: {source: yahoo}
+    quote: USD
+    paper_broker: alpaca_paper  # usa tu cuenta paper de Alpaca si hay llaves; si no, el simulado interno
+    live_broker: alpaca
+    capital: 700            # USD
+    fee: 0.0
+    slippage: 0.0005
+    band: 0.05              # rebalancea cuando un ETF se desvía más de 5 puntos
+    kill_drawdown: 0.25
+    max_order_value: 700
+    min_order_value: 1
+    benchmark: SPY

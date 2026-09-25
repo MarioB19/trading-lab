@@ -1,0 +1,8 @@
+run_at_utc,sleeve,mode,broker,candle,asset,side,qty,price,value,fee,status,note
+2026-09-25 05:26,crypto,paper,simulado,2026-09-24,NEAR,buy,6.27660259,4.597076,28.85,0.0289,filled,
+2026-09-25 05:26,crypto,paper,simulado,2026-09-24,UNI,buy,3.27025933,9.16309,29.97,0.03,filled,
+2026-09-25 05:26,crypto,paper,simulado,2026-09-24,LINK,buy,3.65744289,13.244526,48.44,0.0484,filled,
+2026-09-25 05:26,crypto,paper,simulado,2026-09-24,LTC,buy,0.6808246,72.07386,49.07,0.0491,filled,
+2026-09-25 05:26,crypto,paper,simulado,2026-09-24,ETH,buy,0.02363862,2692.61448,63.65,0.0636,filled,
+2026-09-25 05:26,stocks,paper,simulado,2026-09-24,IEF,buy,3.12186411,89.734847,280.14,0.0,filled,
+2026-09-25 05:26,stocks,paper,simulado,2026-09-24,SPY,buy,0.54426702,767.563583,417.76,0.0,filled,

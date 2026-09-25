@@ -1,0 +1,44 @@
+# Corre el bot todos los días y guarda el estado en el repositorio.
+# Sin secretos configurados todo es SIMULADO. Para dinero real ver README ("Pasar a real").
+name: bot-diario
+on:
+  schedule:
+    - cron: "20 0 * * *"   # 00:20 UTC = 18:20 hora del centro de México (tras el cierre diario)
+  workflow_dispatch: {}
+permissions:
+  contents: write
+concurrency:
+  group: bot
+  cancel-in-progress: false
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: pip install -e .
+      - name: Correr el bot
+        env:
+          BITSO_API_KEY: ${{ secrets.BITSO_API_KEY }}
+          BITSO_API_SECRET: ${{ secrets.BITSO_API_SECRET }}
+          ALPACA_KEY_ID: ${{ secrets.ALPACA_KEY_ID }}
+          ALPACA_SECRET_KEY: ${{ secrets.ALPACA_SECRET_KEY }}
+          CONFIRMO_DINERO_REAL: ${{ vars.CONFIRMO_DINERO_REAL }}
+        run: |
+          if [ "$CONFIRMO_DINERO_REAL" = "si" ]; then
+            python -m lab.bot --live
+          else
+            python -m lab.bot
+          fi
+      - name: Guardar estado
+        if: always()
+        run: |
+          git config user.name "trading-lab-bot"
+          git config user.email "trading-lab-bot@users.noreply.github.com"
+          git add state/
+          git commit -m "bot: $(date -u +%F)" || { echo "sin cambios"; exit 0; }
+          git pull --rebase
+          git push

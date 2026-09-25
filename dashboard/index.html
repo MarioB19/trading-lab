@@ -1,0 +1,391 @@
+<title>Tablero Trading Lab</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{--bg:#f3f4f6;--surface:#ffffff;--surface-2:#f7f8fa;--ink:#0f1419;--ink-2:#434b55;--muted:#6b7480;--rule:#e0e3e8;--grid:#eceef1;
+--series-1:#2a78d6;--series-2:#eb6834;--bench:#9aa3ad;--good:#0a8f0a;--good-bg:#e5f5e5;--warn:#9a6700;--warn-bg:#fff4d6;--crit:#c43333;--crit-bg:#fde8e8;--chip:#eceff3}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){color-scheme:dark;--bg:#0f1113;--surface:#181b1f;--surface-2:#1e2227;--ink:#eef1f4;--ink-2:#c1c7ce;--muted:#8f98a3;--rule:#2a2f35;--grid:#23272c;
+--series-1:#3987e5;--series-2:#d95926;--bench:#6b737c;--good:#3fbf3f;--good-bg:#12301a;--warn:#f0b429;--warn-bg:#342a10;--crit:#ef6b6b;--crit-bg:#3a1717;--chip:#252a30}}
+:root[data-theme="dark"]{color-scheme:dark;--bg:#0f1113;--surface:#181b1f;--surface-2:#1e2227;--ink:#eef1f4;--ink-2:#c1c7ce;--muted:#8f98a3;--rule:#2a2f35;--grid:#23272c;
+--series-1:#3987e5;--series-2:#d95926;--bench:#6b737c;--good:#3fbf3f;--good-bg:#12301a;--warn:#f0b429;--warn-bg:#342a10;--crit:#ef6b6b;--crit-bg:#3a1717;--chip:#252a30}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font:14.5px/1.55 "IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;padding-inline:16px;padding-block:20px 56px;margin:0}
+.wrap{max-width:1120px;margin:0 auto;display:grid;gap:22px}
+h1,h2,h3{font-family:"IBM Plex Sans Condensed","IBM Plex Sans",system-ui,sans-serif;font-weight:600;margin:0;line-height:1.2;text-wrap:balance}
+h1{font-size:26px}h2{font-size:19px}h3{font-size:16px}
+p{margin:0}
+.mono,.num,td.n{font-family:"IBM Plex Mono",ui-monospace,monospace;font-variant-numeric:tabular-nums}
+.muted{color:var(--muted)}
+.top{display:flex;flex-wrap:wrap;gap:10px 16px;align-items:flex-end;justify-content:space-between}
+.top .meta{display:flex;flex-wrap:wrap;gap:8px;align-items:center;font-size:13px;color:var(--muted)}
+.chip{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:2px 10px;font-size:12px;font-weight:500;background:var(--chip);color:var(--ink-2);white-space:nowrap}
+.chip.good{background:var(--good-bg);color:var(--good)}.chip.warn{background:var(--warn-bg);color:var(--warn)}.chip.crit{background:var(--crit-bg);color:var(--crit)}
+.chip i{width:7px;height:7px;border-radius:50%;background:currentColor;display:inline-block}
+button{font:inherit;font-size:13px;border:1px solid var(--rule);background:var(--surface);color:var(--ink);border-radius:8px;padding:6px 12px;cursor:pointer}
+button:hover{background:var(--surface-2)}
+:focus-visible{outline:2px solid var(--series-1);outline-offset:2px}
+.banner{border-radius:10px;padding:10px 14px;font-size:13.5px;border:1px solid var(--rule);background:var(--surface)}
+.banner.warn{background:var(--warn-bg);border-color:transparent;color:var(--ink)}
+.banner.crit{background:var(--crit-bg);border-color:transparent}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.wrap>*,.kpi,.sleeve,.panel,.rcard,.sec,.tbl{min-width:0}
+.kpi{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;display:grid;gap:2px}
+.kpi .lab{font-size:12.5px;color:var(--muted)}
+.kpi .val{font-family:"IBM Plex Mono",monospace;font-size:24px;font-weight:500;font-variant-numeric:tabular-nums}
+.kpi .sub{font-size:12.5px;color:var(--ink-2)}
+.pos{color:var(--good)}.neg{color:var(--crit)}
+.sleeves{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr));gap:14px}
+.sleeve{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:16px;display:grid;gap:14px;align-content:start}
+.sleeve header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
+.sleeve header .id{display:flex;align-items:center;gap:10px}
+.swatch{width:12px;height:12px;border-radius:3px;display:inline-block}
+.stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+@media (max-width:520px){.stats{grid-template-columns:repeat(2,1fr)}}
+.stat{display:grid;gap:1px}.stat .lab{font-size:12px;color:var(--muted)}.stat .val{font-family:"IBM Plex Mono",monospace;font-size:16px;font-variant-numeric:tabular-nums}
+.bar{height:8px;border-radius:4px;background:var(--grid);overflow:hidden;position:relative}
+.bar span{position:absolute;inset:0 auto 0 0;border-radius:4px}
+.expo{display:grid;gap:6px}
+.expo .row{display:flex;justify-content:space-between;font-size:12.5px;color:var(--ink-2)}
+.notes{margin:0;padding-left:1.1em;font-size:13px;color:var(--ink-2);display:grid;gap:3px}
+.tbl{overflow-x:auto;border:1px solid var(--rule);border-radius:10px;background:var(--surface)}
+table{border-collapse:collapse;width:100%;font-size:13.5px}
+th,td{padding:7px 9px;text-align:left;border-bottom:1px solid var(--rule);white-space:nowrap}
+th{font-weight:500;color:var(--muted);font-size:12px;background:var(--surface-2)}
+td.n,th.n{text-align:right}
+tr:last-child td{border-bottom:0}
+tr.off td{color:var(--muted)}
+.wbar{display:inline-block;height:6px;border-radius:3px;vertical-align:middle;margin-right:6px}
+.charts{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr));gap:14px}
+.panel{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:14px 16px;display:grid;gap:8px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 16px;font-size:12.5px;color:var(--ink-2)}
+.legend i{display:inline-block;width:14px;height:3px;border-radius:2px;vertical-align:middle;margin-right:6px}
+svg.chart{width:100%;height:auto;display:block;overflow:visible}
+.chart .grid{stroke:var(--grid)}.chart .axis{stroke:var(--muted)}.chart .tick{fill:var(--muted);font:11px "IBM Plex Mono",monospace}
+.chart .xh{stroke:var(--muted)}
+.empty{display:grid;place-items:center;min-height:150px;color:var(--muted);font-size:13px;text-align:center;padding:10px;border:1px dashed var(--rule);border-radius:8px}
+.tip{position:fixed;pointer-events:none;background:var(--surface);border:1px solid var(--rule);border-radius:8px;padding:7px 10px;font-size:12px;box-shadow:0 6px 18px rgba(0,0,0,.14);z-index:9;min-width:170px}
+.tip div{display:flex;justify-content:space-between;gap:12px}
+.research{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,320px),1fr));gap:12px}
+.rcard{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:14px 16px;display:grid;gap:8px}
+.rrow{display:grid;grid-template-columns:1fr auto auto;gap:4px 14px;font-size:13px;align-items:baseline}
+.rrow .h{font-size:11.5px;color:var(--muted)}
+.foot{font-size:12.5px;color:var(--muted);display:grid;gap:4px;max-width:80ch}
+.sec{display:grid;gap:10px}
+.sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+@media (prefers-reduced-motion:no-preference){.fresh{animation:flash .8s ease-out}@keyframes flash{from{background:var(--good-bg)}to{background:transparent}}}
+</style>
+
+<div class="wrap">
+  <div class="top">
+    <div style="display:grid;gap:4px">
+      <span class="muted mono" style="font-size:12px;letter-spacing:.06em">MARIOB19/TRADING-LAB</span>
+      <h1>Trading Lab</h1>
+    </div>
+    <div class="meta">
+      <span id="mode-chip" class="chip"></span>
+      <span id="source"></span>
+      <button id="refresh" type="button">Actualizar</button>
+    </div>
+  </div>
+  <div id="banner" hidden></div>
+  <div class="kpis" id="kpis"></div>
+  <div class="sleeves" id="sleeves"></div>
+  <section class="sec">
+    <div class="sec-h"><h2>Capital día a día</h2><span class="muted" style="font-size:12.5px">Base 100 el primer día · referencia: comprar y aguantar</span></div>
+    <div class="charts" id="charts"></div>
+  </section>
+  <section class="sec">
+    <div class="sec-h"><h2>Operaciones recientes</h2><span class="muted" id="trades-count" style="font-size:12.5px"></span></div>
+    <div id="trades"></div>
+  </section>
+  <section class="sec">
+    <div class="sec-h"><h2>Lo que dice el backtest</h2><span class="muted" id="research-date" style="font-size:12.5px"></span></div>
+    <div class="research" id="research"></div>
+  </section>
+  <div class="foot">
+    <p>El bot corre todos los días a las 00:20 UTC en GitHub Actions y guarda su estado en <span class="mono">state/</span>. Este tablero lee esos archivos con tu conector de GitHub; nadie más puede verlos.</p>
+    <p>Resultados de backtest: fuera de muestra, con comisiones. No garantizan resultados futuros. No es asesoría financiera.</p>
+  </div>
+</div>
+<script type="application/json" id="fallback">{"generated": "2026-09-25 05:26", "snapshot": {"sleeves": {"crypto": {"label": "Criptomonedas", "strategy": "tactical", "broker": "simulado", "mode": "paper", "candle": "2026-09-24", "equity": 299.34, "cash": 79.8, "capital": 300, "exposure": 0.7334, "peak": 300.0, "drawdown": -0.0022, "brake": 1.0, "kill_switch": false, "kill_drawdown": 0.45, "benchmark": "BTC", "assets": [{"asset": "ETH", "target": 0.211742, "trend": 1.0, "momentum": 0.384217, "vol": 0.559819, "score": 0.686324, "eligible": true, "price": 2687.24, "weight": 0.212208, "qty": 0.023639}, {"asset": "LTC", "target": 0.163239, "trend": 1.0, "momentum": 0.498197, "vol": 0.726158, "score": 0.686072, "eligible": true, "price": 71.93, "weight": 0.163598, "qty": 0.680825}, {"asset": "LINK", "target": 0.161148, "trend": 1.0, "momentum": 0.512989, "vol": 0.735581, "score": 0.697393, "eligible": true, "price": 13.21809, "weight": 0.161503, "qty": 3.657443}, {"asset": "UNI", "target": 0.099686, "trend": 1.0, "momentum": 1.646699, "vol": 1.189105, "score": 1.384822, "eligible": true, "price": 9.1448, "weight": 0.099906, "qty": 3.270259}, {"asset": "NEAR", "target": 0.095988, "trend": 1.0, "momentum": 1.977036, "vol": 1.234918, "score": 1.600946, "eligible": true, "price": 4.5879, "weight": 0.096199, "qty": 6.276603}, {"asset": "BTC", "target": 0.0, "trend": 1.0, "momentum": 0.251059, "vol": 0.44702, "score": 0.561628, "eligible": true, "price": 84380.0, "weight": 0.0, "qty": 0.0}, {"asset": "SOL", "target": 0.0, "trend": 1.0, "momentum": 0.422757, "vol": 0.659318, "score": 0.641203, "eligible": true, "price": 117.02, "weight": 0.0, "qty": 0.0}, {"asset": "XRP", "target": 0.0, "trend": 1.0, "momentum": 0.228687, "vol": 0.787416, "score": 0.290428, "eligible": true, "price": 1.53423, "weight": 0.0, "qty": 0.0}, {"asset": "ADA", "target": 0.0, "trend": 1.0, "momentum": 0.287485, "vol": 0.810329, "score": 0.354776, "eligible": true, "price": 0.247619, "weight": 0.0, "qty": 0.0}, {"asset": "DOGE", "target": 0.0, "trend": 1.0, "momentum": 0.145633, "vol": 0.798729, "score": 0.182331, "eligible": true, "price": 0.095754, "weight": 0.0, "qty": 0.0}, {"asset": "AVAX", "target": 0.0, "trend": 1.0, "momentum": 0.367777, "vol": 0.993765, "score": 0.370085, "eligible": true, "price": 10.206, "weight": 0.0, "qty": 0.0}, {"asset": "BCH", "target": 0.0, "trend": 1.0, "momentum": 0.231466, "vol": 1.188875, "score": 0.194693, "eligible": true, "price": 338.37, "weight": 0.0, "qty": 0.0}, {"asset": "XLM", "target": 0.0, "trend": 1.0, "momentum": 0.238019, "vol": 0.81561, "score": 0.291829, "eligible": true, "price": 0.217578, "weight": 0.0, "qty": 0.0}, {"asset": "TRX", "target": 0.0, "trend": 1.0, "momentum": 0.049786, "vol": 0.174461, "score": 0.285371, "eligible": true, "price": 0.340168, "weight": 0.0, "qty": 0.0}, {"asset": "HBAR", "target": 0.0, "trend": 1.0, "momentum": 0.181678, "vol": 0.685776, "score": 0.264923, "eligible": true, "price": 0.093, "weight": 0.0, "qty": 0.0}, {"asset": "ATOM", "target": 0.0, "trend": 1.0, "momentum": 0.120028, "vol": 0.778728, "score": 0.154134, "eligible": true, "price": 1.7836, "weight": 0.0, "qty": 0.0}], "notes": [], "status": "ok", "last_run_utc": "2026-09-25 05:26"}, "stocks": {"label": "Acciones y ETFs", "strategy": "passive", "broker": "simulado", "mode": "paper", "candle": "2026-09-24", "equity": 699.65, "cash": 2.1, "capital": 700, "exposure": 0.997, "peak": 700.0, "drawdown": -0.0005, "brake": 1.0, "kill_switch": false, "kill_drawdown": 0.25, "benchmark": "SPY", "assets": [{"asset": "SPY", "target": 0.6, "price": 767.179993, "weight": 0.596798, "qty": 0.544267}, {"asset": "IEF", "target": 0.4, "price": 89.690002, "weight": 0.400199, "qty": 3.121864}, {"asset": "QQQ", "target": 0.0, "price": 741.099976, "weight": 0.0, "qty": 0.0}, {"asset": "IWM", "target": 0.0, "price": 281.660004, "weight": 0.0, "qty": 0.0}, {"asset": "EFA", "target": 0.0, "price": 104.5, "weight": 0.0, "qty": 0.0}, {"asset": "EEM", "target": 0.0, "price": 67.25, "weight": 0.0, "qty": 0.0}, {"asset": "EWW", "target": 0.0, "price": 72.510002, "weight": 0.0, "qty": 0.0}, {"asset": "TLT", "target": 0.0, "price": 79.419998, "weight": 0.0, "qty": 0.0}, {"asset": "GLD", "target": 0.0, "price": 391.690002, "weight": 0.0, "qty": 0.0}, {"asset": "DBC", "target": 0.0, "price": 33.18, "weight": 0.0, "qty": 0.0}, {"asset": "VNQ", "target": 0.0, "price": 91.169998, "weight": 0.0, "qty": 0.0}, {"asset": "XLK", "target": 0.0, "price": 194.710007, "weight": 0.0, "qty": 0.0}, {"asset": "XLF", "target": 0.0, "price": 54.529999, "weight": 0.0, "qty": 0.0}, {"asset": "XLE", "target": 0.0, "price": 62.599998, "weight": 0.0, "qty": 0.0}, {"asset": "XLV", "target": 0.0, "price": 169.869995, "weight": 0.0, "qty": 0.0}, {"asset": "XLI", "target": 0.0, "price": 168.830002, "weight": 0.0, "qty": 0.0}, {"asset": "XLP", "target": 0.0, "price": 81.699997, "weight": 0.0, "qty": 0.0}, {"asset": "XLU", "target": 0.0, "price": 39.360001, "weight": 0.0, "qty": 0.0}, {"asset": "XLY", "target": 0.0, "price": 110.32, "weight": 0.0, "qty": 0.0}, {"asset": "XLB", "target": 0.0, "price": 49.68, "weight": 0.0, "qty": 0.0}], "notes": ["Alpaca paper no disponible (faltan ALPACA_KEY_ID / ALPACA_SECRET_KEY); uso el simulado interno"], "status": "ok", "last_run_utc": "2026-09-25 05:26"}}, "generated_utc": "2026-09-25 05:26", "mode": "paper", "research": {"generated": "2026-09-25 05:26 UTC", "combined": {"cagr": 0.21268576528611693, "max_dd": -0.2647582015156076, "p_loss_12m": 0.2204, "crypto_share": 0.3}, "crypto": {"label": "Criptomonedas", "oos_start": "2021-01-01", "recommended": "CANDIDATA: top5 · vol 40% · con filtro BTC · freno", "strategy": {"cagr": 0.37882386014875635, "sharpe": 1.2272043804405897, "max_dd": -0.3753300132293804}, "benchmark_name": "Comprar y aguantar BTC", "benchmark": {"cagr": 0.20468044171400135, "sharpe": 0.6117478088856954, "max_dd": -0.7666881595920354}, "tactical": {"cagr": 0.37882386014875635, "sharpe": 1.2272043804405897, "max_dd": -0.3753300132293804}, "placebo_p": 0.0, "p_loss_12m": 0.248}, "stocks": {"label": "Acciones y ETFs", "oos_start": "2010-01-01", "recommended": "60/40 (SPY/IEF)", "strategy": {"cagr": 0.0989591721055032, "sharpe": 0.9957761616582715, "max_dd": -0.2157834867560986}, "benchmark_name": "Comprar y aguantar SPY", "benchmark": {"cagr": 0.1425221941910968, "sharpe": 0.8667747246377154, "max_dd": -0.33717268745960116}, "tactical": {"cagr": 0.045218721219039804, "sharpe": 0.5260217640796205, "max_dd": -0.16907009335593293}, "placebo_p": 0.34, "p_loss_12m": 0.1338}}}, "equity": "date,sleeve,mode,equity,cash,exposure,drawdown,brake,benchmark_price,n_positions\n2026-09-24,crypto,paper,299.34,79.8,0.7334,-0.0022,1.0,84380.0,5\n2026-09-24,stocks,paper,699.65,2.1,0.997,-0.0005,1.0,767.179993,2\n", "trades": "run_at_utc,sleeve,mode,broker,candle,asset,side,qty,price,value,fee,status,note\n2026-09-25 05:26,crypto,paper,simulado,2026-09-24,NEAR,buy,6.27660259,4.597076,28.85,0.0289,filled,\n2026-09-25 05:26,crypto,paper,simulado,2026-09-24,UNI,buy,3.27025933,9.16309,29.97,0.03,filled,\n2026-09-25 05:26,crypto,paper,simulado,2026-09-24,LINK,buy,3.65744289,13.244526,48.44,0.0484,filled,\n2026-09-25 05:26,crypto,paper,simulado,2026-09-24,LTC,buy,0.6808246,72.07386,49.07,0.0491,filled,\n2026-09-25 05:26,crypto,paper,simulado,2026-09-24,ETH,buy,0.02363862,2692.61448,63.65,0.0636,filled,\n2026-09-25 05:26,stocks,paper,simulado,2026-09-24,IEF,buy,3.12186411,89.734847,280.14,0.0,filled,\n2026-09-25 05:26,stocks,paper,simulado,2026-09-24,SPY,buy,0.54426702,767.563583,417.76,0.0,filled,\n"}</script>
+<script>
+(function () {
+  "use strict";
+  const REPO = { owner: "MarioB19", repo: "trading-lab" };
+  const FILES = { snapshot: "state/snapshot.json", equity: "state/equity.csv", trades: "state/trades.csv" };
+  const COLORS = { crypto: "--series-1", stocks: "--series-2" };
+  const FB = JSON.parse(document.getElementById("fallback").textContent);
+  const S = { snapshot: FB.snapshot, equity: parseCSV(FB.equity), trades: parseCSV(FB.trades),
+              live: {}, errors: {}, fallbackDate: FB.generated };
+  let mcp = null;
+
+  // ---------------------------------------------------------------- utilidades
+  function parseCSV(text) {
+    if (!text) return [];
+    const rows = []; let row = [], f = "", q = false;
+    for (let i = 0; i < text.length; i++) {
+      const c = text[i];
+      if (q) { if (c === '"') { if (text[i + 1] === '"') { f += '"'; i++; } else q = false; } else f += c; }
+      else if (c === '"') q = true;
+      else if (c === ",") { row.push(f); f = ""; }
+      else if (c === "\n" || c === "\r") { if (c === "\r" && text[i + 1] === "\n") i++; row.push(f); rows.push(row); row = []; f = ""; }
+      else f += c;
+    }
+    if (f.length || row.length) { row.push(f); rows.push(row); }
+    const head = rows.shift() || [];
+    return rows.filter(r => r.length > 1).map(r => Object.fromEntries(head.map((h, i) => [h, r[i] ?? ""])));
+  }
+  const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+  const minus = s => s.replace("-", "−");
+  const usd = (x, d = 2) => x == null || isNaN(x) ? "–" : minus((x < 0 ? "-" : "") + "$" + Math.abs(x).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }));
+  const pct = (x, d = 1, sign = false) => x == null || isNaN(x) ? "–" : minus((sign && x > 0 ? "+" : "") + (x * 100).toFixed(d) + "%");
+  const num = (x, d = 4) => x == null || isNaN(x) ? "–" : (+x).toLocaleString("en-US", { maximumFractionDigits: d });
+  const cls = x => x > 0.00005 ? "pos" : x < -0.00005 ? "neg" : "";
+  function when(ts) { try { return new Date(ts).toLocaleString("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }); } catch (e) { return ts; } }
+  function utc(s) { return s ? s.replace(" ", "T") + ":00Z" : null; }
+  function nextRun() {
+    const n = new Date(); const t = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate(), 0, 20));
+    if (t <= n) t.setUTCDate(t.getUTCDate() + 1);
+    return t.toLocaleString("es-MX", { weekday: "long", hour: "2-digit", minute: "2-digit" });
+  }
+
+  // ---------------------------------------------------------------- render
+  function render() {
+    const snap = S.snapshot || { sleeves: {} };
+    const sleeves = Object.entries(snap.sleeves || {});
+    const live = snap.mode === "live";
+    const mc = document.getElementById("mode-chip");
+    mc.className = "chip " + (live ? "crit" : "");
+    mc.innerHTML = "<i></i>" + (live ? "DINERO REAL" : "Simulado, sin dinero real");
+    const src = document.getElementById("source");
+    const anyLive = Object.keys(S.live).length > 0;
+    src.textContent = anyLive
+      ? "Datos de GitHub · " + when(Math.max(...Object.values(S.live)))
+      : "Datos incluidos en la página (" + (S.fallbackDate || "sin fecha") + ")";
+
+    // KPIs
+    const tot = sleeves.reduce((a, [, s]) => a + (+s.equity || 0), 0);
+    const cap = sleeves.reduce((a, [, s]) => a + (+s.capital || 0), 0);
+    const expoVal = sleeves.reduce((a, [, s]) => a + (+s.equity || 0) * (+s.exposure || 0), 0);
+    const worst = sleeves.reduce((m, [, s]) => Math.min(m, +s.drawdown || 0), 0);
+    const kills = sleeves.filter(([, s]) => s.kill_switch).length;
+    const blocked = sleeves.filter(([, s]) => ["blocked", "error"].includes(s.status)).length;
+    const lastRun = sleeves.map(([, s]) => s.last_run_utc).filter(Boolean).sort().pop();
+    document.getElementById("kpis").innerHTML = [
+      kpi("Capital total", usd(tot), `<span class="${cls(tot - cap)}">${usd(tot - cap)} (${pct(cap ? tot / cap - 1 : 0, 2, true)})</span> vs ${usd(cap, 0)} asignados`),
+      kpi("Invertido ahora", pct(tot ? expoVal / tot : 0, 0), `${usd(expoVal)} en activos · ${usd(tot - expoVal)} en efectivo`),
+      kpi("Peor caída actual", pct(worst, 1), kills ? `<span class="neg">Kill switch activo en ${kills} bloque(s)</span>` : "Kill switch armado en ambos bloques"),
+      kpi("Última corrida", lastRun ? when(utc(lastRun)) : "–", (blocked ? `<span class="neg">${blocked} bloque(s) no operaron</span> · ` : "") + "Siguiente: " + nextRun()),
+    ].join("");
+
+    // Bloques
+    document.getElementById("sleeves").innerHTML = sleeves.map(([k, s]) => sleeveCard(k, s)).join("") ||
+      `<div class="empty">Aún no hay datos del bot.</div>`;
+
+    // Gráficas
+    document.getElementById("charts").innerHTML = sleeves.map(([k, s]) => chartPanel(k, s, snap.mode)).join("");
+    sleeves.forEach(([k]) => attachHover(k));
+
+    // Operaciones
+    const tr = S.trades.slice().reverse().slice(0, 30);
+    document.getElementById("trades-count").textContent = S.trades.length ? `${S.trades.length} en total · últimas ${tr.length}` : "";
+    document.getElementById("trades").innerHTML = S.errors.trades && !S.trades.length ? errBox(S.errors.trades) : tr.length ? `<div class="tbl"><table>
+      <thead><tr><th>Vela</th><th>Bloque</th><th>Activo</th><th>Operación</th><th class="n">Cantidad</th><th class="n">Precio</th><th class="n">Valor</th><th>Estado</th><th>Dónde</th></tr></thead><tbody>
+      ${tr.map(t => `<tr><td class="mono">${esc(t.candle)}</td><td>${esc(labelOf(t.sleeve))}</td><td class="mono">${esc(t.asset)}</td>
+        <td><span class="chip ${t.side === "buy" ? "good" : "warn"}">${t.side === "buy" ? "Compra" : "Venta"}</span></td>
+        <td class="n">${num(+t.qty, 6)}</td><td class="n">${usd(+t.price, +t.price < 1 ? 5 : 2)}</td><td class="n">${usd(+t.value)}</td>
+        <td>${statusText(t.status)}${t.note ? ` <span class="muted">${esc(t.note)}</span>` : ""}</td><td class="muted">${esc(t.broker)}${t.mode === "live" ? " · real" : ""}</td></tr>`).join("")}
+      </tbody></table></div>` : `<div class="empty">Sin operaciones todavía.</div>`;
+
+    renderResearch(snap.research);
+    renderBanner();
+  }
+  const kpi = (lab, val, sub) => `<div class="kpi"><span class="lab">${lab}</span><span class="val">${val}</span><span class="sub">${sub}</span></div>`;
+  const labelOf = k => (S.snapshot?.sleeves?.[k]?.label) || k;
+  function statusText(s) { return { filled: "Ejecutada", submitted: "Enviada (al abrir el mercado)", partial: "Parcial", failed: '<span class="neg">Fallida</span>' }[s] || esc(s); }
+  function statusChip(s) {
+    const m = { ok: ["good", "Operó hoy"], skip: ["", "Sin vela nueva"], blocked: ["warn", "No operó"], error: ["crit", "Error"] }[s] || ["", s || "–"];
+    return `<span class="chip ${m[0]}"><i></i>${m[1]}</span>`;
+  }
+
+  function sleeveCard(k, s) {
+    const color = `var(${COLORS[k] || "--series-1"})`;
+    const pnl = (+s.equity || 0) - (+s.capital || 0);
+    const tactical = s.strategy === "tactical";
+    const assets = (s.assets || []).filter(a => (a.weight || 0) > 0.0005 || (a.target || 0) > 0.0005);
+    const cand = tactical ? (s.assets || []).filter(a => a.eligible && !((a.weight || 0) > 0.0005 || (a.target || 0) > 0.0005))
+      .sort((a, b) => (b.score ?? -9) - (a.score ?? -9)).slice(0, 5) : [];
+    const brake = +s.brake;
+    const brakeTxt = s.kill_switch ? '<span class="chip crit"><i></i>Kill switch ACTIVADO</span>'
+      : brake < 0.999 ? `<span class="chip warn"><i></i>Freno: exposición al ${(brake * 100).toFixed(0)}%</span>`
+      : `<span class="chip good"><i></i>Sin freno · kill a −${((+s.kill_drawdown || 0) * 100).toFixed(0)}%</span>`;
+    const maxW = Math.max(0.01, ...assets.map(a => Math.max(a.weight || 0, a.target || 0)));
+    return `<article class="sleeve">
+      <header><div class="id"><span class="swatch" style="background:${color}"></span><h3>${esc(s.label || k)}</h3>
+        <span class="chip">${tactical ? "Táctico" : "Pasivo"}</span><span class="chip">${esc(s.broker || "")}</span></div>${statusChip(s.status)}</header>
+      <div class="stats">
+        <div class="stat"><span class="lab">Capital</span><span class="val">${usd(+s.equity)}</span></div>
+        <div class="stat"><span class="lab">Resultado</span><span class="val ${cls(pnl)}">${pct(s.capital ? pnl / s.capital : 0, 2, true)}</span></div>
+        <div class="stat"><span class="lab">Caída desde máximo</span><span class="val ${(+s.drawdown || 0) < -0.1 ? "neg" : ""}">${pct(+s.drawdown, 1)}</span></div>
+        <div class="stat"><span class="lab">Vela</span><span class="val" style="font-size:14px">${esc(s.candle || "–")}</span></div>
+      </div>
+      <div class="expo"><div class="row"><span>Invertido ${pct(+s.exposure, 0)} · efectivo ${usd(+s.cash)}</span>${brakeTxt}</div>
+        <div class="bar"><span style="width:${Math.min(100, (+s.exposure || 0) * 100)}%;background:${color}"></span></div></div>
+      ${assets.length ? `<div class="tbl"><table><thead><tr><th>Activo</th><th class="n">Peso</th><th class="n">Objetivo</th><th class="n">Valor</th>${tactical ? '<th class="n" title="Fracción de promedios móviles que el precio supera">Tend.</th><th class="n" title="Rendimiento promedio a 1, 3 y 6 meses">Mom.</th><th class="n" title="Volatilidad anual">Vol.</th>' : ""}</tr></thead><tbody>
+        ${assets.map(a => `<tr><td class="mono">${esc(a.asset)}</td>
+          <td class="n"><span class="wbar" style="width:${Math.round(40 * (a.weight || 0) / maxW)}px;background:${color}"></span>${pct(a.weight, 1)}</td>
+          <td class="n">${pct(a.target, 1)}</td><td class="n">${usd((a.qty || 0) * (a.price || 0))}</td>
+          ${tactical ? `<td class="n">${pct(a.trend, 0)}</td><td class="n">${pct(a.momentum, 0, true)}</td><td class="n">${pct(a.vol, 0)}</td>` : ""}</tr>`).join("")}
+        </tbody></table></div>` : `<div class="empty">Sin posiciones: todo en efectivo.</div>`}
+      ${cand.length ? `<p class="muted" style="font-size:12.5px">Siguientes en la fila: ${cand.map(a => `<span class="mono">${esc(a.asset)}</span> (tendencia ${pct(a.trend, 0)}, momentum ${pct(a.momentum, 0, true)})`).join(" · ")}</p>` : ""}
+      ${(s.notes || []).length ? `<ul class="notes">${s.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}
+    </article>`;
+  }
+
+  // ---------------------------------------------------------------- gráficas
+  const W = 560, H = 220, ML = 44, MR = 12, MT = 10, MB = 26;
+  const CH = {};
+  function chartPanel(k, s, mode) {
+    const rows = S.equity.filter(r => r.sleeve === k && (!mode || r.mode === mode));
+    const color = COLORS[k] || "--series-1";
+    const bname = s.benchmark || "referencia";
+    const legend = `<div class="legend"><span><i style="background:var(${color})"></i>${esc(s.label || k)}</span><span><i style="background:var(--bench)"></i>Comprar y aguantar ${esc(bname)}</span></div>`;
+    if (rows.length < 2) {
+      return `<div class="panel"><h3>${esc(s.label || k)}</h3>${legend}<div class="empty">La curva aparece a partir de la segunda corrida diaria.<br>Hoy: ${usd(rows.length ? +rows[0].equity : +s.equity)}</div></div>`;
+    }
+    const e0 = +rows[0].equity, b0 = +rows[0].benchmark_price;
+    const dates = rows.map(r => r.date);
+    const eq = rows.map(r => 100 * (+r.equity) / e0);
+    const bm = rows.map(r => b0 ? 100 * (+r.benchmark_price) / b0 : null);
+    CH[k] = { dates, series: [{ name: s.label || k, v: eq, c: color }, { name: "Comprar y aguantar " + bname, v: bm, c: "--bench" }] };
+    const all = eq.concat(bm.filter(x => x != null));
+    let lo = Math.min(...all), hi = Math.max(...all); const pad = Math.max(1, (hi - lo) * 0.08); lo -= pad; hi += pad;
+    const xs = i => ML + (W - ML - MR) * i / (dates.length - 1);
+    const ys = v => MT + (H - MT - MB) * (1 - (v - lo) / (hi - lo));
+    const step = niceStep((hi - lo) / 4);
+    let g = "";
+    for (let t = Math.ceil(lo / step) * step; t <= hi; t += step) g += `<line class="grid" x1="${ML}" x2="${W - MR}" y1="${ys(t).toFixed(1)}" y2="${ys(t).toFixed(1)}"/><text class="tick" x="${ML - 6}" y="${(ys(t) + 4).toFixed(1)}" text-anchor="end">${+t.toFixed(1)}</text>`;
+    const idxs = [0, Math.floor((dates.length - 1) / 2), dates.length - 1].filter((v, i, a) => a.indexOf(v) === i);
+    idxs.forEach((i, j) => g += `<text class="tick" x="${xs(i).toFixed(1)}" y="${H - 6}" text-anchor="${j === 0 ? "start" : j === idxs.length - 1 ? "end" : "middle"}">${dates[i].slice(5)}</text>`);
+    const path = v => v.map((y, i) => y == null ? null : `${xs(i).toFixed(1)},${ys(y).toFixed(1)}`).filter(Boolean).join(" ");
+    return `<div class="panel"><h3>${esc(s.label || k)}</h3>${legend}
+      <svg class="chart" id="ch-${k}" viewBox="0 0 ${W} ${H}" role="img" aria-label="Capital de ${esc(s.label || k)} contra ${esc(bname)}">
+        ${g}<line class="axis" x1="${ML}" x2="${W - MR}" y1="${H - MB}" y2="${H - MB}"/>
+        <polyline points="${path(bm)}" fill="none" stroke="var(--bench)" stroke-width="1.6" stroke-linejoin="round"/>
+        <polyline points="${path(eq)}" fill="none" stroke="var(${color})" stroke-width="2.2" stroke-linejoin="round"/>
+        <circle cx="${xs(eq.length - 1).toFixed(1)}" cy="${ys(eq[eq.length - 1]).toFixed(1)}" r="4" fill="var(${color})" stroke="var(--surface)" stroke-width="2"/>
+        <line class="xh" x1="0" x2="0" y1="${MT}" y2="${H - MB}" visibility="hidden"/>
+        <rect class="hit" x="${ML}" y="${MT}" width="${W - ML - MR}" height="${H - MT - MB}" fill="transparent"/>
+      </svg></div>`;
+  }
+  function niceStep(x) { const p = Math.pow(10, Math.floor(Math.log10(x || 1))); const n = x / p; return (n < 1.5 ? 1 : n < 3 ? 2 : n < 7 ? 5 : 10) * p; }
+  const tip = document.createElement("div"); tip.className = "tip"; tip.hidden = true; document.body.appendChild(tip);
+  function attachHover(k) {
+    const svg = document.getElementById("ch-" + k); const d = CH[k]; if (!svg || !d) return;
+    const hit = svg.querySelector(".hit"), xh = svg.querySelector(".xh"), n = d.dates.length;
+    hit.addEventListener("pointermove", ev => {
+      const r = svg.getBoundingClientRect(), vx = (ev.clientX - r.left) * (W / r.width);
+      const i = Math.max(0, Math.min(n - 1, Math.round((vx - ML) / (W - ML - MR) * (n - 1))));
+      const px = ML + (W - ML - MR) * i / (n - 1); xh.setAttribute("x1", px); xh.setAttribute("x2", px); xh.setAttribute("visibility", "visible");
+      tip.innerHTML = `<div class="muted mono">${d.dates[i]}</div>` + d.series.map(s => `<div><span><i style="display:inline-block;width:10px;height:3px;border-radius:2px;margin-right:6px;vertical-align:middle;background:var(${s.c})"></i>${esc(s.name)}</span><b class="mono">${s.v[i] == null ? "–" : s.v[i].toFixed(1)}</b></div>`).join("");
+      tip.hidden = false; tip.style.left = Math.min(ev.clientX + 14, innerWidth - tip.offsetWidth - 8) + "px"; tip.style.top = (ev.clientY + 14) + "px";
+    });
+    hit.addEventListener("pointerleave", () => { tip.hidden = true; xh.setAttribute("visibility", "hidden"); });
+  }
+
+  // ---------------------------------------------------------------- investigación
+  function renderResearch(r) {
+    const el = document.getElementById("research");
+    if (!r || !r.crypto) { el.innerHTML = `<div class="empty">Sin resumen de investigación.</div>`; return; }
+    document.getElementById("research-date").textContent = r.generated ? "Actualizado " + r.generated : "";
+    const card = (k) => { const x = r[k]; if (!x) return ""; const rec = x.recommended.startsWith("CANDIDATA") ? "Portafolio táctico" : x.recommended;
+      return `<div class="rcard"><div style="display:flex;gap:8px;align-items:center"><span class="swatch" style="background:var(${COLORS[k]})"></span><h3>${esc(x.label)}</h3><span class="muted" style="font-size:12px">desde ${esc(x.oos_start.slice(0, 4))}, fuera de muestra</span></div>
+        <div class="rrow"><span class="h"></span><span class="h">Rend. anual</span><span class="h">Caída máx.</span>
+          <span>${esc(rec)} <span class="chip">lo que usa el bot</span></span><span class="num">${pct(x.strategy.cagr)}</span><span class="num">${pct(x.strategy.max_dd, 0)}</span>
+          <span class="muted">${esc(x.benchmark_name)}</span><span class="num muted">${pct(x.benchmark.cagr)}</span><span class="num muted">${pct(x.benchmark.max_dd, 0)}</span>
+          ${x.recommended.startsWith("CANDIDATA") ? "" : `<span class="muted">Táctico (descartado)</span><span class="num muted">${pct(x.tactical.cagr)}</span><span class="num muted">${pct(x.tactical.max_dd, 0)}</span>`}
+        </div>
+        <p class="muted" style="font-size:12.5px">Probabilidad de terminar 12 meses con pérdida: ${pct(x.p_loss_12m, 0)} · placebo p = ${(+x.placebo_p).toFixed(2)}${x.placebo_p < 0.05 ? " (el timing no es azar)" : " (el timing no se distingue del azar)"}</p></div>`; };
+    const c = r.combined || {};
+    el.innerHTML = card("crypto") + card("stocks") + (c.cagr != null ? `<div class="rcard"><h3>Los dos juntos</h3>
+      <p style="font-size:13px">${pct(c.crypto_share, 0)} cripto / ${pct(1 - c.crypto_share, 0)} acciones, sin rebalancear entre cuentas:</p>
+      <div class="rrow"><span class="h"></span><span class="h">Rend. anual</span><span class="h">Caída máx.</span><span>Combinado</span><span class="num">${pct(c.cagr)}</span><span class="num">${pct(c.max_dd, 0)}</span></div>
+      <p class="muted" style="font-size:12.5px">Probabilidad de terminar 12 meses con pérdida: ${pct(c.p_loss_12m, 0)}.</p></div>` : "");
+  }
+
+  // ---------------------------------------------------------------- avisos y errores
+  function errText(e) {
+    const m = {
+      needs_reauth: "Tu conexión con GitHub venció. Reconéctala en claude.ai → Configuración → Conectores.",
+      server_not_connected: "Este tablero necesita el conector de GitHub. Agrégalo en claude.ai → Configuración → Conectores.",
+      selection_required: "Tienes más de un conector de GitHub; elige cuál usar en el aviso de claude.ai.",
+      not_in_manifest: "No se permitió que esta página lea GitHub. Puedes permitirlo desde el menú de la página.",
+      blocked_by_policy: "La política de tu organización bloquea la lectura de GitHub desde esta página.",
+      server_unavailable: "GitHub no respondió. Se reintenta en la próxima actualización.",
+      tool_error: "GitHub respondió con un error: " + (e && e.message || "") + ". ¿Ya existe el repositorio con la carpeta state/?",
+      not_granted: "Esta vista no puede leer conectores; se muestran los datos incluidos en la página.",
+      capability_disabled: "Esta vista no puede leer conectores; se muestran los datos incluidos en la página.",
+    };
+    return m[e && e.code] || ("No se pudo leer GitHub (" + (e && (e.code || e.message) || "error") + ").");
+  }
+  const errBox = e => `<div class="banner warn">${esc(errText(e))}</div>`;
+  function renderBanner() {
+    const b = document.getElementById("banner");
+    const errs = Object.values(S.errors);
+    if (!errs.length) { b.hidden = true; return; }
+    const same = errs.every(e => e.code === errs[0].code);
+    b.hidden = false; b.className = "banner warn";
+    b.textContent = same ? errText(errs[0]) : errs.map(errText).join(" ");
+  }
+
+  // ---------------------------------------------------------------- datos en vivo desde GitHub
+  function fileText(result) {
+    const blocks = (result && result.content) || [];
+    for (const bl of blocks) {
+      const r = bl && bl.resource;
+      if (r && typeof r.text === "string") return r.text;
+      if (r && typeof r.blob === "string") { try { return new TextDecoder().decode(Uint8Array.from(atob(r.blob), c => c.charCodeAt(0))); } catch (e) { /* sigue */ } }
+    }
+    const p = result && result.payload;
+    if (p && typeof p === "object" && typeof p.content === "string" && p.encoding === "base64") {
+      try { return new TextDecoder().decode(Uint8Array.from(atob(p.content.replace(/\s/g, "")), c => c.charCodeAt(0))); } catch (e) { /* sigue */ }
+    }
+    const texts = blocks.filter(bl => bl && bl.type === "text" && !/^successfully downloaded/i.test(bl.text)).map(bl => bl.text);
+    return texts.length ? texts.join("\n") : null;
+  }
+  const DENIALS = ["needs_reauth", "server_not_connected", "blocked_by_policy", "approval_required", "not_in_manifest", "selection_required"];
+  function onEvent(key, ev) {
+    if (ev.type === "data") {
+      const txt = fileText(ev.result);
+      if (txt == null) { S.errors[key] = { code: "formato", message: "respuesta sin contenido" }; render(); return; }
+      try {
+        if (key === "snapshot") S.snapshot = JSON.parse(txt); else S[key] = parseCSV(txt);
+        S.live[key] = (ev.result.cache && ev.result.cache.storedAt) || Date.now();
+        delete S.errors[key];
+      } catch (e) { S.errors[key] = { code: "formato", message: String(e) }; }
+    } else {
+      S.errors[key] = ev.error || { code: "upstream_error" };
+      if (DENIALS.includes(S.errors[key].code)) {  // sin permiso: se retiran los datos de GitHub
+        delete S.live[key];
+        if (key === "snapshot") S.snapshot = FB.snapshot; else S[key] = parseCSV(FB[key]);
+      }
+    }
+    render();
+  }
+
+  document.getElementById("refresh").addEventListener("click", async () => {
+    if (!mcp) { render(); return; }
+    try { await mcp.invalidate("GitHub", "get_file_contents"); } catch (e) { /* nada en caché */ }
+  });
+
+  render();
+  (async () => {
+    try { mcp = window.claude && window.claude.use ? await window.claude.use("mcp") : null; } catch (e) { mcp = null; }
+    if (!mcp) return;
+    for (const [key, path] of Object.entries(FILES)) {
+      mcp.watchTool("GitHub", "get_file_contents", { owner: REPO.owner, repo: REPO.repo, path },
+        ev => onEvent(key, ev), { refetchInterval: 15 * 60 * 1000, cache: { staleTime: 5 * 60 * 1000 } });
+    }
+  })();
+})();
+</script>
