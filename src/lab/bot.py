@@ -214,7 +214,10 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
         return res
     value = {a: q * float(px[a]) for a, q in positions.items() if a in px.index and np.isfinite(px[a])}
     equity_total = cash + sum(value.values())
-    equity = min(equity_total, float(sc["capital"])) if mode == "live" else equity_total
+    # En una cuenta externa (real o paper de Alpaca, que trae $100k virtuales) el bot solo
+    # maneja `capital`; así el simulado se comporta igual que lo haría el real.
+    capped = mode == "live" or not isinstance(broker, SimBroker)
+    equity = min(equity_total, float(sc["capital"])) if capped else equity_total
     w_now = {a: v / equity for a, v in value.items()} if equity > 0 else {}
 
     peak = max(float(st.get("peak") or 0), equity)
@@ -282,8 +285,9 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
     cash = broker.cash()
     value = {a: q * float(px[a]) for a, q in positions.items() if a in px.index and np.isfinite(px[a])}
     eq_after = cash + sum(value.values())
-    if mode == "live":
+    if capped:
         eq_after = min(eq_after, float(sc["capital"]))
+        cash = max(0.0, eq_after - sum(value.values()))  # efectivo dentro del capital asignado
     st["peak"] = max(peak, eq_after)
     st["last_candle"] = cstr
     exposure = sum(value.values()) / eq_after if eq_after > 0 else 0.0

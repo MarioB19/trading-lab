@@ -167,3 +167,21 @@ def test_alpaca_order_payload(monkeypatch):
     assert sent["url"].startswith("https://paper-api.alpaca.markets")
     assert sent["body"] == {"symbol": "SPY", "qty": "1.500000", "side": "buy", "type": "market", "time_in_force": "day"}
     assert f.status == "submitted"
+
+
+def test_external_paper_account_respects_capital(monkeypatch):
+    """Una cuenta paper de Alpaca trae $100k virtuales: el bot solo debe usar `capital`."""
+    class FakeAlpaca(SimBroker):
+        pass
+    idx = pd.date_range("2024-01-01", periods=300, freq="B")
+    P = pd.DataFrame({"SPY": np.linspace(100, 120, 300), "IEF": np.linspace(90, 95, 300)}, index=idx)
+    sc = copy.deepcopy(bot.DEFAULT_CONFIG["sleeves"]["stocks"])
+    sc["universe"] = ["SPY", "IEF"]
+    st = {}
+    broker = FakeAlpaca({"cash": 100_000.0, "positions": {}}, 0.0, 0.0, 1.0)
+    monkeypatch.setattr(bot, "SimBroker", type("Otro", (), {}))  # que no se reconozca como simulado interno
+    r = bot.run_sleeve("stocks", sc, P, broker, st, idx[-1] + pd.Timedelta(days=1, hours=2), "paper",
+                       pd.Series(dtype=float), 0.4)
+    spent = sum(t["value"] for t in r["trades"] if t["side"] == "buy")
+    assert spent <= sc["capital"] * 1.001
+    assert r["snapshot"]["equity"] <= sc["capital"] * 1.001
