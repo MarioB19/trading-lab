@@ -87,6 +87,18 @@ class AlpacaBroker:
         return {p["symbol"]: float(p["qty"]) for p in self._req("GET", "/v2/positions")
                 if abs(float(p["qty"])) > 1e-9}
 
+    def asset_info(self, symbol: str) -> dict:
+        """¿Tu cuenta puede operar este ETF, y en fracciones?"""
+        if not hasattr(self, "_info"):
+            self._info = {}
+        if symbol not in self._info:
+            try:
+                a = self._req("GET", f"/v2/assets/{symbol}")
+                self._info[symbol] = {"tradable": bool(a.get("tradable")), "fractionable": bool(a.get("fractionable"))}
+            except RuntimeError:
+                self._info[symbol] = {"tradable": False, "fractionable": False}
+        return self._info[symbol]
+
     def pending(self) -> int:
         """Órdenes de la corrida anterior que aún esperan la apertura del mercado."""
         return len(self._req("GET", "/v2/orders", params={"status": "open"}))

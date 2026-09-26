@@ -16,7 +16,7 @@ import numpy as np
 import pandas as pd
 
 from .backtest import perf, sharpe
-from .data import ROOT, load_crypto_panel, load_etf_panel
+from .data import MULTI_MARKET, ROOT, load_crypto_panel, load_etf_panel
 from .portfolio import (PortfolioParams, crypto_universe, equal_weight_buy_hold, fixed_weights,
                         listed_universe, simulate_portfolio, target_weights)
 from .strategies import trend_ensemble
@@ -31,6 +31,8 @@ BITSO_TRADABLE = ["BTC", "ETH", "SOL", "XRP", "ADA", "DOGE", "LINK", "AVAX", "LT
 CANDIDATES = {
     "crypto": {"top_k": 5, "vol_target": 0.40, "regime_asset": "BTC", "dd_brake": True},
     "stocks": {"top_k": 5, "vol_target": 0.10, "regime_asset": None, "dd_brake": True},
+    # Declarada el 25-sep-2026 en el documento "Plan: bloque multi-mercado", antes de correr la prueba.
+    "multi": {"top_k": 8, "vol_target": 0.10, "regime_asset": None, "dd_brake": True, "cash_asset": "BIL"},
 }
 
 SLEEVES = {
@@ -52,6 +54,16 @@ SLEEVES = {
         "costs_test": [0.0002, 0.0005, 0.002, 0.005], "benchmark": "SPY", "kill_dd": 0.25,
         "passive": "60/40 (SPY/IEF)",
     },
+    "multi": {
+        "label": "Multi-mercado", "ann": 252, "eval_start": "2009-01-01", "oos_year": 2012,
+        "cost": 0.001, "band": 0.02,
+        "base": {"mom_windows": (21, 63, 126), "max_weight": 0.25, "ann": 252, "cov_window": 63,
+                 "dd_peak_window": 126},
+        "grid": {"top_k": [4, 8, 12], "vol_target": [None, 0.10, 0.15], "regime_asset": [None],
+                 "dd_brake": [True, False], "cash_asset": ["BIL", None]},
+        "costs_test": [0.0005, 0.001, 0.003, 0.005], "benchmark": "SPY", "kill_dd": 0.25,
+        "passive": None,
+    },
 }
 
 
@@ -59,7 +71,10 @@ def key_of(d: dict) -> str:
     vt = "sin" if d["vol_target"] is None else f"{d['vol_target']:.0%}"
     rg = "con filtro BTC" if d.get("regime_asset") else "sin filtro"
     br = "freno" if d["dd_brake"] else "sin freno"
-    return f"top{d['top_k']} · vol {vt} · {rg} · {br}"
+    cash = ""
+    if "cash_asset" in d:
+        cash = " · efectivo en " + d["cash_asset"] if d["cash_asset"] else " · efectivo sin rendir"
+    return f"top{d['top_k']} · vol {vt} · {rg} · {br}{cash}"
 
 
 def params_for(sleeve: str, d: dict) -> PortfolioParams:
@@ -71,6 +86,11 @@ def load_sleeve(sleeve: str, refresh: bool):
     if sleeve == "crypto":
         P, M = load_crypto_panel(refresh)
         return P, crypto_universe(M, P, top_n=15)
+    if sleeve == "multi":
+        P = load_etf_panel(MULTI_MARKET, refresh=refresh, name="multi_prices")
+        elig = listed_universe(P)
+        elig["BIL"] = False  # el efectivo no compite ni entra a la referencia de pesos iguales
+        return P, elig
     P = load_etf_panel(refresh=refresh)
     return P, listed_universe(P)
 
@@ -174,8 +194,10 @@ def run_sleeve(sleeve: str, refresh: bool = False) -> tuple[dict, dict]:
     res["bootstrap"] = {k: bootstrap_compare(c_oos, win(v, oos)["ret"]) for k, v in bench.items()}
 
     # 5) costos, kill switch, año por año, Monte Carlo ------------------------------------
-    res["costs"] = {f"{c:.2%}": perf(win(simulate_portfolio(P, runs[cand]["W"], pc, c, cfg["band"]), oos), ann)["cagr"]
-                    for c in cfg["costs_test"]}
+    res["costs"], res["costs_sharpe"] = {}, {}
+    for c in cfg["costs_test"]:
+        pf_c = perf(win(simulate_portfolio(P, runs[cand]["W"], pc, c, cfg["band"]), oos), ann)
+        res["costs"][f"{c:.2%}"], res["costs_sharpe"][f"{c:.2%}"] = pf_c["cagr"], pf_c["sharpe"]
     res["kill_switch"] = {}
     for kd in (0.35, cfg["kill_dd"]):
         killed = simulate_portfolio(P.loc[start:], runs[cand]["W"].loc[start:], pc, cfg["cost"], cfg["band"], kill_dd=kd)
@@ -214,6 +236,8 @@ def run_sleeve(sleeve: str, refresh: bool = False) -> tuple[dict, dict]:
 
     series = {"candidate": win(runs[cand]["bt"], oos)["ret"], "benchmark": win(bench[bkey], oos)["ret"],
               "optimizer": win(wf_bt, oos)["ret"]}
+    for k, v in bench.items():
+        series["bench:" + k] = win(v, oos)["ret"]
     if cfg["passive"]:
         series["passive"] = win(bench[cfg["passive"]], oos)["ret"]
         res["recommended"] = cfg["passive"]
@@ -314,10 +338,65 @@ def run(refresh: bool = False) -> dict:
     return res
 
 
+def combine(c: pd.Series, s: pd.Series, share: float) -> dict:
+    """Dos cuentas separadas, sin rebalancear entre ellas: `share` en c y el resto en s."""
+    c, s = c.copy(), s.copy()
+    c.index, s.index = c.index.astype("datetime64[ns]"), s.index.astype("datetime64[ns]")
+    idx = pd.date_range(max(c.index[0], s.index[0]), min(c.index[-1], s.index[-1]), freq="D")
+    fill = lambda x: (1 + x).cumprod().reindex(x.index.union(idx)).ffill().reindex(idx)  # noqa: E731
+    ec, es = fill(c), fill(s)
+    r = (share * ec / ec.iloc[0] + (1 - share) * es / es.iloc[0]).pct_change().fillna(0.0)
+    out = perf(pd.DataFrame({"ret": r, "position": 1.0, "turnover": 0.0}), 365)
+    out["p_loss_12m"] = monte_carlo(r, horizon=365, capital=1000)["p_loss"]
+    return out
+
+
+def run_multi_market(refresh: bool = False) -> dict:
+    """Prueba del bloque multi-mercado contra los criterios declarados antes de correrla."""
+    t0 = time.time()
+    res, ser = run_sleeve("multi", refresh)
+    _, cser = run_sleeve("crypto", False)
+    cand = "CANDIDATA: " + res["candidate"]
+    ref = "60/40 (SPY/IEF)"
+    o_c, o_r = res["oos"][cand], res["oos"][ref]
+    boot = res["bootstrap"][ref]
+    comb_new = combine(cser["candidate"], ser["candidate"], 0.3)
+    comb_old = combine(cser["candidate"], ser["bench:" + ref], 0.3)
+    crit = [
+        {"id": 1, "name": "El timing no es suerte (placebo p < 0.05)", "value": res["placebo"]["p_value"],
+         "pass": res["placebo"]["p_value"] < 0.05},
+        {"id": 2, "name": "Mejor Sharpe que el 60/40 con probabilidad ≥ 80% (bootstrap)",
+         "value": boot["p_sharpe_better"], "pass": boot["p_sharpe_better"] >= 0.80},
+        {"id": 3, "name": "Caída máxima no peor que la del 60/40", "value": [o_c["max_dd"], o_r["max_dd"]],
+         "pass": o_c["max_dd"] >= o_r["max_dd"]},
+        {"id": 4, "name": "Con costos de 0.3% sigue con mejor Sharpe que el 60/40",
+         "value": [res["costs_sharpe"]["0.30%"], o_r["sharpe"]], "pass": res["costs_sharpe"]["0.30%"] > o_r["sharpe"]},
+        {"id": 5, "name": "Junto con cripto (30/70) mejora el Sharpe sin más caída que con el 60/40",
+         "value": [comb_new["sharpe"], comb_old["sharpe"], comb_new["max_dd"], comb_old["max_dd"]],
+         "pass": comb_new["sharpe"] > comb_old["sharpe"] and comb_new["max_dd"] >= comb_old["max_dd"] - 0.01},
+    ]
+    res["criteria"] = crit
+    res["combined_new"], res["combined_old"] = comb_new, comb_old
+    res["verdict"] = "aprobado" if all(c["pass"] for c in crit) else "no aprobado"
+    res["generated"] = pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%d %H:%M UTC")
+    res["runtime_s"] = round(time.time() - t0, 1)
+    REPORTS.mkdir(exist_ok=True)
+    (REPORTS / "multi_market_results.json").write_text(json.dumps(res, indent=1, default=float))
+    return res
+
+
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--refresh", action="store_true")
+    ap.add_argument("--multi-market", action="store_true", help="prueba del bloque multi-mercado")
     args = ap.parse_args()
+    if args.multi_market:
+        r = run_multi_market(args.refresh)
+        print(pd.DataFrame(r["oos"]).T[["cagr", "sharpe", "max_dd", "exposure"]].round(3).to_string())
+        for c in r["criteria"]:
+            print(("PASA  " if c["pass"] else "FALLA ") + c["name"], c["value"])
+        print("Veredicto:", r["verdict"])
+        return
     res = run(args.refresh)
     for sl in ("crypto", "stocks"):
         print(f"\n{res[sl]['label']} (fuera de muestra desde {res[sl]['oos_start'][:4]}):")

@@ -55,6 +55,19 @@ SLEEVE_DEFAULTS = {
         "max_data_age_hours": 100, "benchmark": "SPY", "min_history": 250,
     },
 }
+SLEEVE_DEFAULTS["multi"] = {
+    "enabled": False, "label": "Multi-mercado", "strategy": "tactical",
+    "params": {"top_k": 8, "vol_target": 0.10, "regime_asset": None, "dd_brake": True,
+               "max_weight": 0.25, "ann": 252, "mom_windows": [21, 63, 126], "cov_window": 63,
+               "dd_peak_window": 126, "cash_asset": "BIL"},
+    "universe": ["GLD", "SLV", "DBC", "USO", "DBA", "DBB", "UUP", "FXE", "FXY", "TLT", "IEF", "TIP",
+                 "LQD", "SPY", "EFA", "EEM", "EWW", "EWJ", "VNQ", "BIL"],
+    "data": {"source": "yahoo"},
+    "quote": "USD", "paper_broker": "alpaca_paper", "live_broker": "alpaca",
+    "capital": 700.0, "fee": 0.0, "slippage": 0.001, "band": 0.02,
+    "kill_drawdown": 0.25, "max_order_value": 700.0, "min_order_value": 1.0,
+    "max_data_age_hours": 100, "benchmark": "SPY", "min_history": 250,
+}
 DEFAULT_CONFIG = {"mode": "paper", "max_price_jump": 0.40, "sleeves": SLEEVE_DEFAULTS,
                   "paths": {"state": "state/state.json", "trades": "state/trades.csv",
                             "equity": "state/equity.csv", "snapshot": "state/snapshot.json"}}
@@ -233,6 +246,21 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
         st["kill_switch"] = True
         brake = 0.0
     desired = (target * brake).to_dict()
+    cash_asset = sc.get("params", {}).get("cash_asset") if sc["strategy"] == "tactical" else None
+    if cash_asset and cash_asset in desired and not st.get("kill_switch") and np.isfinite(px.get(cash_asset, np.nan)):
+        # el freno reduce lo riesgoso; lo liberado se estaciona en el activo de efectivo (igual que el backtest)
+        desired[cash_asset] = max(0.0, 1.0 - sum(v for k, v in desired.items() if k != cash_asset))
+
+    # ¿se puede operar en TU cuenta? (Alpaca responde por activo; el simulado acepta todo)
+    info_fn = getattr(broker, "asset_info", None)
+    info: dict[str, dict] = {}
+    if info_fn:
+        for a in list(desired):
+            if desired[a] > w_now.get(a, 0.0) + 1e-9:
+                info[a] = info_fn(a)
+                if not info[a]["tradable"]:
+                    desired[a] = w_now.get(a, 0.0)
+                    notes.append(f"{a}: tu cuenta no permite operarlo; se omite")
 
     # un dato raro nunca debe hacer comprar: solo se permite reducir ese activo
     jumps = prices.pct_change(fill_method=None).abs().iloc[-5:].max()
@@ -271,7 +299,13 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
                 if diff * equity >= minv:
                     notes.append(f"{a}: sin efectivo suficiente para comprar")
                 continue
-            fills.append(broker.execute(a, "buy", val / price, price))
+            qty = val / price
+            if info.get(a, {}).get("fractionable") is False:
+                qty = float(int(qty))  # sin fracciones: solo acciones enteras
+                if qty == 0:
+                    notes.append(f"{a}: no admite fracciones y no alcanza para una acción entera")
+                    continue
+            fills.append(broker.execute(a, "buy", qty, price))
     for f in fills:
         res["trades"].append({"run_at_utc": run_at, "sleeve": name, "mode": mode, "broker": broker.name,
                               "candle": cstr, "asset": f.asset, "side": f.side, "qty": round(f.qty, 8),

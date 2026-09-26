@@ -41,6 +41,7 @@ class PortfolioParams:
     dd_full: float = 0.30
     dd_floor: float = 0.25
     dd_peak_window: int = 180
+    cash_asset: str | None = None   # p. ej. "BIL": el efectivo no usado se estaciona en bonos del Tesoro
 
     @classmethod
     def from_dict(cls, d: dict | None) -> "PortfolioParams":
@@ -103,11 +104,15 @@ def target_weights(prices: pd.DataFrame, eligible: pd.DataFrame | None,
     trend, vol, score = sig["trend"].values, sig["vol"].values, sig["score"].values
     rets = np.log(prices).diff().values
     has_regime = p.regime_asset is not None and p.regime_asset in cols
+    ci = cols.index(p.cash_asset) if p.cash_asset and p.cash_asset in cols else -1
+    cash_ok = np.isfinite(clean(prices).values[:, ci]) if ci >= 0 else None
     ri = cols.index(p.regime_asset) if has_regime else -1
     W = np.zeros(prices.shape)
     for t in range(len(prices)):
         tr, vo, sc = trend[t], vol[t], score[t]
         ok = elig[t] & (tr >= p.min_trend) & (sc > 0) & np.isfinite(vo) & (vo > 0) & np.isfinite(sc)
+        if ci >= 0:
+            ok[ci] = False  # el activo de efectivo nunca compite por tendencia
         if has_regime and not (np.isfinite(tr[ri]) and tr[ri] >= p.min_trend):
             mask = np.zeros(len(cols), bool)
             mask[ri] = True
@@ -127,6 +132,8 @@ def target_weights(prices: pd.DataFrame, eligible: pd.DataFrame | None,
                 sp = float(np.sqrt(max(w @ cov @ w, 1e-12)))
                 w = w * min(1.0, p.vol_target / sp)
         W[t, idx] = w
+    if ci >= 0:
+        W[:, ci] = np.where(cash_ok, np.clip(1.0 - W.sum(axis=1), 0.0, 1.0), 0.0)
     out = pd.DataFrame(W, index=prices.index, columns=cols)
     return (out, sig) if return_signals else out
 
@@ -145,6 +152,9 @@ def simulate_portfolio(prices: pd.DataFrame, weights: pd.DataFrame, p: Portfolio
                        kill_dd: float | None = None) -> pd.DataFrame:
     """Backtest diario multi-activo con costos, banda de rebalanceo, deriva y freno por caída."""
     R = clean(prices).pct_change(fill_method=None).replace([np.inf, -np.inf], np.nan).fillna(0.0).values
+    cols = list(prices.columns)
+    ci = cols.index(p.cash_asset) if p.cash_asset and p.cash_asset in cols else -1
+    cash_ok = np.isfinite(clean(prices).values[:, ci]) if ci >= 0 else None
     Wt = weights.reindex_like(prices).fillna(0.0).values
     n, m = R.shape
     w = np.zeros(m)
@@ -160,6 +170,9 @@ def simulate_portfolio(prices: pd.DataFrame, weights: pd.DataFrame, p: Portfolio
             killed = True
         mult = 0.0 if killed else drawdown_multiplier(dd, p)
         desired = Wt[t - 1] * mult
+        if ci >= 0 and not killed and cash_ok[t - 1]:
+            # el freno reduce solo lo riesgoso; lo liberado se estaciona en el activo de efectivo
+            desired[ci] = max(0.0, 1.0 - (desired.sum() - desired[ci]))
         diff = desired - w
         trade = (np.abs(diff) > band) | ((desired == 0) & (w > 0))
         tv = np.abs(diff[trade]).sum()

@@ -213,10 +213,18 @@ def load_crypto_panel(refresh: bool = False) -> tuple[pd.DataFrame, pd.DataFrame
     return P, M
 
 
-def load_etf_panel(symbols: list[str] | None = None, refresh: bool = False) -> pd.DataFrame:
+MULTI_MARKET = ["GLD", "SLV", "DBC", "USO", "DBA", "DBB",   # materias primas
+                "UUP", "FXE", "FXY",                        # divisas
+                "TLT", "IEF", "TIP", "LQD",                 # bonos
+                "SPY", "EFA", "EEM", "EWW", "EWJ", "VNQ",   # bolsas y bienes raíces
+                "BIL"]                                      # efectivo: letras del Tesoro de 1-3 meses
+
+
+def load_etf_panel(symbols: list[str] | None = None, refresh: bool = False,
+                   name: str = "etf_prices") -> pd.DataFrame:
     import time
 
-    path = DATA_DIR / "etf_prices.csv"
+    path = DATA_DIR / f"{name}.csv"
     if path.exists() and not refresh:
         return pd.read_csv(path, index_col=0, parse_dates=True)
     out = {}

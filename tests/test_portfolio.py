@@ -185,3 +185,17 @@ def test_external_paper_account_respects_capital(monkeypatch):
     spent = sum(t["value"] for t in r["trades"] if t["side"] == "buy")
     assert spent <= sc["capital"] * 1.001
     assert r["snapshot"]["equity"] <= sc["capital"] * 1.001
+
+
+def test_cash_asset_fills_remainder_and_no_lookahead():
+    P = panel(n=800)
+    P["BIL"] = 100 * np.exp(np.linspace(0, 0.05, len(P)))  # sube despacio, como letras del Tesoro
+    p = PortfolioParams(cash_asset="BIL", vol_target=0.10)
+    elig = listed_universe(P)
+    elig["BIL"] = False
+    W = target_weights(P, elig, p)
+    assert (W["BIL"] >= 0).all() and np.allclose(W.sum(axis=1)[W.sum(axis=1) > 0], 1.0)
+    part = target_weights(P.iloc[:600], elig.iloc[:600], p)
+    pd.testing.assert_frame_equal(W.iloc[:600], part)
+    bt = simulate_portfolio(P, W, p, cost=0.001, band=0.02)
+    assert bt["ret"].notna().all()
