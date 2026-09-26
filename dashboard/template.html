@@ -95,6 +95,10 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
     <div class="charts" id="charts"></div>
   </section>
   <section class="sec">
+    <div class="sec-h"><h2>¿Cuántas van ganando?</h2><span class="muted" id="an-note" style="font-size:12.5px">Compras y ventas emparejadas en orden (FIFO), con comisiones</span></div>
+    <div id="analysis"></div>
+  </section>
+  <section class="sec">
     <div class="sec-h"><h2>Operaciones recientes</h2><span class="muted" id="trades-count" style="font-size:12.5px"></span></div>
     <div id="trades"></div>
   </section>
@@ -112,11 +116,11 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
 (function () {
   "use strict";
   const REPO = { owner: "MarioB19", repo: "trading-lab" };
-  const FILES = { snapshot: "state/snapshot.json", equity: "state/equity.csv", trades: "state/trades.csv" };
+  const FILES = { snapshot: "state/snapshot.json", equity: "state/equity.csv", trades: "state/trades.csv", analysis: "state/analysis.json" };
   const COLORS = { crypto: "--series-1", stocks: "--series-2" };
   const FB = JSON.parse(document.getElementById("fallback").textContent);
   const S = { snapshot: FB.snapshot, equity: parseCSV(FB.equity), trades: parseCSV(FB.trades),
-              live: {}, errors: {}, fallbackDate: FB.generated };
+              analysis: FB.analysis || null, live: {}, errors: {}, fallbackDate: FB.generated };
   let mcp = null;
 
   // ---------------------------------------------------------------- utilidades
@@ -197,6 +201,7 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
         <td>${statusText(t.status)}${t.note ? ` <span class="muted">${esc(t.note)}</span>` : ""}</td><td class="muted">${esc(t.broker)}${t.mode === "live" ? " · real" : ""}</td></tr>`).join("")}
       </tbody></table></div>` : `<div class="empty">Sin operaciones todavía.</div>`;
 
+    renderAnalysis(S.analysis);
     renderResearch(snap.research);
     renderBanner();
   }
@@ -293,6 +298,29 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
     hit.addEventListener("pointerleave", () => { tip.hidden = true; xh.setAttribute("visibility", "hidden"); });
   }
 
+  // ---------------------------------------------------------------- análisis de operaciones
+  function renderAnalysis(a) {
+    const el = document.getElementById("analysis");
+    if (!a || !a.summary) { el.innerHTML = `<div class="empty">El análisis aparece después de la siguiente corrida del bot.</div>`; return; }
+    const s = a.summary;
+    const tiles = [
+      kpi("Operaciones", String(s.n_trades), `${s.n_buys} compras · ${s.n_sells} ventas · comisiones ${usd(s.fees)}`),
+      kpi("Cerradas: ganadas / perdidas", s.closed_lots ? `${s.wins} / ${s.losses}` : "0",
+          s.closed_lots ? `Acierto ${pct(s.win_rate, 0)} · resultado <span class="${cls(s.realized_pnl)}">${usd(s.realized_pnl)}</span>` : "Aún no se ha vendido nada"),
+      kpi("Abiertas: ganando / perdiendo", `${s.open_winning} / ${s.open_losing}`, `No realizado <span class="${cls(s.unrealized_pnl)}">${usd(s.unrealized_pnl)}</span>`),
+      kpi("Resultado total", `<span class="${cls(s.total_pnl)}">${usd(s.total_pnl)}</span>`, "Realizado + no realizado, ya con comisiones"),
+    ].join("");
+    const open = (a.open || []).slice().sort((x, y) => (y.pnl || 0) - (x.pnl || 0));
+    const closed = (a.closed || []).slice().reverse().slice(0, 15);
+    const openT = open.length ? `<div class="tbl"><table><thead><tr><th>Abierta</th><th>Bloque</th><th class="n">Costo</th><th class="n">Vale</th><th class="n">Resultado</th><th>Desde</th></tr></thead><tbody>
+      ${open.map(p => `<tr><td class="mono">${esc(p.asset)}</td><td>${esc(labelOf(p.sleeve))}</td><td class="n">${usd(p.cost)}</td><td class="n">${usd(p.value)}</td>
+        <td class="n ${cls(p.pnl)}">${usd(p.pnl)} (${pct(p.ret, 2, true)})</td><td class="mono muted">${esc(p.since)}</td></tr>`).join("")}</tbody></table></div>` : "";
+    const closedT = closed.length ? `<div class="tbl"><table><thead><tr><th>Cerrada</th><th>Bloque</th><th class="n">Compra</th><th class="n">Venta</th><th class="n">Resultado</th><th>Días</th></tr></thead><tbody>
+      ${closed.map(c => `<tr><td class="mono">${esc(c.asset)}</td><td>${esc(labelOf(c.sleeve))}</td><td class="n">${usd(c.buy_price, c.buy_price < 1 ? 5 : 2)}</td><td class="n">${usd(c.sell_price, c.sell_price < 1 ? 5 : 2)}</td>
+        <td class="n ${cls(c.pnl)}">${usd(c.pnl)} (${pct(c.ret, 2, true)})</td><td class="mono muted">${esc(c.opened)} → ${esc(c.closed)}</td></tr>`).join("")}</tbody></table></div>` : "";
+    el.innerHTML = `<div class="kpis">${tiles}</div>${openT ? `<div style="height:10px"></div>${openT}` : ""}${closedT ? `<div style="height:10px"></div>${closedT}` : ""}`;
+  }
+
   // ---------------------------------------------------------------- investigación
   function renderResearch(r) {
     const el = document.getElementById("research");
@@ -359,7 +387,7 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
       const txt = fileText(ev.result);
       if (txt == null) { S.errors[key] = { code: "formato", message: "respuesta sin contenido" }; render(); return; }
       try {
-        if (key === "snapshot") S.snapshot = JSON.parse(txt); else S[key] = parseCSV(txt);
+        if (key === "snapshot") S.snapshot = JSON.parse(txt); else if (key === "analysis") S.analysis = JSON.parse(txt); else S[key] = parseCSV(txt);
         S.live[key] = (ev.result.cache && ev.result.cache.storedAt) || Date.now();
         delete S.errors[key];
       } catch (e) { S.errors[key] = { code: "formato", message: String(e) }; }
@@ -367,7 +395,7 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
       S.errors[key] = ev.error || { code: "upstream_error" };
       if (DENIALS.includes(S.errors[key].code)) {  // sin permiso: se retiran los datos de GitHub
         delete S.live[key];
-        if (key === "snapshot") S.snapshot = FB.snapshot; else S[key] = parseCSV(FB[key]);
+        if (key === "snapshot") S.snapshot = FB.snapshot; else if (key === "analysis") S.analysis = FB.analysis || null; else S[key] = parseCSV(FB[key]);
       }
     }
     render();

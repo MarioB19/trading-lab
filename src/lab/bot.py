@@ -481,6 +481,13 @@ def main(argv: list[str] | None = None) -> int:
     append_csv(paths["trades"], TRADE_FIELDS, trades)
     append_csv(paths["equity"], EQUITY_FIELDS, eq_rows)
     save_json(paths["snapshot"], snapshot)
+    try:  # análisis de operaciones (FIFO) para el tablero; nunca debe tumbar la corrida
+        from .analyze import run as analyze_run
+
+        snapshot["analysis"] = analyze_run(write=paths["snapshot"].parent == ROOT / "state")["summary"]
+        save_json(paths["snapshot"], snapshot)
+    except Exception as exc:  # noqa: BLE001
+        print(f"[aviso] análisis de operaciones: {exc}")
     return 1 if failures == len(names) else 0
 
 

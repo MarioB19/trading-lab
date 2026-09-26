@@ -108,7 +108,14 @@ def yahoo_daily(symbol: str, start: str = "1995-01-01", retries: int = 6) -> pd.
         res = r.json()["chart"]["result"][0]
         ts = res.get("timestamp") or []
         ind = res["indicators"]
-        close = (ind.get("adjclose") or [{}])[0].get("adjclose") or ind["quote"][0]["close"]
+        close = list((ind.get("adjclose") or [{}])[0].get("adjclose") or ind["quote"][0]["close"])
+        meta = res.get("meta") or {}
+        reg = (meta.get("currentTradingPeriod") or {}).get("regular") or {}
+        if (ts and close and close[-1] is None and meta.get("regularMarketPrice") and reg.get("end")
+                and meta.get("regularMarketTime", 0) >= reg["end"] and ts[-1] >= reg.get("start", 0)):
+            # Yahoo tarda horas en llenar la barra diaria aunque la sesión ya cerró:
+            # se usa el precio de cierre oficial de la sesión.
+            close[-1] = float(meta["regularMarketPrice"])
         idx = pd.to_datetime(pd.Series(ts), unit="s").dt.normalize()
         s = pd.Series(close, index=pd.DatetimeIndex(idx), dtype=float, name=symbol).dropna()
         return s[~s.index.duplicated(keep="last")]
