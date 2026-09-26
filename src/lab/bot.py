@@ -251,6 +251,15 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
         # el freno reduce lo riesgoso; lo liberado se estaciona en el activo de efectivo (igual que el backtest)
         desired[cash_asset] = max(0.0, 1.0 - sum(v for k, v in desired.items() if k != cash_asset))
 
+    # rebalanceo mensual: fuera del primer día hábil del mes solo actúan el freno y el kill switch
+    if sc["strategy"] == "tactical" and sc.get("params", {}).get("rebalance") == "monthly":
+        new_month = len(prices) > 1 and prices.index[-1].month != prices.index[-2].month
+        brake_changed = abs(brake - float(st.get("last_brake", 1.0))) > 1e-9
+        if not (new_month or brake_changed or st.get("kill_switch") or sum(w_now.values()) == 0):
+            desired = dict(w_now)
+            notes.append("rebalanceo mensual: hoy no toca")
+    st["last_brake"] = brake
+
     # ¿se puede operar en TU cuenta? (Alpaca responde por activo; el simulado acepta todo)
     info_fn = getattr(broker, "asset_info", None)
     info: dict[str, dict] = {}

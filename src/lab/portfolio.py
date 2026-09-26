@@ -42,6 +42,7 @@ class PortfolioParams:
     dd_floor: float = 0.25
     dd_peak_window: int = 180
     cash_asset: str | None = None   # p. ej. "BIL": el efectivo no usado se estaciona en bonos del Tesoro
+    rebalance: str = "daily"        # "monthly": solo se rebalancea el primer día hábil de cada mes
 
     @classmethod
     def from_dict(cls, d: dict | None) -> "PortfolioParams":
@@ -135,7 +136,19 @@ def target_weights(prices: pd.DataFrame, eligible: pd.DataFrame | None,
     if ci >= 0:
         W[:, ci] = np.where(cash_ok, np.clip(1.0 - W.sum(axis=1), 0.0, 1.0), 0.0)
     out = pd.DataFrame(W, index=prices.index, columns=cols)
+    if p.rebalance == "monthly":
+        # la cartera se decide el primer día hábil del mes y se mantiene hasta el siguiente
+        out.loc[~rebalance_days(prices.index)] = np.nan
+        out = out.ffill().fillna(0.0)
     return (out, sig) if return_signals else out
+
+
+def rebalance_days(index: pd.DatetimeIndex) -> np.ndarray:
+    """True el primer día con datos de cada mes (se sabe sin mirar al futuro)."""
+    m = np.asarray(index.month)
+    out = np.zeros(len(index), bool)
+    out[1:] = m[1:] != m[:-1]
+    return out
 
 
 def drawdown_multiplier(dd: float, p: PortfolioParams) -> float:
@@ -162,6 +175,9 @@ def simulate_portfolio(prices: pd.DataFrame, weights: pd.DataFrame, p: Portfolio
     out_ret, gross, turn, mult_arr = np.zeros(n), np.zeros(n), np.zeros(n), np.ones(n)
     held = np.zeros((n, m))
     equity, killed = 1.0, False
+    monthly = p.rebalance == "monthly"
+    rdays = rebalance_days(prices.index) if monthly else None
+    prev_mult = 1.0
     for t in range(1, n):
         lo = max(0, t - p.dd_peak_window)
         peak = eq_hist[lo:t].max()
@@ -175,6 +191,9 @@ def simulate_portfolio(prices: pd.DataFrame, weights: pd.DataFrame, p: Portfolio
             desired[ci] = max(0.0, 1.0 - (desired.sum() - desired[ci]))
         diff = desired - w
         trade = (np.abs(diff) > band) | ((desired == 0) & (w > 0))
+        if monthly and not (rdays[t - 1] or killed or mult != prev_mult or w.sum() == 0):
+            trade[:] = False  # fuera del día de rebalanceo solo actúan el freno y el kill switch
+        prev_mult = mult
         tv = np.abs(diff[trade]).sum()
         w = np.where(trade, desired, w)
         port = float(w @ R[t])

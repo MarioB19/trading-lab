@@ -32,7 +32,11 @@ CANDIDATES = {
     "crypto": {"top_k": 5, "vol_target": 0.40, "regime_asset": "BTC", "dd_brake": True},
     "stocks": {"top_k": 5, "vol_target": 0.10, "regime_asset": None, "dd_brake": True},
     # Declarada el 25-sep-2026 en el documento "Plan: bloque multi-mercado", antes de correr la prueba.
-    "multi": {"top_k": 8, "vol_target": 0.10, "regime_asset": None, "dd_brake": True, "cash_asset": "BIL"},
+    "multi": {"top_k": 8, "vol_target": 0.10, "regime_asset": None, "dd_brake": True, "cash_asset": "BIL",
+              "rebalance": "daily"},
+    # Experimento 2, declarado el 25-sep-2026 tras fallar el 1: misma regla, rebalanceo mensual.
+    "multi_monthly": {"top_k": 8, "vol_target": 0.10, "regime_asset": None, "dd_brake": True,
+                      "cash_asset": "BIL", "rebalance": "monthly"},
 }
 
 SLEEVES = {
@@ -60,7 +64,7 @@ SLEEVES = {
         "base": {"mom_windows": (21, 63, 126), "max_weight": 0.25, "ann": 252, "cov_window": 63,
                  "dd_peak_window": 126},
         "grid": {"top_k": [4, 8, 12], "vol_target": [None, 0.10, 0.15], "regime_asset": [None],
-                 "dd_brake": [True, False], "cash_asset": ["BIL", None]},
+                 "dd_brake": [True, False], "cash_asset": ["BIL", None], "rebalance": ["daily", "monthly"]},
         "costs_test": [0.0005, 0.001, 0.003, 0.005], "benchmark": "SPY", "kill_dd": 0.25,
         "passive": None,
     },
@@ -74,7 +78,8 @@ def key_of(d: dict) -> str:
     cash = ""
     if "cash_asset" in d:
         cash = " · efectivo en " + d["cash_asset"] if d["cash_asset"] else " · efectivo sin rendir"
-    return f"top{d['top_k']} · vol {vt} · {rg} · {br}{cash}"
+    reb = {"monthly": " · mensual", "daily": ""}.get(d.get("rebalance", "daily"), "")
+    return f"top{d['top_k']} · vol {vt} · {rg} · {br}{cash}{reb}"
 
 
 def params_for(sleeve: str, d: dict) -> PortfolioParams:
@@ -132,13 +137,14 @@ def yearly(ret: pd.Series) -> dict:
     return {int(k): float(v) for k, v in ((1 + ret).groupby(ret.index.year).prod() - 1).items()}
 
 
-def run_sleeve(sleeve: str, refresh: bool = False) -> tuple[dict, dict]:
+def run_sleeve(sleeve: str, refresh: bool = False, candidate: str | None = None) -> tuple[dict, dict]:
     cfg = SLEEVES[sleeve]
+    cand_cfg = CANDIDATES[candidate or sleeve]
     ann, start, oos = cfg["ann"], cfg["eval_start"], f"{cfg['oos_year']}-01-01"
     P, elig = load_sleeve(sleeve, refresh)
     res: dict = {"label": cfg["label"], "assets": list(P.columns), "first": str(P.index[0].date()),
                  "last": str(P.index[-1].date()), "eval_start": start, "oos_start": oos,
-                 "cost_per_side": cfg["cost"], "candidate": key_of(CANDIDATES[sleeve])}
+                 "cost_per_side": cfg["cost"], "candidate": key_of(cand_cfg)}
 
     # 1) todas las variantes --------------------------------------------------------------
     g = cfg["grid"]
@@ -148,7 +154,7 @@ def run_sleeve(sleeve: str, refresh: bool = False) -> tuple[dict, dict]:
         p = params_for(sleeve, d)
         W = target_weights(P, elig, p)
         runs[key_of(d)] = {"params": p, "W": W, "bt": simulate_portfolio(P, W, p, cfg["cost"], cfg["band"])}
-    cand = key_of(CANDIDATES[sleeve])
+    cand = key_of(cand_cfg)
     pc = runs[cand]["params"]
 
     # 2) referencias -----------------------------------------------------------------------
@@ -351,10 +357,10 @@ def combine(c: pd.Series, s: pd.Series, share: float) -> dict:
     return out
 
 
-def run_multi_market(refresh: bool = False) -> dict:
+def run_multi_market(refresh: bool = False, candidate: str = "multi") -> dict:
     """Prueba del bloque multi-mercado contra los criterios declarados antes de correrla."""
     t0 = time.time()
-    res, ser = run_sleeve("multi", refresh)
+    res, ser = run_sleeve("multi", refresh, candidate)
     _, cser = run_sleeve("crypto", False)
     cand = "CANDIDATA: " + res["candidate"]
     ref = "60/40 (SPY/IEF)"
@@ -381,7 +387,8 @@ def run_multi_market(refresh: bool = False) -> dict:
     res["generated"] = pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%d %H:%M UTC")
     res["runtime_s"] = round(time.time() - t0, 1)
     REPORTS.mkdir(exist_ok=True)
-    (REPORTS / "multi_market_results.json").write_text(json.dumps(res, indent=1, default=float))
+    suffix = "" if candidate == "multi" else "_" + candidate.split("_", 1)[1]
+    (REPORTS / f"multi_market{suffix}_results.json").write_text(json.dumps(res, indent=1, default=float))
     return res
 
 
@@ -389,9 +396,10 @@ def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--refresh", action="store_true")
     ap.add_argument("--multi-market", action="store_true", help="prueba del bloque multi-mercado")
+    ap.add_argument("--candidate", default="multi", help="multi (diario) o multi_monthly (mensual)")
     args = ap.parse_args()
     if args.multi_market:
-        r = run_multi_market(args.refresh)
+        r = run_multi_market(args.refresh, args.candidate)
         print(pd.DataFrame(r["oos"]).T[["cagr", "sharpe", "max_dd", "exposure"]].round(3).to_string())
         for c in r["criteria"]:
             print(("PASA  " if c["pass"] else "FALLA ") + c["name"], c["value"])

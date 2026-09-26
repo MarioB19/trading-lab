@@ -199,3 +199,22 @@ def test_cash_asset_fills_remainder_and_no_lookahead():
     pd.testing.assert_frame_equal(W.iloc[:600], part)
     bt = simulate_portfolio(P, W, p, cost=0.001, band=0.02)
     assert bt["ret"].notna().all()
+
+
+def test_monthly_rebalance_no_lookahead_and_trades_only_monthly():
+    idx = pd.date_range("2022-01-03", periods=900, freq="B")
+    P = panel(n=900)
+    P.index = idx
+    p = PortfolioParams(rebalance="monthly", dd_brake=False, ann=252)
+    elig = listed_universe(P)
+    W = target_weights(P, elig, p)
+    part = target_weights(P.iloc[:640], elig.iloc[:640], p)
+    pd.testing.assert_frame_equal(W.iloc[:640], part)
+    changes = W.diff().abs().sum(axis=1) > 1e-12
+    from lab.portfolio import rebalance_days
+    assert not (changes & ~pd.Series(rebalance_days(idx), index=idx)).iloc[1:].any()
+    bt = simulate_portfolio(P, W, p, cost=0.001, band=0.02)
+    traded = bt.index[bt["turnover"] > 0]
+    rd = pd.Series(rebalance_days(idx), index=idx).shift(1, fill_value=False)
+    first_trade = traded[0]
+    assert rd.loc[traded[traded > first_trade]].all()  # después de entrar, solo opera tras un día de rebalanceo
