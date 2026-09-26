@@ -21,6 +21,8 @@ def build() -> str:
         "equity": (st / "equity.csv").read_text() if (st / "equity.csv").exists() else "",
         "trades": (st / "trades.csv").read_text() if (st / "trades.csv").exists() else "",
         "analysis": json.loads((st / "analysis.json").read_text()) if (st / "analysis.json").exists() else None,
+        "rt": json.loads((st / "live.json").read_text()) if (st / "live.json").exists() else None,
+        "rtEquity": (st / "live_equity.csv").read_text() if (st / "live_equity.csv").exists() else "",
     }
     payload = json.dumps(fb, ensure_ascii=False).replace("</", "<\\/")
     html = tpl.replace("__FALLBACK__", payload)

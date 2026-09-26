@@ -852,14 +852,14 @@
    "turnover_per_year": 41.86662758155055,
    "days": 2823,
    "dsr_vs_zero": {
-    "n_trials": 36,
-    "sr0_annual": 0.5776730616250292,
-    "dsr": 0.9933637812889203
+    "n_trials": 39,
+    "sr0_annual": 0.5862609508922396,
+    "dsr": 0.9928545896916912
    },
    "dsr_vs_benchmark": {
-    "n_trials": 36,
-    "sr0_annual": 0.5361680338895113,
-    "dsr": 0.29608593581016873
+    "n_trials": 39,
+    "sr0_annual": 0.5441388949345255,
+    "dsr": 0.2883327556212389
    }
   },
   "placebo": {
@@ -2028,6 +2028,6 @@
   "crypto_share": 0.3,
   "p_loss_12m": 0.2444
  },
- "generated": "2026-09-26 01:48 UTC",
- "runtime_s": 96.8
+ "generated": "2026-09-26 04:27 UTC",
+ "runtime_s": 116.2
 }

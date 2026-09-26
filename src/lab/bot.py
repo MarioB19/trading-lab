@@ -203,6 +203,25 @@ def compute_targets(sc: dict, prices: pd.DataFrame) -> tuple[pd.Series, pd.DataF
     return W.loc[last], table
 
 
+# ------------------------------------------------------------------ valuación
+def book_value(positions: dict, cash: float, px: pd.Series, capital: float, capped: bool) -> tuple[dict, float, float]:
+    """(valor por activo, capital del bloque, efectivo del bloque) a los precios `px`.
+
+    En una cuenta externa (real o paper de Alpaca, que trae $100k virtuales) el bot solo
+    maneja `capital`; así el simulado se comporta igual que lo haría el real.
+    """
+    value = {a: q * float(px[a]) for a, q in positions.items() if a in px.index and np.isfinite(px[a])}
+    equity = cash + sum(value.values())
+    if capped:
+        equity = min(equity, float(capital))
+        cash = max(0.0, equity - sum(value.values()))  # efectivo dentro del capital asignado
+    return value, equity, cash
+
+
+def is_capped(broker, mode: str) -> bool:
+    return mode == "live" or not isinstance(broker, SimBroker)
+
+
 # ------------------------------------------------------------------ lógica diaria de un bloque
 def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now: pd.Timestamp,
                mode: str, eq_hist: pd.Series, max_jump: float) -> dict:
@@ -236,12 +255,8 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
         res["status"] = "blocked"
         notes.append(f"sin precio confiable para {', '.join(missing)}: no se opera hoy")
         return res
-    value = {a: q * float(px[a]) for a, q in positions.items() if a in px.index and np.isfinite(px[a])}
-    equity_total = cash + sum(value.values())
-    # En una cuenta externa (real o paper de Alpaca, que trae $100k virtuales) el bot solo
-    # maneja `capital`; así el simulado se comporta igual que lo haría el real.
-    capped = mode == "live" or not isinstance(broker, SimBroker)
-    equity = min(equity_total, float(sc["capital"])) if capped else equity_total
+    capped = is_capped(broker, mode)
+    value, equity, _ = book_value(positions, cash, px, sc["capital"], capped)
     w_now = {a: v / equity for a, v in value.items()} if equity > 0 else {}
 
     peak = max(float(st.get("peak") or 0), equity)
@@ -343,11 +358,7 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
     # valuación después de operar
     positions = broker.positions()
     cash = broker.cash()
-    value = {a: q * float(px[a]) for a, q in positions.items() if a in px.index and np.isfinite(px[a])}
-    eq_after = cash + sum(value.values())
-    if capped:
-        eq_after = min(eq_after, float(sc["capital"]))
-        cash = max(0.0, eq_after - sum(value.values()))  # efectivo dentro del capital asignado
+    value, eq_after, cash = book_value(positions, cash, px, sc["capital"], capped)
     st["peak"] = max(peak, eq_after)
     st["last_candle"] = cstr
     exposure = sum(value.values()) / eq_after if eq_after > 0 else 0.0
@@ -441,6 +452,25 @@ def replay(cfg: dict, name: str = "crypto", days: int = 365, prices: pd.DataFram
     return df
 
 
+# ------------------------------------------------------------------ ¿hay vela nueva?
+def latest_closed_candle(sc: dict, now: pd.Timestamp) -> pd.Timestamp:
+    """Fecha de la última vela diaria que ya cerró: día UTC en cripto, sesión de Nueva York en bolsa."""
+    if sc["data"]["source"] == "ccxt":
+        return now.normalize() - pd.Timedelta(days=1)
+    ny = now.tz_localize("UTC").tz_convert("America/New_York")
+    d = ny.normalize().tz_localize(None)
+    if ny.hour < 17:
+        d -= pd.Timedelta(days=1)
+    while d.weekday() >= 5:  # sábado y domingo no hay sesión (los feriados se detectan al descargar)
+        d -= pd.Timedelta(days=1)
+    return d
+
+
+def is_due(sc: dict, st: dict, now: pd.Timestamp) -> bool:
+    last = st.get("last_candle")
+    return last is None or pd.Timestamp(last) < latest_closed_candle(sc, now)
+
+
 # ------------------------------------------------------------------ principal
 def research_summary() -> dict:
     f = ROOT / "reports" / "multi_results.json"
@@ -459,6 +489,16 @@ def research_summary() -> dict:
                    "placebo_p": x["placebo"]["p_value"],
                    "p_loss_12m": (x["monte_carlo_12m"].get("passive") if x["recommended"] != "CANDIDATA: " + x["candidate"]
                                   else x["monte_carlo_12m"]["candidate"])["p_loss"]}
+    rt = ROOT / "reports" / "tiempo_real_results.json"
+    if rt.exists():  # prueba pre-registrada de operar en tiempo real
+        t = json.loads(rt.read_text())
+        out["realtime"] = {"generated": t.get("generated"), "winner": t.get("winner"), "mode": t.get("mode"),
+                           "oos_start": t.get("data", {}).get("oos_start"),
+                           "variants": {k: {f: v.get(f) for f in ("label", "cagr", "sharpe", "max_dd", "rebalances_per_year",
+                                                                   "cost_drag_per_year", "verdict")}
+                                        for k, v in t.get("variants", {}).items()},
+                           # mismo ejercicio sin kill switch (con él, las cuatro lo tocan y quedan planas)
+                           "no_kill": t.get("no_kill_switch_extra"), "kill_dates": t.get("kill_switch_date")}
     return out
 
 
@@ -471,6 +511,8 @@ def main(argv: list[str] | None = None) -> int:
     ap.add_argument("--sleeve", choices=["crypto", "stocks"])
     ap.add_argument("--status", action="store_true")
     ap.add_argument("--reset-kill-switch", metavar="BLOQUE")
+    ap.add_argument("--if-due", action="store_true",
+                    help="solo corre los bloques con una vela diaria nueva (para la revisión de cada hora)")
     args = ap.parse_args(argv)
 
     load_env(ROOT / ".env")
@@ -511,6 +553,11 @@ def main(argv: list[str] | None = None) -> int:
     eq_all = pd.read_csv(paths["equity"]) if paths["equity"].exists() else pd.DataFrame(columns=EQUITY_FIELDS)
     trades, eq_rows, failures = [], [], 0
     names = [args.sleeve] if args.sleeve else [n for n, s in cfg["sleeves"].items() if s.get("enabled")]
+    if args.if_due:
+        names = [n for n in names if is_due(cfg["sleeves"][n], state["sleeves"].get(n, {}), now)]
+        if not names:
+            print("Sin velas diarias nuevas: nada que operar.")
+            return 0
     for name in names:
         sc = cfg["sleeves"][name]
         st = state["sleeves"].setdefault(name, {})

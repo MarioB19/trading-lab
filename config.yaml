@@ -65,3 +65,15 @@ sleeves:
   multi:
     enabled: false
 
+# ---------------------------------------------------------------- TIEMPO REAL
+# Cada hora (GitHub Actions) el bot valúa las posiciones a precio de mercado, mide la caída,
+# calcula qué haría la señal si el día cerrara en ese momento y avisa si se acerca el kill switch.
+# Operar más seguido que una vez al día se probó el 26-sep-2026 con criterios declarados antes
+# (reports/tiempo_real_informe.md): ninguna variante pasó. Sin kill switch, revisar cada hora
+# rindió −8.3% anual y cada 4 horas 12.9%, contra 21.6% del diario; el costo anual subió de 12%
+# a 26–43% del capital. Por eso solo observa. Cambiar `action` exige que una variante pase la prueba.
+realtime:
+  enabled: true
+  action: observe           # observe = valúa y avisa; no opera
+  every_minutes: 60         # en GitHub corre a los :07 de cada hora
+  alert_kill_margin: 0.05   # avisa cuando falten 5 puntos para el kill switch

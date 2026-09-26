@@ -8,6 +8,7 @@ Laboratorio y bot de inversión con dinero potencialmente real. El objetivo es n
 - Investigación: `python -m lab.research_multi --refresh`
 - Consistencia bot/backtest: `python -m lab.bot --replay 365 --sleeve crypto` (diferencia < 2%)
 - Estado: `python -m lab.bot --status`; capital diario en `state/equity.csv`, operaciones en `state/trades.csv`
+- Tiempo real: `python -m lab.realtime --once` (foto de cada hora en `state/live.json`); prueba: `python -m lab.research_rt`
 
 ## Reglas duras
 

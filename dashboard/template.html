@@ -72,6 +72,11 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
 .foot{font-size:12.5px;color:var(--muted);display:grid;gap:4px;max-width:80ch}
 .sec{display:grid;gap:10px}
 .sec-h{display:flex;justify-content:space-between;align-items:baseline;gap:10px;flex-wrap:wrap}
+.alerts{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.alerts li{border-radius:8px;padding:6px 10px;font-size:13px;background:var(--warn-bg)}
+.alerts li.crit{background:var(--crit-bg)}
+.moves{display:flex;flex-wrap:wrap;gap:6px}
+svg.spark{width:100%;height:46px;display:block}
 @media (prefers-reduced-motion:no-preference){.fresh{animation:flash .8s ease-out}@keyframes flash{from{background:var(--good-bg)}to{background:transparent}}}
 </style>
 
@@ -89,6 +94,10 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
   </div>
   <div id="banner" hidden></div>
   <div class="kpis" id="kpis"></div>
+  <section class="sec">
+    <div class="sec-h"><h2>En vivo</h2><span class="muted" id="rt-note" style="font-size:12.5px"></span></div>
+    <div class="sleeves" id="rt"></div>
+  </section>
   <div class="sleeves" id="sleeves"></div>
   <section class="sec">
     <div class="sec-h"><h2>Capital día a día</h2><span class="muted" style="font-size:12.5px">Base 100 el primer día · referencia: comprar y aguantar</span></div>
@@ -107,7 +116,7 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
     <div class="research" id="research"></div>
   </section>
   <div class="foot">
-    <p>El bot corre todos los días a las 00:20 UTC en GitHub Actions y guarda su estado en <span class="mono">state/</span>. Este tablero lee esos archivos con tu conector de GitHub; nadie más puede verlos.</p>
+    <p>El bot revisa cada hora en GitHub Actions y opera una vez al día, tras el cierre de las 00:00 UTC (18:00 en el centro de México). Guarda su estado en <span class="mono">state/</span>; este tablero lee esos archivos con tu conector de GitHub y nadie más puede verlos.</p>
     <p>Resultados de backtest: fuera de muestra, con comisiones. No garantizan resultados futuros. No es asesoría financiera.</p>
   </div>
 </div>
@@ -116,11 +125,13 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
 (function () {
   "use strict";
   const REPO = { owner: "MarioB19", repo: "trading-lab" };
-  const FILES = { snapshot: "state/snapshot.json", equity: "state/equity.csv", trades: "state/trades.csv", analysis: "state/analysis.json" };
+  const FILES = { snapshot: "state/snapshot.json", equity: "state/equity.csv", trades: "state/trades.csv", analysis: "state/analysis.json",
+                  rt: "state/live.json", rtEquity: "state/live_equity.csv" };
   const COLORS = { crypto: "--series-1", stocks: "--series-2" };
   const FB = JSON.parse(document.getElementById("fallback").textContent);
   const S = { snapshot: FB.snapshot, equity: parseCSV(FB.equity), trades: parseCSV(FB.trades),
-              analysis: FB.analysis || null, live: {}, errors: {}, fallbackDate: FB.generated };
+              analysis: FB.analysis || null, rt: FB.rt || null, rtEquity: parseCSV(FB.rtEquity),
+              live: {}, errors: {}, fallbackDate: FB.generated };
   let mcp = null;
 
   // ---------------------------------------------------------------- utilidades
@@ -147,10 +158,10 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
   const cls = x => x > 0.00005 ? "pos" : x < -0.00005 ? "neg" : "";
   function when(ts) { try { return new Date(ts).toLocaleString("es-MX", { day: "numeric", month: "short", hour: "2-digit", minute: "2-digit" }); } catch (e) { return ts; } }
   function utc(s) { return s ? s.replace(" ", "T") + ":00Z" : null; }
-  function nextRun() {
-    const n = new Date(); const t = new Date(Date.UTC(n.getUTCFullYear(), n.getUTCMonth(), n.getUTCDate(), 0, 20));
-    if (t <= n) t.setUTCDate(t.getUTCDate() + 1);
-    return t.toLocaleString("es-MX", { weekday: "long", hour: "2-digit", minute: "2-digit" });
+  function nextRun() {  // la revisión corre a los 7 minutos de cada hora; la diaria, tras las 00:00 UTC
+    const n = new Date(); const t = new Date(n); t.setUTCMinutes(7, 0, 0);
+    if (t <= n) t.setUTCHours(t.getUTCHours() + 1);
+    return t.toLocaleString("es-MX", { hour: "2-digit", minute: "2-digit" });
   }
 
   // ---------------------------------------------------------------- render
@@ -168,18 +179,25 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
       : "Datos incluidos en la página (" + (S.fallbackDate || "sin fecha") + ")";
 
     // KPIs
-    const tot = sleeves.reduce((a, [, s]) => a + (+s.equity || 0), 0);
+    const rtS = (S.rt && S.rt.sleeves) || {};
+    const eqNow = k => (rtS[k] && rtS[k].status === "ok") ? rtS[k] : null;
+    const tot = sleeves.reduce((a, [k, s]) => a + (+(eqNow(k) || s).equity || 0), 0);
+    const totClose = sleeves.reduce((a, [, s]) => a + (+s.equity || 0), 0);
     const cap = sleeves.reduce((a, [, s]) => a + (+s.capital || 0), 0);
-    const expoVal = sleeves.reduce((a, [, s]) => a + (+s.equity || 0) * (+s.exposure || 0), 0);
-    const worst = sleeves.reduce((m, [, s]) => Math.min(m, +s.drawdown || 0), 0);
+    const expoVal = sleeves.reduce((a, [k, s]) => { const x = eqNow(k) || s; return a + (+x.equity || 0) * (+x.exposure || 0); }, 0);
+    const worst = sleeves.reduce((m, [k, s]) => Math.min(m, +(eqNow(k) || s).drawdown || 0), 0);
+    const rtWhen = S.rt && S.rt.updated_utc;
     const kills = sleeves.filter(([, s]) => s.kill_switch).length;
     const blocked = sleeves.filter(([, s]) => ["blocked", "error"].includes(s.status)).length;
     const lastRun = sleeves.map(([, s]) => s.last_run_utc).filter(Boolean).sort().pop();
     document.getElementById("kpis").innerHTML = [
-      kpi("Capital total", usd(tot), `<span class="${cls(tot - cap)}">${usd(tot - cap)} (${pct(cap ? tot / cap - 1 : 0, 2, true)})</span> vs ${usd(cap, 0)} asignados`),
+      kpi(rtWhen ? "Capital ahora" : "Capital total", usd(tot), `<span class="${cls(tot - cap)}">${usd(tot - cap)} (${pct(cap ? tot / cap - 1 : 0, 2, true)})</span> vs ${usd(cap, 0)} asignados` +
+          (rtWhen ? `<br>Al último cierre: ${usd(totClose)}` : "")),
       kpi("Invertido ahora", pct(tot ? expoVal / tot : 0, 0), `${usd(expoVal)} en activos · ${usd(tot - expoVal)} en efectivo`),
       kpi("Peor caída actual", pct(worst, 1), kills ? `<span class="neg">Kill switch activo en ${kills} bloque(s)</span>` : "Kill switch armado en ambos bloques"),
-      kpi("Última corrida", lastRun ? when(utc(lastRun)) : "–", (blocked ? `<span class="neg">${blocked} bloque(s) no operaron</span> · ` : "") + "Siguiente: " + nextRun()),
+      kpi("Última revisión", rtWhen ? when(utc(rtWhen)) : lastRun ? when(utc(lastRun)) : "–",
+          (blocked ? `<span class="neg">${blocked} bloque(s) no operaron</span> · ` : "") + `Revisa cada hora · siguiente ${nextRun()}` +
+          (lastRun ? `<br>Última corrida que opera: ${when(utc(lastRun))}` : "")),
     ].join("");
 
     // Bloques
@@ -201,8 +219,9 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
         <td>${statusText(t.status)}${t.note ? ` <span class="muted">${esc(t.note)}</span>` : ""}</td><td class="muted">${esc(t.broker)}${t.mode === "live" ? " · real" : ""}</td></tr>`).join("")}
       </tbody></table></div>` : `<div class="empty">Sin operaciones todavía.</div>`;
 
+    renderLive(S.rt);
     renderAnalysis(S.analysis);
-    renderResearch(snap.research);
+    renderResearch((S.rt && S.rt.research && S.rt.research.crypto) ? S.rt.research : snap.research);
     renderBanner();
   }
   const kpi = (lab, val, sub) => `<div class="kpi"><span class="lab">${lab}</span><span class="val">${val}</span><span class="sub">${sub}</span></div>`;
@@ -298,6 +317,47 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
     hit.addEventListener("pointerleave", () => { tip.hidden = true; xh.setAttribute("visibility", "hidden"); });
   }
 
+  // ---------------------------------------------------------------- en vivo
+  const ACTION = { observe: "observación: valúa y vigila cada hora, no opera", watch: "vigía: puede vender si el freno se aprieta" };
+  function spark(k) {
+    const rows = S.rtEquity.filter(r => r.sleeve === k).slice(-72);
+    if (rows.length < 2) return "";
+    const v = rows.map(r => +r.equity), lo = Math.min(...v), hi = Math.max(...v), sp = hi - lo || 1;
+    const pts = v.map((y, i) => `${(300 * i / (v.length - 1)).toFixed(1)},${(42 - 38 * (y - lo) / sp).toFixed(1)}`).join(" ");
+    return `<svg class="spark" viewBox="0 0 300 46" preserveAspectRatio="none" role="img" aria-label="Capital de las últimas ${rows.length} revisiones">
+      <polyline points="${pts}" fill="none" stroke="var(${COLORS[k] || "--series-1"})" stroke-width="1.8" vector-effect="non-scaling-stroke"/></svg>
+      <div class="expo"><div class="row"><span>Últimas ${rows.length} revisiones</span><span class="mono">${usd(lo)} – ${usd(hi)}</span></div></div>`;
+  }
+  function renderLive(rt) {
+    const el = document.getElementById("rt"), note = document.getElementById("rt-note");
+    if (!rt || !rt.sleeves) { el.innerHTML = `<div class="empty">La revisión en tiempo real aparece después de su primera corrida.</div>`; note.textContent = ""; return; }
+    note.textContent = `Precio de mercado · ${when(utc(rt.updated_utc))} · modo ${ACTION[rt.action] || rt.action}`;
+    el.innerHTML = Object.entries(rt.sleeves).map(([k, s]) => {
+      const color = `var(${COLORS[k] || "--series-1"})`;
+      if (s.status !== "ok") return `<article class="sleeve"><header><div class="id"><span class="swatch" style="background:${color}"></span><h3>${esc(labelOf(k))}</h3></div>${statusChip(s.status)}</header>
+        ${(s.notes || []).length ? `<ul class="notes">${s.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul>` : ""}</article>`;
+      const room = (+s.kill_drawdown || 0) + (+s.drawdown || 0);
+      const moves = (s.signal_now || []).filter(g => g.move !== "igual");
+      return `<article class="sleeve">
+        <header><div class="id"><span class="swatch" style="background:${color}"></span><h3>${esc(s.label || labelOf(k))}</h3></div>
+          <span class="chip ${(s.alerts || []).length ? "warn" : "good"}"><i></i>${(s.alerts || []).length ? "Con avisos" : "Todo en orden"}</span></header>
+        <div class="stats">
+          <div class="stat"><span class="lab">Capital ahora</span><span class="val">${usd(+s.equity)}</span></div>
+          <div class="stat"><span class="lab">Desde el cierre</span><span class="val ${cls(s.change_since_close)}">${pct(s.change_since_close, 2, true)}</span></div>
+          <div class="stat"><span class="lab">Caída desde máximo</span><span class="val ${(+s.drawdown || 0) < -0.1 ? "neg" : ""}">${pct(+s.drawdown, 1)}</span></div>
+          <div class="stat"><span class="lab">Margen al kill switch</span><span class="val">${pct(room, 0)}</span></div>
+        </div>
+        ${spark(k)}
+        ${(s.alerts || []).length ? `<ul class="alerts">${s.alerts.map(a => `<li class="${/kill switch activado|activará/.test(a) ? "crit" : ""}">${esc(a)}</li>`).join("")}</ul>` : ""}
+        ${s.signal_now ? `<div style="display:grid;gap:6px"><span class="muted" style="font-size:12.5px">Si el día cerrara ahora (informativo; el bot opera solo tras el cierre):</span>
+          <div class="moves">${moves.length ? moves.map(g => `<span class="chip ${g.move === "entraría" || g.move === "subiría" ? "good" : "warn"}">${esc(g.asset)} ${esc(g.move)}</span>`).join("") : '<span class="chip">Sin cambios</span>'}</div></div>` : ""}
+        ${(s.positions || []).length ? `<div class="tbl"><table><thead><tr><th>Activo</th><th class="n">Precio</th><th class="n">Desde el cierre</th><th class="n">Valor</th></tr></thead><tbody>
+          ${s.positions.map(p => `<tr><td class="mono">${esc(p.asset)}</td><td class="n">${usd(p.price, p.price < 1 ? 5 : 2)}</td><td class="n ${cls(p.change_since_close)}">${pct(p.change_since_close, 2, true)}</td><td class="n">${usd(p.value)}</td></tr>`).join("")}
+          </tbody></table></div>` : ""}
+      </article>`;
+    }).join("");
+  }
+
   // ---------------------------------------------------------------- análisis de operaciones
   function renderAnalysis(a) {
     const el = document.getElementById("analysis");
@@ -336,7 +396,15 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
         </div>
         <p class="muted" style="font-size:12.5px">Probabilidad de terminar 12 meses con pérdida: ${pct(x.p_loss_12m, 0)} · placebo p = ${(+x.placebo_p).toFixed(2)}${x.placebo_p < 0.05 ? " (el timing no es azar)" : " (el timing no se distingue del azar)"}</p></div>`; };
     const c = r.combined || {};
-    el.innerHTML = card("crypto") + card("stocks") + (c.cagr != null ? `<div class="rcard"><h3>Los dos juntos</h3>
+    const rtr = r.realtime;
+    const RTN = { R0: "Una vez al día (el bot)", R1: "Cada 4 horas", R2: "Cada hora", R3: "Vigía por hora" };
+    const nk = rtr && (rtr.no_kill || rtr.variants);
+    const rtCard = nk ? `<div class="rcard"><h3>¿Operar en tiempo real?</h3>
+      <p class="muted" style="font-size:12.5px">Prueba declarada antes de correrla, con velas por hora desde ${esc((rtr.oos_start || "").slice(0, 4))} y costos reales${rtr.no_kill ? ". Sin kill switch, para comparar todo el periodo" : ""}.</p>
+      <div class="rrow" style="grid-template-columns:1fr auto auto auto"><span class="h"></span><span class="h">Rend. anual</span><span class="h">Caída máx.</span><span class="h">Costo/año</span>
+        ${Object.entries(nk).map(([k, v]) => `<span>${esc(RTN[k] || k)}${rtr.variants?.[k]?.verdict === "aprobada" ? ' <span class="chip good">aprobada</span>' : ""}</span><span class="num">${pct(v.cagr)}</span><span class="num">${pct(v.max_dd, 0)}</span><span class="num">${pct(v.cost_drag_per_year, 0)}</span>`).join("")}</div>
+      <p class="muted" style="font-size:12.5px">${rtr.winner ? "Se usa la variante aprobada, en simulado." : "Ninguna pasó los cinco criterios: el bot opera una vez al día y la revisión de cada hora solo vigila."}</p></div>` : "";
+    el.innerHTML = card("crypto") + card("stocks") + rtCard + (c.cagr != null ? `<div class="rcard"><h3>Los dos juntos</h3>
       <p style="font-size:13px">${pct(c.crypto_share, 0)} cripto / ${pct(1 - c.crypto_share, 0)} acciones, sin rebalancear entre cuentas:</p>
       <div class="rrow"><span class="h"></span><span class="h">Rend. anual</span><span class="h">Caída máx.</span><span>Combinado</span><span class="num">${pct(c.cagr)}</span><span class="num">${pct(c.max_dd, 0)}</span></div>
       <p class="muted" style="font-size:12.5px">Probabilidad de terminar 12 meses con pérdida: ${pct(c.p_loss_12m, 0)}.</p></div>` : "");
@@ -388,7 +456,7 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
       const txt = fileText(ev.result);
       if (txt == null) { S.errors[key] = { code: "formato", message: "respuesta sin contenido" }; render(); return; }
       try {
-        if (key === "snapshot") S.snapshot = JSON.parse(txt); else if (key === "analysis") S.analysis = JSON.parse(txt); else S[key] = parseCSV(txt);
+        if (key === "snapshot") S.snapshot = JSON.parse(txt); else if (key === "analysis" || key === "rt") S[key] = JSON.parse(txt); else S[key] = parseCSV(txt);
         S.live[key] = (ev.result.cache && ev.result.cache.storedAt) || Date.now();
         delete S.errors[key];
       } catch (e) { S.errors[key] = { code: "formato", message: String(e) }; }
@@ -396,7 +464,7 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
       S.errors[key] = ev.error || { code: "upstream_error" };
       if (DENIALS.includes(S.errors[key].code)) {  // sin permiso: se retiran los datos de GitHub
         delete S.live[key];
-        if (key === "snapshot") S.snapshot = FB.snapshot; else if (key === "analysis") S.analysis = FB.analysis || null; else S[key] = parseCSV(FB[key]);
+        if (key === "snapshot") S.snapshot = FB.snapshot; else if (key === "analysis" || key === "rt") S[key] = FB[key] || null; else S[key] = parseCSV(FB[key]);
       }
     }
     render();

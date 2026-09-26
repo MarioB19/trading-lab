@@ -1,0 +1,281 @@
+{
+ "updated_utc": "2026-09-26 04:33",
+ "mode": "paper",
+ "action": "observe",
+ "every_minutes": 60,
+ "sleeves": {
+  "crypto": {
+   "status": "ok",
+   "label": "Criptomonedas",
+   "strategy": "tactical",
+   "broker": "simulado \u00b7 libro real de Bitso",
+   "updated_utc": "2026-09-26 04:33",
+   "prices_as_of_utc": "2026-09-26 04:33",
+   "equity": 305.03,
+   "cash": 87.42,
+   "exposure": 0.7134,
+   "peak": 306.37,
+   "drawdown": -0.0044,
+   "kill_drawdown": 0.45,
+   "kill_at_equity": 168.5,
+   "brake_now": 1.0,
+   "kill_switch": false,
+   "change_since_close": -0.0045,
+   "positions": [
+    {
+     "asset": "SOL",
+     "qty": 0.45551896,
+     "price": 120.44,
+     "value": 54.86,
+     "weight": 0.1799,
+     "change_since_close": -0.0139
+    },
+    {
+     "asset": "LINK",
+     "qty": 3.65744289,
+     "price": 14.14,
+     "value": 51.72,
+     "weight": 0.1695,
+     "change_since_close": 0.0149
+    },
+    {
+     "asset": "LTC",
+     "qty": 0.6808246,
+     "price": 71.87,
+     "value": 48.93,
+     "weight": 0.1604,
+     "change_since_close": -0.0095
+    },
+    {
+     "asset": "UNI",
+     "qty": 3.27025933,
+     "price": 9.6091,
+     "value": 31.42,
+     "weight": 0.103,
+     "change_since_close": -0.0027
+    },
+    {
+     "asset": "NEAR",
+     "qty": 6.27660259,
+     "price": 4.8863,
+     "value": 30.67,
+     "weight": 0.1005,
+     "change_since_close": -0.0133
+    }
+   ],
+   "alerts": [],
+   "notes": [],
+   "action": "observe",
+   "signal_now": [
+    {
+     "asset": "ETH",
+     "target_now": 0.2131,
+     "weight_now": 0.0,
+     "move": "entrar\u00eda"
+    },
+    {
+     "asset": "LTC",
+     "target_now": 0.1636,
+     "weight_now": 0.1604,
+     "move": "igual"
+    },
+    {
+     "asset": "LINK",
+     "target_now": 0.1585,
+     "weight_now": 0.1695,
+     "move": "igual"
+    },
+    {
+     "asset": "UNI",
+     "target_now": 0.0997,
+     "weight_now": 0.103,
+     "move": "igual"
+    },
+    {
+     "asset": "NEAR",
+     "target_now": 0.095,
+     "weight_now": 0.1005,
+     "move": "igual"
+    },
+    {
+     "asset": "SOL",
+     "target_now": 0.0,
+     "weight_now": 0.1799,
+     "move": "saldr\u00eda"
+    }
+   ]
+  },
+  "stocks": {
+   "status": "ok",
+   "label": "Acciones y ETFs",
+   "strategy": "passive",
+   "broker": "simulado",
+   "updated_utc": "2026-09-26 04:33",
+   "prices_as_of_utc": "2026-09-25 20:00",
+   "equity": 702.89,
+   "cash": 2.1,
+   "exposure": 0.997,
+   "peak": 702.89,
+   "drawdown": 0.0,
+   "kill_drawdown": 0.25,
+   "kill_at_equity": 527.17,
+   "brake_now": 1.0,
+   "kill_switch": false,
+   "change_since_close": 0.0,
+   "positions": [
+    {
+     "asset": "SPY",
+     "qty": 0.54426702,
+     "price": 771.35,
+     "value": 419.82,
+     "weight": 0.5973,
+     "change_since_close": 0.0
+    },
+    {
+     "asset": "IEF",
+     "qty": 3.12186411,
+     "price": 90.0,
+     "value": 280.97,
+     "weight": 0.3997,
+     "change_since_close": 0.0
+    }
+   ],
+   "alerts": [],
+   "notes": [
+    "Alpaca paper no disponible (faltan ALPACA_KEY_ID / ALPACA_SECRET_KEY); uso el simulado interno"
+   ],
+   "action": "observe"
+  }
+ },
+ "research": {
+  "generated": "2026-09-26 04:27 UTC",
+  "combined": {
+   "cagr": 0.1824578310978977,
+   "max_dd": -0.27153953925370544,
+   "p_loss_12m": 0.2444,
+   "crypto_share": 0.3
+  },
+  "crypto": {
+   "label": "Criptomonedas",
+   "oos_start": "2021-01-01",
+   "recommended": "CANDIDATA: top5 \u00b7 vol 40% \u00b7 con filtro BTC \u00b7 freno",
+   "strategy": {
+    "cagr": 0.3227004460957936,
+    "sharpe": 1.0970446795545996,
+    "max_dd": -0.41631401689754055
+   },
+   "benchmark_name": "Comprar y aguantar BTC",
+   "benchmark": {
+    "cagr": 0.20468044171400135,
+    "sharpe": 0.6117478088856954,
+    "max_dd": -0.7666881595920354
+   },
+   "tactical": {
+    "cagr": 0.3227004460957936,
+    "sharpe": 1.0970446795545996,
+    "max_dd": -0.41631401689754055
+   },
+   "placebo_p": 0.0,
+   "p_loss_12m": 0.2812
+  },
+  "stocks": {
+   "label": "Acciones y ETFs",
+   "oos_start": "2010-01-01",
+   "recommended": "60/40 (SPY/IEF)",
+   "strategy": {
+    "cagr": 0.0989591721055032,
+    "sharpe": 0.9957761616582715,
+    "max_dd": -0.2157834867560986
+   },
+   "benchmark_name": "Comprar y aguantar SPY",
+   "benchmark": {
+    "cagr": 0.1425221941910968,
+    "sharpe": 0.8667747246377154,
+    "max_dd": -0.33717268745960116
+   },
+   "tactical": {
+    "cagr": 0.045218721219039804,
+    "sharpe": 0.5260217640796205,
+    "max_dd": -0.16907009335593293
+   },
+   "placebo_p": 0.34,
+   "p_loss_12m": 0.1338
+  },
+  "realtime": {
+   "generated": "2026-09-26 04:19 UTC",
+   "winner": null,
+   "mode": "observe",
+   "oos_start": "2021-01-01",
+   "variants": {
+    "R0": {
+     "label": "Una vez al d\u00eda, 00:00 UTC (lo que hace hoy el bot)",
+     "cagr": -0.0013314810528888277,
+     "sharpe": 0.07887273058355933,
+     "max_dd": -0.45354816835238665,
+     "rebalances_per_year": 50.37488061127029,
+     "cost_drag_per_year": 0.04191780283778685,
+     "verdict": null
+    },
+    "R1": {
+     "label": "Cada 4 horas",
+     "cagr": -0.015271365133735837,
+     "sharpe": -0.0035840839554866634,
+     "max_dd": -0.44043533719901395,
+     "rebalances_per_year": 134.9140401146132,
+     "cost_drag_per_year": 0.08856710657892336,
+     "verdict": "no aprobada"
+    },
+    "R2": {
+     "label": "Cada hora",
+     "cagr": -0.023083398830899715,
+     "sharpe": -0.09987590184679246,
+     "max_dd": -0.4470226909973527,
+     "rebalances_per_year": 161.75740210124164,
+     "cost_drag_per_year": 0.09314297883622132,
+     "verdict": "no aprobada"
+    },
+    "R3": {
+     "label": "Vig\u00eda: rebalanceo diario; freno y kill switch cada hora",
+     "cagr": 0.0002824610477079048,
+     "sharpe": 0.08699374747539367,
+     "max_dd": -0.4470375431816268,
+     "rebalances_per_year": 52.117956064947464,
+     "cost_drag_per_year": 0.04093747300036486,
+     "verdict": "no aprobada"
+    }
+   },
+   "no_kill": {
+    "R0": {
+     "cagr": 0.21570696659896704,
+     "sharpe": 0.8123028178488471,
+     "max_dd": -0.5030749699636526,
+     "cost_drag_per_year": 0.12119302710986288
+    },
+    "R1": {
+     "cagr": 0.12926949448546377,
+     "sharpe": 0.5621090861120733,
+     "max_dd": -0.505351087358862,
+     "cost_drag_per_year": 0.26350056405339584
+    },
+    "R2": {
+     "cagr": -0.08334781040411121,
+     "sharpe": -0.18906091910388736,
+     "max_dd": -0.7110412083270437,
+     "cost_drag_per_year": 0.4280613900796368
+    },
+    "R3": {
+     "cagr": 0.22497422806007616,
+     "sharpe": 0.8436153360465084,
+     "max_dd": -0.49839287592728965,
+     "cost_drag_per_year": 0.11956351591346667
+    }
+   },
+   "kill_dates": {
+    "R0": "2023-06-08 01:00:00",
+    "R1": "2023-05-08 21:00:00",
+    "R2": "2022-10-28 04:00:00",
+    "R3": "2023-06-07 11:00:00"
+   }
+  }
+ }
+}

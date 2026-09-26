@@ -122,6 +122,17 @@ def yahoo_daily(symbol: str, start: str = "1995-01-01", retries: int = 6) -> pd.
     raise RuntimeError(f"Yahoo limitó las solicitudes para {symbol}")
 
 
+def yahoo_last(symbol: str) -> tuple[float, pd.Timestamp]:
+    """Último precio de Yahoo (en sesión: el del momento; fuera de sesión: el cierre) y su hora UTC."""
+    import requests
+
+    r = requests.get(YAHOO_URL.format(symbol=symbol), params={"range": "1d", "interval": "1d"},
+                     headers=YAHOO_HEADERS, timeout=20)
+    r.raise_for_status()
+    meta = r.json()["chart"]["result"][0]["meta"]
+    return float(meta["regularMarketPrice"]), pd.Timestamp(meta["regularMarketTime"], unit="s")
+
+
 # Criptos que alguna vez fueron grandes, INCLUYENDO las que se desplomaron o murieron
 # (LUNA, FTT, EOS, NEO, IOTA...). Elegir solo las que hoy siguen vivas inflaría el backtest.
 CRYPTO_RESEARCH = {
@@ -238,3 +249,121 @@ def load_etf_panel(symbols: list[str] | None = None, refresh: bool = False,
     DATA_DIR.mkdir(exist_ok=True)
     P.to_csv(path)
     return P
+
+
+# ============================================================ velas por hora (tiempo real)
+HOUR_MS = 3_600_000
+# (exchange, velas por solicitud). Se usa, por cripto, la fuente con historia más antigua.
+HOURLY_SOURCES = [("bitstamp", 1000), ("coinbaseexchange", 300)]
+
+
+def fetch_hourly(exchange, symbol: str, since_ms: int, limit: int, now_ms: int | None = None) -> pd.Series:
+    """Cierres por hora de velas COMPLETAS, indexados por la hora en que CIERRA la vela (UTC).
+
+    La vela de las 23:00 cierra a las 00:00: ese precio es el cierre diario que usa el bot.
+    """
+    now_ms = exchange.milliseconds() if now_ms is None else now_ms
+    rows, since = [], since_ms
+    while since < now_ms:
+        batch = _retry(lambda: exchange.fetch_ohlcv(symbol, "1h", since=since, limit=limit))
+        batch = [b for b in batch if b[0] >= since]
+        if not batch:
+            since += limit * HOUR_MS  # hueco (o antes de que existiera el par): avanzar
+            continue
+        rows += batch
+        since = batch[-1][0] + HOUR_MS
+    rows = [r for r in rows if r[0] + HOUR_MS <= now_ms]  # la vela en curso todavía no existe
+    if not rows:
+        return pd.Series(dtype=float)
+    ts = pd.to_datetime([r[0] + HOUR_MS for r in rows], unit="ms")
+    s = pd.Series([float(r[4]) for r in rows], index=pd.DatetimeIndex(ts), name=symbol)
+    return s[~s.index.duplicated(keep="last")].sort_index()
+
+
+def _retry(fn, tries: int = 8):
+    """Reintenta con espera creciente si el exchange limita las solicitudes o falla la red."""
+    import time
+
+    import ccxt
+
+    for k in range(tries):
+        try:
+            return fn()
+        except (ccxt.RateLimitExceeded, ccxt.NetworkError):
+            if k == tries - 1:
+                raise
+            time.sleep(min(60, 2 ** k))
+
+
+def _first_day(exchange, symbol: str, start_ms: int, now_ms: int) -> int | None:
+    """Primer día con velas del par (sondea con velas diarias en ventanas de 300 días)."""
+    since = start_ms
+    while since < now_ms:
+        o = _retry(lambda: exchange.fetch_ohlcv(symbol, "1d", since=since, limit=300))
+        o = [b for b in o if b[0] >= since]
+        if o:
+            return int(o[0][0])
+        since += 300 * DAY_MS
+    return None
+
+
+def load_hourly_panel(coins: list[str], refresh: bool = False, start: str = "2020-01-01",
+                      quote: str = "USD") -> pd.DataFrame:
+    """Panel de cierres por hora (índice = hora de cierre de la vela, UTC). Caché en data/.
+
+    Con refresh solo descarga lo nuevo desde la última hora guardada.
+    """
+    import concurrent.futures as cf
+
+    path = DATA_DIR / "hourly_prices.csv"
+    old = pd.read_csv(path, index_col=0, parse_dates=True) if path.exists() else pd.DataFrame()
+    if len(old) and not refresh and set(coins) <= set(old.columns):
+        return old[coins]
+    start_ms = int(pd.Timestamp(start, tz="UTC").timestamp() * 1000)
+
+    def one(coin: str) -> tuple[str, pd.Series, str]:
+        best = None
+        for name, limit in HOURLY_SOURCES:
+            ex = make_exchange(name)
+            ex.load_markets()
+            sym = f"{coin}/{quote}"
+            if sym not in ex.markets:
+                continue
+            now_ms = ex.milliseconds()
+            if coin in old.columns and old[coin].notna().any():
+                first = start_ms  # ya se conoce la fuente; solo falta lo nuevo
+            else:
+                first = _first_day(ex, sym, start_ms, now_ms)
+            if first is not None and (best is None or first < best[2]):
+                best = (ex, sym, first, limit)
+        if best is None:
+            return coin, pd.Series(dtype=float), "sin datos"
+        ex, sym, first, limit = best
+        since = first
+        if coin in old.columns and old[coin].notna().any():
+            since = int(old[coin].dropna().index[-1].timestamp() * 1000)  # última hora guardada (cierre)
+        s = fetch_hourly(ex, sym, max(since, start_ms), limit)
+        return coin, s, ex.id
+
+    with cf.ThreadPoolExecutor(3) as pool:
+        got = list(pool.map(one, coins))
+    cols = {}
+    for coin, s, src in got:
+        prev = old[coin].dropna() if coin in old.columns else pd.Series(dtype=float)
+        cols[coin] = s.combine_first(prev) if len(prev) else s
+        print(f"  {coin}: {src}, {len(s)} velas nuevas")
+    P = pd.DataFrame(cols).sort_index()
+    P = P[[c for c in coins if c in P.columns]]
+    DATA_DIR.mkdir(exist_ok=True)
+    P.to_csv(path)
+    return P
+
+
+def hourly_to_daily(H: pd.DataFrame) -> pd.DataFrame:
+    """Cierre diario = precio de las 00:00 UTC del día siguiente (vela diaria completa).
+
+    La fila D es el cierre del día D, igual que en el resto del laboratorio.
+    """
+    mid = H[H.index.hour == 0]
+    mid.index = mid.index.normalize() - pd.Timedelta(days=1)
+    return mid

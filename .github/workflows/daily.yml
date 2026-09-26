@@ -1,9 +1,14 @@
-# Corre el bot todos los días y guarda el estado en el repositorio.
+# Corre el bot y la revisión en tiempo real, y guarda el estado en el repositorio.
 # Sin secretos configurados todo es SIMULADO. Para dinero real ver README ("Pasar a real").
+#   - Cada hora: revisión en tiempo real (lab.realtime) y, si hay una vela diaria nueva que no se
+#     ha operado, la corrida diaria (lab.bot --if-due). Así, si GitHub se salta una corrida
+#     programada, la siguiente hora la pone al día.
+#   - 00:20 UTC = 18:20 hora del centro de México: corrida diaria tras el cierre (respaldo).
 name: bot-diario
 on:
   schedule:
-    - cron: "20 0 * * *"   # 00:20 UTC = 18:20 hora del centro de México (tras el cierre diario)
+    - cron: "20 0 * * *"
+    - cron: "7 * * * *"
   workflow_dispatch: {}
 permissions:
   contents: write
@@ -16,10 +21,14 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - run: git pull --rebase   # si esta corrida esperó en la cola, trae el estado más reciente
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: pip install -e .
+          cache: pip
+          cache-dependency-path: pyproject.toml
+      # solo lo que usa el bot (sin scipy ni scikit-learn): la corrida por hora tarda menos
+      - run: pip install "pandas>=2.1" "numpy>=1.26" "ccxt>=4.3" "pyyaml>=6.0" "requests>=2.31" && pip install -e . --no-deps
       - name: Correr el bot
         env:
           BITSO_API_KEY: ${{ secrets.BITSO_API_KEY }}
@@ -29,9 +38,11 @@ jobs:
           CONFIRMO_DINERO_REAL: ${{ vars.CONFIRMO_DINERO_REAL }}
         run: |
           if [ "$CONFIRMO_DINERO_REAL" = "si" ]; then
-            python -m lab.bot --live
+            python -m lab.bot --live --if-due
+            python -m lab.realtime --once --live
           else
-            python -m lab.bot
+            python -m lab.bot --if-due
+            python -m lab.realtime --once
           fi
       - name: Guardar estado
         if: always()
@@ -39,6 +50,6 @@ jobs:
           git config user.name "trading-lab-bot"
           git config user.email "trading-lab-bot@users.noreply.github.com"
           git add state/
-          git commit -m "bot: $(date -u +%F)" || { echo "sin cambios"; exit 0; }
+          git commit -m "bot: $(date -u +'%F %H:%M') UTC" || { echo "sin cambios"; exit 0; }
           git pull --rebase
           git push

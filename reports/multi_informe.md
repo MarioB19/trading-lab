@@ -15,7 +15,7 @@ Datos 2014-01-01 a 2026-09-23; fuera de muestra desde 2021; costo 0.45% por lado
 | Regla de tendencia solo BTC | 17.0% | 0.62 | −56% | 53% |
 
 - Placebo (pesos desfasados al azar): p = 0.000.
-- Mejor variante de 36 en todo el periodo: top3 · vol sin · con filtro BTC · freno (DSR vs 0: 0.993; DSR vs referencia: 0.296).
+- Mejor variante de 39 en todo el periodo: top3 · vol sin · con filtro BTC · freno (DSR vs 0: 0.993; DSR vs referencia: 0.288).
 - Bootstrap de la candidata: vs Comprar y aguantar BTC: P(más rendimiento) 66%, P(menor caída) 97%; vs Pesos iguales, rebalanceo mensual: P(más rendimiento) 73%, P(menor caída) 100%; vs Regla de tendencia solo BTC: P(más rendimiento) 83%, P(menor caída) 87%
 - Costos: 0.30% → 37.9%, 0.45% → 32.3%, 0.60% → 26.8%, 1.00% → 14.7%
 - Kill switch: a 35%: se habría activado el 2023-06-09; a 45%: no se habría activado.

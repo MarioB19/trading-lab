@@ -29,9 +29,13 @@ def expected_max_sharpe(n_trials: int, var_sr: float) -> float:
                                     + EULER * norm.ppf(1 - 1 / (n_trials * np.e))))
 
 
-def deflated_sharpe(best_ret: pd.Series, trial_daily_srs: list[float], ann: int = ANN) -> dict:
-    sr0 = expected_max_sharpe(len(trial_daily_srs), float(np.var(trial_daily_srs, ddof=1)))
-    return {"n_trials": len(trial_daily_srs), "sr0_annual": sr0 * np.sqrt(ann),
+def deflated_sharpe(best_ret: pd.Series, trial_daily_srs: list[float], ann: int = ANN,
+                    extra_trials: int = 0) -> dict:
+    """extra_trials: intentos que no se simulan aquí (p. ej. las variantes en tiempo real,
+    que necesitan datos por hora) pero que cuentan igual como pruebas hechas."""
+    n = len(trial_daily_srs) + extra_trials
+    sr0 = expected_max_sharpe(n, float(np.var(trial_daily_srs, ddof=1)))
+    return {"n_trials": n, "sr0_annual": sr0 * np.sqrt(ann),
             "dsr": probabilistic_sharpe(best_ret, sr0)}
 
 
