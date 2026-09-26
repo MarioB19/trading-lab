@@ -17,3 +17,5 @@ time_utc,sleeve,mode,equity,drawdown,exposure,brake_now,action
 2026-09-26 14:23,stocks,paper,702.89,0.0,0.997,1.0,observe
 2026-09-26 18:31,crypto,paper,305.49,-0.0029,0.7138,1.0,observe
 2026-09-26 18:31,stocks,paper,702.89,0.0,0.997,1.0,observe
+2026-09-26 21:56,crypto,paper,305.99,-0.0012,0.7143,1.0,observe
+2026-09-26 21:56,stocks,paper,702.89,0.0,0.997,1.0,observe
