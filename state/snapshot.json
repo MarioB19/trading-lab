@@ -210,22 +210,24 @@
      "qty": 0.0
     }
    ],
-   "notes": [],
-   "status": "ok",
-   "last_run_utc": "2026-09-26 01:02"
+   "notes": [
+    "esta vela ya se oper\u00f3"
+   ],
+   "status": "skip",
+   "last_run_utc": "2026-09-26 01:06"
   },
   "stocks": {
    "label": "Acciones y ETFs",
    "strategy": "passive",
    "broker": "simulado",
    "mode": "paper",
-   "candle": "2026-09-24",
-   "equity": 699.65,
+   "candle": "2026-09-25",
+   "equity": 702.89,
    "cash": 2.1,
    "capital": 700,
    "exposure": 0.997,
-   "peak": 700.0,
-   "drawdown": -0.0005,
+   "peak": 702.89,
+   "drawdown": 0.0,
    "brake": 1.0,
    "kill_switch": false,
    "kill_drawdown": 0.25,
@@ -234,153 +236,152 @@
     {
      "asset": "SPY",
      "target": 0.6,
-     "price": 767.179993,
-     "weight": 0.596798,
+     "price": 771.35,
+     "weight": 0.597279,
      "qty": 0.544267
     },
     {
      "asset": "IEF",
      "target": 0.4,
-     "price": 89.690002,
-     "weight": 0.400199,
+     "price": 90.0,
+     "weight": 0.399733,
      "qty": 3.121864
     },
     {
      "asset": "QQQ",
      "target": 0.0,
-     "price": 741.099976,
+     "price": 744.5,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "IWM",
      "target": 0.0,
-     "price": 281.660004,
+     "price": 281.97,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "EFA",
      "target": 0.0,
-     "price": 104.5,
+     "price": 105.56,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "EEM",
      "target": 0.0,
-     "price": 67.25,
+     "price": 67.98,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "EWW",
      "target": 0.0,
-     "price": 72.510002,
+     "price": 73.34,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "TLT",
      "target": 0.0,
-     "price": 79.419998,
+     "price": 79.32,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "GLD",
      "target": 0.0,
-     "price": 391.690002,
+     "price": 393.41,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "DBC",
      "target": 0.0,
-     "price": 33.18,
+     "price": 32.62,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "VNQ",
      "target": 0.0,
-     "price": 91.169998,
+     "price": 90.99,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "XLK",
      "target": 0.0,
-     "price": 194.710007,
+     "price": 196.27,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "XLF",
      "target": 0.0,
-     "price": 54.529999,
+     "price": 54.84,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "XLE",
      "target": 0.0,
-     "price": 62.599998,
+     "price": 62.04,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "XLV",
      "target": 0.0,
-     "price": 169.869995,
+     "price": 170.7,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "XLI",
      "target": 0.0,
-     "price": 168.830002,
+     "price": 170.43,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "XLP",
      "target": 0.0,
-     "price": 81.699997,
+     "price": 82.06,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "XLU",
      "target": 0.0,
-     "price": 39.360001,
+     "price": 39.51,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "XLY",
      "target": 0.0,
-     "price": 110.32,
+     "price": 110.56,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "XLB",
      "target": 0.0,
-     "price": 49.68,
+     "price": 49.8,
      "weight": 0.0,
      "qty": 0.0
     }
    ],
    "notes": [
-    "Alpaca paper no disponible (faltan ALPACA_KEY_ID / ALPACA_SECRET_KEY); uso el simulado interno",
-    "esta vela ya se oper\u00f3"
+    "Alpaca paper no disponible (faltan ALPACA_KEY_ID / ALPACA_SECRET_KEY); uso el simulado interno"
    ],
-   "status": "skip",
-   "last_run_utc": "2026-09-26 01:02"
+   "status": "ok",
+   "last_run_utc": "2026-09-26 01:06"
   }
  },
- "generated_utc": "2026-09-26 01:02",
+ "generated_utc": "2026-09-26 01:06",
  "mode": "paper",
  "research": {
   "generated": "2026-09-25 12:09 UTC",
@@ -435,6 +436,39 @@
    },
    "placebo_p": 0.34,
    "p_loss_12m": 0.1338
+  }
+ },
+ "analysis": {
+  "n_trades": 9,
+  "n_buys": 8,
+  "n_sells": 1,
+  "fees": 0.3392,
+  "closed_lots": 1,
+  "wins": 0,
+  "losses": 1,
+  "win_rate": 0.0,
+  "realized_pnl": -0.28,
+  "avg_win": null,
+  "avg_loss": -0.28,
+  "profit_factor": 0.0,
+  "open_positions": 7,
+  "open_winning": 6,
+  "open_losing": 1,
+  "unrealized_pnl": 9.18,
+  "total_pnl": 8.9,
+  "by_sleeve": {
+   "crypto": {
+    "closed_lots": 1,
+    "wins": 0,
+    "realized_pnl": -0.28,
+    "unrealized_pnl": 6.29
+   },
+   "stocks": {
+    "closed_lots": 0,
+    "wins": 0,
+    "realized_pnl": 0.0,
+    "unrealized_pnl": 2.89
+   }
   }
  }
 }
