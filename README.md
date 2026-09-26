@@ -46,6 +46,8 @@ Resultados **fuera de muestra**, con comisiones y deslizamiento incluidos. Las r
 
 La misma lógica que funciona en cripto **no funcionó en acciones**: su timing no se distingue del azar (p = 0.34). Por eso el bloque de acciones queda en 60/40 pasivo. La táctica sigue disponible (`strategy: tactical`), pero no está recomendada.
 
+**Multi-mercado (materias primas, divisas, bonos y bolsas en 19 ETFs), probado el 25-sep-2026:** perdió 1.4% anual de 2012 a hoy y falló los cinco criterios declarados antes de la prueba; queda apagado. Detalle en `reports/multi_market_informe.md`.
+
 **Combinado 30% cripto / 70% ETFs (2021 a hoy):** 21.3% anual, caída máxima −26%, 22% de probabilidad de perder en un periodo de 12 meses. La racha más larga sin recuperar el máximo fue de 824 días.
 
 ## Riesgo, en números
