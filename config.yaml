@@ -25,13 +25,13 @@ sleeves:
     universe: [BTC, ETH, SOL, XRP, ADA, DOGE, LINK, AVAX, LTC, BCH, XLM, TRX, HBAR, NEAR, UNI, ATOM]
     data: {source: ccxt, exchange: kraken, fallback_exchange: bitso}
     quote: USD
-    paper_broker: sim       # simulado interno
-    live_broker: bitso      # real: Bitso, pares contra USD
-    capital: 300            # USD. El bot nunca maneja más que esto
-    fee: 0.001
-    slippage: 0.002
+    paper_broker: bitso_book  # simulado contra el libro de órdenes REAL de Bitso (dinero ficticio)
+    live_broker: bitso        # real: Bitso, pares contra USD
+    capital: 300              # USD. El bot nunca maneja más que esto
+    fee: 0.0036               # comisión real de Bitso en mercados contra USD, nivel más bajo (taker)
+    slippage: 0.001           # solo si el libro no responde; normalmente se mide en el libro real
     band: 0.02              # no mover un activo por menos de 2 puntos de peso
-    kill_drawdown: 0.45     # peor caída histórica de la estrategia: 38%. A 45% se apaga el bloque
+    kill_drawdown: 0.45     # peor caída histórica con costos reales: 42%. A 45% se apaga el bloque
     max_order_value: 300
     min_order_value: 5
     benchmark: BTC

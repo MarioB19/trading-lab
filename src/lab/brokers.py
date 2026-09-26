@@ -24,6 +24,7 @@ class Fill:
     fee: float
     status: str = "filled"   # filled | submitted (se llenará al abrir el mercado) | partial | failed
     note: str = ""
+    ref: float = 0.0         # precio de referencia justo antes de ejecutar (medio del libro o cierre)
 
 
 class SimBroker:
@@ -42,23 +43,84 @@ class SimBroker:
     def pending(self) -> int:
         return 0
 
-    def execute(self, asset: str, side: str, qty: float, ref_price: float) -> Fill:
-        px = ref_price * (1 + self.slip if side == "buy" else 1 - self.slip)
+    def _apply(self, asset: str, side: str, qty: float, px: float) -> tuple[float, float]:
+        """Mueve efectivo y posición en el libro contable. Devuelve (cantidad, comisión)."""
+        pos = self.l["positions"]
+        if side == "sell":
+            qty = min(qty, pos.get(asset, 0.0))
         notional = qty * px
         fee = notional * self.fee
-        pos = self.l["positions"]
         if side == "buy":
             self.l["cash"] -= notional + fee
             pos[asset] = pos.get(asset, 0.0) + qty
         else:
-            qty = min(qty, pos.get(asset, 0.0))
-            notional = qty * px
-            fee = notional * self.fee
             self.l["cash"] += notional - fee
             pos[asset] = pos.get(asset, 0.0) - qty
             if pos[asset] <= 1e-12:
                 pos.pop(asset)
-        return Fill(asset, side, qty, px, fee)
+        return qty, fee
+
+    def execute(self, asset: str, side: str, qty: float, ref_price: float) -> Fill:
+        px = ref_price * (1 + self.slip if side == "buy" else 1 - self.slip)
+        qty, fee = self._apply(asset, side, qty, px)
+        return Fill(asset, side, qty, px, fee, ref=ref_price)
+
+
+class BookSimBroker(SimBroker):
+    """Simulado contra el libro de órdenes REAL de Bitso en el momento de operar.
+
+    Usa la comisión real, el diferencial real y la profundidad real: si no hay suficiente
+    oferta a buen precio, la orden se llena más cara o solo en parte, como pasaría con dinero.
+    El dinero sigue siendo ficticio.
+    """
+
+    def __init__(self, ledger: dict, taker_fee: float, quote: str = "USD", min_order_value: float = 1.0,
+                 fallback_slippage: float = 0.002, exchange=None):
+        super().__init__(ledger, taker_fee, fallback_slippage, min_order_value)
+        if exchange is None:
+            from .data import make_exchange
+
+            exchange = make_exchange("bitso")
+        self.ex = exchange
+        self.ex.load_markets()
+        self.quote = quote
+        self.name = "simulado · libro real de Bitso"
+
+    def asset_info(self, asset: str) -> dict:
+        m = self.ex.markets.get(f"{asset}/{self.quote}")
+        return {"tradable": bool(m) and m.get("active") is not False, "fractionable": True}
+
+    def execute(self, asset: str, side: str, qty: float, ref_price: float) -> Fill:
+        sym = f"{asset}/{self.quote}"
+        m = self.ex.markets.get(sym)
+        if not m:
+            return Fill(asset, side, 0.0, ref_price, 0.0, "failed", "Bitso no tiene este mercado", ref_price)
+        if side == "sell":
+            qty = min(qty, self.l["positions"].get(asset, 0.0))
+        try:
+            qty = float(self.ex.amount_to_precision(sym, qty))
+            book = self.ex.fetch_order_book(sym, limit=100)
+        except Exception as exc:  # noqa: BLE001  sin libro: deslizamiento supuesto
+            f = super().execute(asset, side, qty, ref_price)
+            f.note = f"libro no disponible, se supuso {self.slip:.2%} ({str(exc)[:60]})"
+            return f
+        if not book["bids"] or not book["asks"]:
+            return Fill(asset, side, 0.0, ref_price, 0.0, "failed", "libro vacío", ref_price)
+        mid = (book["bids"][0][0] + book["asks"][0][0]) / 2
+        got = cost = 0.0
+        for px, q in (book["asks"] if side == "buy" else book["bids"]):
+            take = min(q, qty - got)
+            got += take
+            cost += take * px
+            if got >= qty - 1e-12:
+                break
+        min_cost = ((m.get("limits") or {}).get("cost") or {}).get("min") or 0.0
+        if got <= 0 or cost < min_cost:
+            return Fill(asset, side, 0.0, mid, 0.0, "failed", f"debajo del mínimo de Bitso (${min_cost})", mid)
+        avg = cost / got
+        got, fee = self._apply(asset, side, got, avg)
+        status = "filled" if got >= qty * 0.999 else "partial"
+        return Fill(asset, side, got, avg, fee, status, "" if status == "filled" else "profundidad insuficiente", mid)
 
 
 class AlpacaBroker:
@@ -111,7 +173,7 @@ class AlpacaBroker:
             return Fill(asset, side, 0.0, ref_price, 0.0, "failed", str(exc))
         status = "filled" if o.get("status") == "filled" else "submitted"
         return Fill(asset, side, qty, float(o.get("filled_avg_price") or ref_price), 0.0, status,
-                    f"orden {o.get('id', '')[:8]}")
+                    f"orden {o.get('id', '')[:8]}", ref_price)
 
 
 class BitsoBroker:
@@ -149,6 +211,7 @@ class BitsoBroker:
         try:
             t = self.ex.fetch_ticker(sym)
             top = float(t["ask"] if side == "buy" else t["bid"])
+            mid = (float(t["ask"]) + float(t["bid"])) / 2
             limit = top * (1 + self.offset) if side == "buy" else top * (1 - self.offset)
             amount = float(self.ex.amount_to_precision(sym, qty))
             limit = float(self.ex.price_to_precision(sym, limit))
@@ -168,4 +231,4 @@ class BitsoBroker:
         fee = o.get("fee") or {}
         return Fill(asset, side, filled, float(o.get("average") or limit),
                     float(fee.get("cost") or 0) if fee.get("currency") == self.quote else 0.0,
-                    "filled" if filled >= amount * 0.999 else ("partial" if filled else "failed"))
+                    "filled" if filled >= amount * 0.999 else ("partial" if filled else "failed"), "", mid)

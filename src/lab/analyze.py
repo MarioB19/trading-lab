@@ -63,7 +63,18 @@ def fifo(trades: pd.DataFrame, prices: dict[str, dict[str, float]]) -> dict:
                          "value": value, "pnl": (value - cost) if value is not None else None,
                          "ret": (value / cost - 1) if value is not None and cost else None,
                          "since": dq[0][3]})
-    return {"closed": closed, "open": open_pos, "fees": float(t["fee"].sum()),
+    # costo real de ejecución (diferencial + comisión), ponderado por monto, donde se midió
+    costs = {}
+    if "cost_bps" in t:
+        c = t[pd.to_numeric(t["cost_bps"], errors="coerce").notna()].copy()
+        if len(c):
+            c["cost_bps"] = pd.to_numeric(c["cost_bps"])
+            c["value"] = (c["qty"] * c["price"]).abs()
+            costs["avg_cost_bps"] = round(float((c["cost_bps"] * c["value"]).sum() / c["value"].sum()), 1)
+            costs["cost_bps_by_sleeve"] = {k: round(float((g["cost_bps"] * g["value"]).sum() / g["value"].sum()), 1)
+                                           for k, g in c.groupby("sleeve")}
+            costs["n_cost_measured"] = int(len(c))
+    return {"closed": closed, "open": open_pos, "fees": float(t["fee"].sum()), "costs": costs,
             "n_trades": int(len(t)), "n_buys": int((t["side"] == "buy").sum()),
             "n_sells": int((t["side"] == "sell").sum())}
 
@@ -89,6 +100,7 @@ def summarize(res: dict) -> dict:
         "unrealized_pnl": round(float(o["pnl"].dropna().sum()), 2) if len(o) else 0.0,
     }
     s["total_pnl"] = round(s["realized_pnl"] + s["unrealized_pnl"], 2)
+    s.update(res.get("costs", {}))
     by = {}
     for sleeve in sorted(set(c.get("sleeve", pd.Series(dtype=str))) | set(o.get("sleeve", pd.Series(dtype=str)))):
         cs = c[c["sleeve"] == sleeve] if len(c) else c

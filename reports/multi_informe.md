@@ -4,35 +4,35 @@ Estrategia: tendencia + momentum ajustado por riesgo + paridad de riesgo + volat
 
 ## Criptomonedas
 
-Datos 2014-01-01 a 2026-09-24; fuera de muestra desde 2021; costo 0.30% por lado; candidata: top5 · vol 40% · con filtro BTC · freno.
+Datos 2014-01-01 a 2026-09-23; fuera de muestra desde 2021; costo 0.45% por lado; candidata: top5 · vol 40% · con filtro BTC · freno.
 
 | Estrategia | Rend. anual | Sharpe | Caída máx. | Exposición media |
 |---|---:|---:|---:|---:|
-| CANDIDATA: top5 · vol 40% · con filtro BTC · freno | 38.2% | 1.23 | −38% | 35% |
-| Optimizador (elige la mejor cada año) | 55.6% | 1.24 | −47% | 39% |
+| CANDIDATA: top5 · vol 40% · con filtro BTC · freno | 32.3% | 1.10 | −42% | 34% |
+| Optimizador (elige la mejor cada año) | 47.4% | 1.13 | −50% | 38% |
 | Comprar y aguantar BTC | 20.5% | 0.61 | −77% | 100% |
-| Pesos iguales, rebalanceo mensual | 19.9% | 0.61 | −78% | 84% |
-| Regla de tendencia solo BTC | 20.8% | 0.70 | −53% | 53% |
+| Pesos iguales, rebalanceo mensual | 19.2% | 0.60 | −78% | 84% |
+| Regla de tendencia solo BTC | 17.0% | 0.62 | −56% | 53% |
 
 - Placebo (pesos desfasados al azar): p = 0.000.
-- Mejor variante de 36 en todo el periodo: top3 · vol sin · con filtro BTC · freno (DSR vs 0: 0.998; DSR vs referencia: 0.430).
-- Bootstrap de la candidata: vs Comprar y aguantar BTC: P(más rendimiento) 73%, P(menor caída) 98%; vs Pesos iguales, rebalanceo mensual: P(más rendimiento) 80%, P(menor caída) 100%; vs Regla de tendencia solo BTC: P(más rendimiento) 86%, P(menor caída) 87%
-- Costos: 0.10% → 47.2%, 0.30% → 38.2%, 0.50% → 30.7%, 1.00% → 14.8%
-- Kill switch: a 35%: se habría activado el 2023-08-31; a 45%: no se habría activado.
-- 12 meses con $1,000: peor 5% $753, mediana $1,278, P(pérdida) 25%, P(caída >30%) 17% (referencia: P(pérdida) 40%, P(caída >30%) 82%).
-- Solo con las 16 criptos operables hoy en Bitso: 39.3% anual, caída máx. −35% (estas sobrevivieron, así que es optimista).
+- Mejor variante de 36 en todo el periodo: top3 · vol sin · con filtro BTC · freno (DSR vs 0: 0.993; DSR vs referencia: 0.296).
+- Bootstrap de la candidata: vs Comprar y aguantar BTC: P(más rendimiento) 66%, P(menor caída) 97%; vs Pesos iguales, rebalanceo mensual: P(más rendimiento) 73%, P(menor caída) 100%; vs Regla de tendencia solo BTC: P(más rendimiento) 83%, P(menor caída) 87%
+- Costos: 0.30% → 37.9%, 0.45% → 32.3%, 0.60% → 26.8%, 1.00% → 14.7%
+- Kill switch: a 35%: se habría activado el 2023-06-09; a 45%: no se habría activado.
+- 12 meses con $1,000: peor 5% $719, mediana $1,227, P(pérdida) 28%, P(caída >30%) 20% (referencia: P(pérdida) 41%, P(caída >30%) 81%).
+- Solo con las 16 criptos operables hoy en Bitso: 33.1% anual, caída máx. −39% (estas sobrevivieron, así que es optimista).
 - **Qué usa el bot en este bloque:** CANDIDATA: top5 · vol 40% · con filtro BTC · freno.
 
 | Año | Candidata | Referencia |
 |---|---:|---:|
-| 2019 | 43% | 94% |
-| 2020 | 83% | 305% |
-| 2021 | 129% | 60% |
-| 2022 | −6% | −64% |
-| 2023 | 40% | 155% |
-| 2024 | 52% | 121% |
-| 2025 | −6% | −6% |
-| 2026 | 48% | −4% |
+| 2019 | 39% | 94% |
+| 2020 | 67% | 305% |
+| 2021 | 122% | 60% |
+| 2022 | −8% | −64% |
+| 2023 | 34% | 155% |
+| 2024 | 45% | 121% |
+| 2025 | −11% | −6% |
+| 2026 | 40% | −4% |
 
 ## Acciones y ETFs
 
@@ -81,7 +81,7 @@ Datos 1998-01-02 a 2026-09-24; fuera de muestra desde 2010; costo 0.05% por lado
 
 ## Combinado de ejemplo
 
-30% cripto (candidata) / 70% ETFs (60/40 pasivo) sin rebalancear entre cuentas: 21.4% anual, caída máx. −26%, P(pérdida en 12 meses) 22%.
+30% cripto (candidata) / 70% ETFs (60/40 pasivo) sin rebalancear entre cuentas: 18.2% anual, caída máx. −27%, P(pérdida en 12 meses) 24%.
 
 ## Limitaciones
 

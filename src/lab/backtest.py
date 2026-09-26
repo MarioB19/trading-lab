@@ -20,7 +20,7 @@ from .strategies import ANN
 
 @dataclass
 class Costs:
-    fee: float = 0.001        # comisión por lado (Bitso taker BTC/MXN ≈ 0.098%)
+    fee: float = 0.001        # comisión por lado (supuesto del estudio de BTC; Bitso real: ver config.yaml)
     slippage: float = 0.001   # diferencia entre el precio de referencia y el de ejecución
 
     @property

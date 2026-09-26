@@ -42,10 +42,12 @@ CANDIDATES = {
 SLEEVES = {
     "crypto": {
         "label": "Criptomonedas", "ann": 365, "eval_start": "2019-01-01", "oos_year": 2021,
-        "cost": 0.003, "band": 0.02, "base": {"mom_windows": (30, 90, 180), "max_weight": 0.40},
+        # 0.45% por lado = comisión real de Bitso contra USD (0.36% taker, nivel más bajo)
+        # + medio diferencial medido en su libro (~0.08% para órdenes de ~$60, sep-2026)
+        "cost": 0.0045, "band": 0.02, "base": {"mom_windows": (30, 90, 180), "max_weight": 0.40},
         "grid": {"top_k": [1, 3, 5], "vol_target": [None, 0.40, 0.60],
                  "regime_asset": ["BTC", None], "dd_brake": [True, False]},
-        "costs_test": [0.001, 0.003, 0.005, 0.01], "benchmark": "BTC", "kill_dd": 0.45,
+        "costs_test": [0.003, 0.0045, 0.006, 0.01], "benchmark": "BTC", "kill_dd": 0.45,
         "passive": None,
     },
     "stocks": {

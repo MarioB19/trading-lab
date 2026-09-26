@@ -22,19 +22,19 @@ Cada domingo, `investigacion-semanal` descarga datos nuevos y vuelve a correr to
 
 Resultados **fuera de muestra**, con comisiones y deslizamiento incluidos. Las reglas se declararon antes de ver los resultados. Detalle en `reports/multi_informe.md`.
 
-**Criptomonedas, 2021 a hoy** (costo 0.3% por operación)
+**Criptomonedas, 2021 a hoy** (costo real de Bitso: 0.45% por operación = 0.36% de comisión contra USD + medio diferencial medido en su libro)
 
 | | Rend. anual | Sharpe | Caída máxima |
 |---|---:|---:|---:|
-| Portafolio táctico (lo que usa el bot) | 37.9% | 1.23 | −38% |
+| Portafolio táctico (lo que usa el bot) | 32.3% | 1.10 | −42% |
 | Comprar y aguantar BTC | 20.5% | 0.61 | −77% |
-| Pesos iguales en el top 15, rebalanceo mensual | 19.5% | 0.60 | −78% |
-| Regla de tendencia solo en BTC | 20.8% | 0.70 | −53% |
+| Pesos iguales en el top 15, rebalanceo mensual | 19.2% | 0.60 | −78% |
+| Regla de tendencia solo en BTC | 17.0% | 0.62 | −56% |
 
 - Ninguna de 200 versiones placebo (mismos pesos desfasados en el tiempo) igualó a la estrategia.
 - El universo de prueba incluye monedas que se desplomaron (LUNA, FTT, EOS, NEO…) y se eligió con la capitalización de cada día.
-- Tiene 73% de probabilidad de ganar más que BTC y 98% de caer menos (bootstrap). Tras corregir por las 36 variantes probadas, que gane *más* que BTC no es estadísticamente seguro. Que caiga mucho menos sí lo es.
-- Con costos de 1% por operación el rendimiento baja a 14.7%: hay que operar por API, no desde la app.
+- Tiene 66% de probabilidad de ganar más que BTC y 97% de caer menos (bootstrap). Tras corregir por las 36 variantes probadas, que gane *más* que BTC no es estadísticamente seguro. Que caiga mucho menos sí lo es.
+- Los costos pesan mucho: con 0.30% por operación rendiría 37.9%; con 0.60%, 26.8%; con 1%, 14.7%. Por eso el bot opera en los mercados contra dólares de Bitso (0.36% de comisión) y no contra pesos (0.78%).
 
 **Acciones y ETFs, 2010 a hoy** (costo 0.05%)
 
@@ -48,7 +48,13 @@ La misma lógica que funciona en cripto **no funcionó en acciones**: su timing 
 
 **Multi-mercado (materias primas, divisas, bonos y bolsas en 19 ETFs), probado el 25-sep-2026:** perdió 1.4% anual de 2012 a hoy y falló los cinco criterios declarados antes de la prueba; la versión con rebalanceo mensual dio 3.1% anual y tampoco pasó. Queda apagado. Detalle en `reports/multi_market_informe.md`.
 
-**Combinado 30% cripto / 70% ETFs (2021 a hoy):** 21.3% anual, caída máxima −26%, 22% de probabilidad de perder en un periodo de 12 meses. La racha más larga sin recuperar el máximo fue de 824 días.
+**Combinado 30% cripto / 70% ETFs (2021 a hoy):** 18.2% anual, caída máxima −27%, 24% de probabilidad de perder en un periodo de 12 meses. La racha más larga sin recuperar el máximo fue de 835 días.
+
+## Qué tan real es el simulado
+
+- **Criptos:** cada orden simulada se llena contra el libro de órdenes real de Bitso en ese momento: comisión real (0.36%), diferencial real y profundidad real. Si no hay suficiente oferta, se llena más cara o en parte. Solo el dinero es ficticio.
+- **Acciones:** con llaves de Alpaca paper, las órdenes van a esa cuenta de práctica, que las ejecuta con precios reales del mercado. Sin llaves, se simulan al cierre con 0.05% de deslizamiento.
+- **Cada operación registra su costo real** (`cost_bps` en `state/trades.csv`) y el tablero muestra el promedio contra lo que supone el backtest.
 
 ## Riesgo, en números
 
@@ -56,7 +62,7 @@ Con $1,000 USD en cada bloque, simulando 12 meses a partir de pedazos del period
 
 | | Peor 5% de los casos | Mediana | P(terminar con pérdida) | P(caída >30% en el camino) |
 |---|---:|---:|---:|---:|
-| Cripto táctico | $746 | $1,278 | 25% | 17% |
+| Cripto táctico | $719 | $1,227 | 28% | 20% |
 | BTC comprar y aguantar | $450 | $1,145 | 41% | 81% |
 | 60/40 | $945 | $1,104 | 13% | 0.1% |
 
@@ -65,7 +71,7 @@ Con $1,000 USD en cada bloque, simulando 12 meses a partir de pedazos del period
 - **Simulado por defecto.** El dinero real exige tres cosas a la vez: `mode: live` en `config.yaml`, la variable `CONFIRMO_DINERO_REAL=si` y las llaves del broker.
 - **Capital máximo por bloque** (`capital`). El bot nunca maneja más que eso, aunque tengas más en la cuenta.
 - **Freno por caída:** la exposición baja de forma gradual si el bloque cae más de 10% desde su máximo de 6 meses (solo en el bloque táctico).
-- **Kill switch:** si el bloque cae 45% (cripto) o 25% (acciones) desde su máximo, vende todo y se apaga hasta que lo rearmes a mano. La peor caída histórica de la estrategia cripto fue 38%.
+- **Kill switch:** si el bloque cae 45% (cripto) o 25% (acciones) desde su máximo, vende todo y se apaga hasta que lo rearmes a mano. La peor caída histórica de la estrategia cripto, con costos reales, fue 42%: el margen antes del kill switch es corto.
 - **Datos:** no opera con datos viejos. Un precio que salta más de 40% en un día solo permite reducir ese activo. Un activo sin precio bloquea el día en vez de valuarse en cero.
 - **No opera dos veces la misma vela.** Si quedan órdenes pendientes en Alpaca, espera.
 - **Tope por compra;** las ventas que reducen riesgo nunca se frenan.
@@ -81,7 +87,7 @@ El repositorio ya corre solo en modo simulado. Para ir subiendo de nivel:
 **2. Acciones en Alpaca paper (gratis, sin dinero real).** Crea una cuenta en alpaca.markets y activa la autenticación en dos pasos. Genera llaves de *Paper Trading* y agrégalas en GitHub → Settings → Secrets and variables → Actions → *New repository secret*: `ALPACA_KEY_ID` y `ALPACA_SECRET_KEY`. Desde la siguiente corrida, las órdenes del bloque de acciones van a tu cuenta paper.
 
 **3. Dinero real (después de 4 a 8 semanas en simulado).**
-- *Cripto (Bitso):* convierte MXN a USD dentro de Bitso. Crea una llave de API con permisos de **ver saldo y operar**, sin retiros, y agrega los secrets `BITSO_API_KEY` y `BITSO_API_SECRET`.
+- *Cripto (Bitso):* convierte MXN a USD dentro de Bitso (ese cambio es un mercado contra pesos: paga 0.78% de comisión una vez). Crea una llave de API con permisos de **ver saldo y operar**, sin retiros, y agrega los secrets `BITSO_API_KEY` y `BITSO_API_SECRET`.
 - *Acciones:* Alpaca acepta cuentas reales de muchos países, pero no publica si México está incluido; confírmalo con su soporte. Si no, la alternativa es Interactive Brokers (requiere agregar un conector).
 - Ajusta `capital` en `config.yaml` a lo que aceptes perder. Cambia `mode: live` y crea la *variable* (no secret) `CONFIRMO_DINERO_REAL` con valor `si`.
 - Para volver a simulado basta con borrar esa variable.
@@ -91,7 +97,7 @@ El repositorio ya corre solo en modo simulado. Para ir subiendo de nivel:
 ```bash
 python -m venv .venv && source .venv/bin/activate    # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
-python -m pytest -q -W ignore                         # 33 pruebas
+python -m pytest -q -W ignore                         # 41 pruebas
 python -m lab.research_multi --refresh                # investigación completa (~2 min)
 python -m lab.bot                                     # corrida del día, simulada
 python -m lab.bot --replay 365                        # el bot re-juega un año y se compara con el backtest

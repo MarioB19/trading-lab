@@ -64,3 +64,42 @@ def test_yahoo_fills_closed_session_bar(monkeypatch):
     assert len(s) == 2 and s.iloc[-1] == pytest.approx(771.35)
     monkeypatch.setattr("requests.get", lambda *a, **k: R(1790270000))  # sesión aún abierta
     assert len(data.yahoo_daily("SPY", start="2026-09-20")) == 1
+
+
+class FakeBitso:
+    def __init__(self, asks, bids):
+        self.markets = {"ETH/USD": {"active": True, "limits": {"cost": {"min": 0.5}}}}
+        self.asks, self.bids = asks, bids
+
+    def load_markets(self):
+        return self.markets
+
+    def amount_to_precision(self, sym, q):
+        return f"{q:.6f}"
+
+    def fetch_order_book(self, sym, limit=100):
+        return {"asks": self.asks, "bids": self.bids}
+
+
+def test_book_sim_walks_real_book_with_real_fee():
+    from lab.brokers import BookSimBroker
+    ex = FakeBitso(asks=[[100.0, 0.5], [101.0, 1.0]], bids=[[99.0, 1.0]])
+    led = {"cash": 1000.0, "positions": {}}
+    b = BookSimBroker(led, taker_fee=0.0036, exchange=ex)
+    f = b.execute("ETH", "buy", 1.0, 99.5)
+    assert f.qty == pytest.approx(1.0) and f.price == pytest.approx(100.5)  # 0.5 a 100 + 0.5 a 101
+    assert f.ref == pytest.approx(99.5)  # medio del libro
+    assert f.fee == pytest.approx(100.5 * 0.0036)
+    assert led["cash"] == pytest.approx(1000 - 100.5 - 100.5 * 0.0036)
+    f2 = b.execute("ETH", "buy", 5.0, 99.5)  # más de lo que hay en el libro
+    assert f2.status == "partial" and f2.qty == pytest.approx(1.5)  # todo lo que ofrece el libro
+    assert b.asset_info("SOL")["tradable"] is False and b.execute("SOL", "buy", 1, 10).status == "failed"
+
+
+def test_trades_csv_migrates_new_columns(tmp_path):
+    from lab.bot import append_csv, TRADE_FIELDS
+    p = tmp_path / "t.csv"
+    p.write_text("run_at_utc,sleeve,asset\n2026-01-01,crypto,ETH\n")
+    append_csv(p, TRADE_FIELDS, [{"run_at_utc": "2026-01-02", "sleeve": "crypto", "asset": "SOL", "cost_bps": 41.2}])
+    df = pd.read_csv(p)
+    assert list(df.columns) == TRADE_FIELDS and len(df) == 2 and df["cost_bps"].iloc[1] == pytest.approx(41.2)

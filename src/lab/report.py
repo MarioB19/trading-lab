@@ -483,7 +483,7 @@ def html_page(res: dict, extras: dict) -> str:
 
 <section>
   <h2>Qué pasa si las comisiones suben</h2>
-  <p class="caption">La regla opera seguido, así que el costo por operación decide si la ventaja sobrevive. Por API en Bitso la comisión taker de BTC/MXN es de 0.098% en el nivel más bajo de volumen; compras por otras vías pueden incluir un diferencial mayor, así que mide el costo real de tus primeras operaciones.</p>
+  <p class="caption">La regla opera seguido, así que el costo por operación decide si la ventaja sobrevive. En Bitso, en el nivel más bajo de volumen, la comisión taker es de 0.78% en mercados contra pesos y de 0.36% contra dólares, más el diferencial del libro.</p>
   {cost_table}
 </section>
 

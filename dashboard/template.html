@@ -304,7 +304,8 @@ svg.chart{width:100%;height:auto;display:block;overflow:visible}
     if (!a || !a.summary) { el.innerHTML = `<div class="empty">El análisis aparece después de la siguiente corrida del bot.</div>`; return; }
     const s = a.summary;
     const tiles = [
-      kpi("Operaciones", String(s.n_trades), `${s.n_buys} compras · ${s.n_sells} ventas · comisiones ${usd(s.fees)}`),
+      kpi("Operaciones", String(s.n_trades), `${s.n_buys} compras · ${s.n_sells} ventas · comisiones ${usd(s.fees)}` +
+          (s.avg_cost_bps != null ? `<br>Costo real medido: ${(s.avg_cost_bps / 100).toFixed(2)}% por operación (${s.n_cost_measured})` : "")),
       kpi("Cerradas: ganadas / perdidas", s.closed_lots ? `${s.wins} / ${s.losses}` : "0",
           s.closed_lots ? `Acierto ${pct(s.win_rate, 0)} · resultado <span class="${cls(s.realized_pnl)}">${usd(s.realized_pnl)}</span>` : "Aún no se ha vendido nada"),
       kpi("Abiertas: ganando / perdiendo", `${s.open_winning} / ${s.open_losing}`, `No realizado <span class="${cls(s.unrealized_pnl)}">${usd(s.unrealized_pnl)}</span>`),

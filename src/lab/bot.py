@@ -23,7 +23,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from .brokers import AlpacaBroker, BitsoBroker, Fill, SimBroker
+from .brokers import AlpacaBroker, BitsoBroker, BookSimBroker, Fill, SimBroker
 from .data import DATA_DIR, ROOT, fetch_daily_closes, make_exchange, yahoo_daily
 from .portfolio import PortfolioParams, clean, drawdown_multiplier, listed_universe, target_weights
 
@@ -35,8 +35,8 @@ SLEEVE_DEFAULTS = {
         "universe": ["BTC", "ETH", "SOL", "XRP", "ADA", "DOGE", "LINK", "AVAX", "LTC", "BCH",
                      "XLM", "TRX", "HBAR", "NEAR", "UNI", "ATOM"],
         "data": {"source": "ccxt", "exchange": "kraken", "fallback_exchange": "bitso"},
-        "quote": "USD", "paper_broker": "sim", "live_broker": "bitso",
-        "capital": 300.0, "fee": 0.001, "slippage": 0.002, "band": 0.02,
+        "quote": "USD", "paper_broker": "bitso_book", "live_broker": "bitso",
+        "capital": 300.0, "fee": 0.0036, "slippage": 0.001, "band": 0.02,
         "kill_drawdown": 0.45, "max_order_value": 300.0, "min_order_value": 5.0,
         "max_data_age_hours": 36, "benchmark": "BTC", "min_history": 250,
     },
@@ -72,7 +72,7 @@ DEFAULT_CONFIG = {"mode": "paper", "max_price_jump": 0.40, "sleeves": SLEEVE_DEF
                   "paths": {"state": "state/state.json", "trades": "state/trades.csv",
                             "equity": "state/equity.csv", "snapshot": "state/snapshot.json"}}
 TRADE_FIELDS = ["run_at_utc", "sleeve", "mode", "broker", "candle", "asset", "side", "qty", "price",
-                "value", "fee", "status", "note"]
+                "value", "fee", "status", "note", "ref_price", "cost_bps"]
 EQUITY_FIELDS = ["date", "sleeve", "mode", "equity", "cash", "exposure", "drawdown", "brake",
                  "benchmark_price", "n_positions"]
 
@@ -119,6 +119,17 @@ def append_csv(path: Path, fields: list[str], rows: list[dict]) -> None:
     if not rows:
         return
     path.parent.mkdir(parents=True, exist_ok=True)
+    if path.exists():  # si cambiaron las columnas, se reescribe el archivo con las nuevas
+        with path.open() as f:
+            header = next(csv.reader(f), [])
+        if header and header != fields:
+            with path.open() as f:
+                old = list(csv.DictReader(f))
+            with path.open("w", newline="") as f:
+                w = csv.DictWriter(f, fieldnames=fields)
+                w.writeheader()
+                for r in old:
+                    w.writerow({k: r.get(k, "") for k in fields})
     new = not path.exists()
     with path.open("a", newline="") as f:
         w = csv.DictWriter(f, fieldnames=fields)
@@ -316,10 +327,16 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
                     continue
             fills.append(broker.execute(a, "buy", qty, price))
     for f in fills:
+        # costo real de ejecutar: precio contra la referencia (a favor = negativo) + comisión
+        cost_bps = ""
+        if f.qty > 0 and f.ref > 0 and f.status in ("filled", "partial"):
+            sign = 1 if f.side == "buy" else -1
+            cost_bps = round(((f.price / f.ref - 1) * sign + f.fee / (f.qty * f.price)) * 1e4, 1)
         res["trades"].append({"run_at_utc": run_at, "sleeve": name, "mode": mode, "broker": broker.name,
                               "candle": cstr, "asset": f.asset, "side": f.side, "qty": round(f.qty, 8),
                               "price": round(f.price, 6), "value": round(f.qty * f.price, 2),
-                              "fee": round(f.fee, 4), "status": f.status, "note": f.note})
+                              "fee": round(f.fee, 4), "status": f.status, "note": f.note,
+                              "ref_price": round(f.ref, 6) if f.ref else "", "cost_bps": cost_bps})
         if f.status == "failed":
             notes.append(f"orden fallida {f.side} {f.asset}: {f.note}")
 
@@ -382,6 +399,11 @@ def make_broker(name: str, sc: dict, mode: str, st: dict, notes: list[str]):
         except RuntimeError as exc:
             notes.append(f"Alpaca paper no disponible ({exc}); uso el simulado interno")
     st.setdefault("ledger", {"cash": float(sc["capital"]), "positions": {}})
+    if sc["paper_broker"] == "bitso_book":
+        try:
+            return BookSimBroker(st["ledger"], sc["fee"], sc["quote"], minv, sc["slippage"])
+        except Exception as exc:  # noqa: BLE001
+            notes.append(f"libro de Bitso no disponible ({str(exc)[:80]}); uso deslizamiento supuesto")
     return SimBroker(st["ledger"], sc["fee"], sc["slippage"], minv)
 
 
@@ -392,9 +414,8 @@ def replay(cfg: dict, name: str = "crypto", days: int = 365, prices: pd.DataFram
 
     sc = cfg["sleeves"][name]
     P = offline_prices(name, sc) if prices is None else prices
-    st: dict = {}
-    broker = make_broker(name, sc, "paper", st, [])
-    broker.min_order_value = 0.0
+    st: dict = {"ledger": {"cash": float(sc["capital"]), "positions": {}}}
+    broker = SimBroker(st["ledger"], sc["fee"], sc["slippage"], 0.0)
     rows, eq = [], pd.Series(dtype=float)
     for i in range(len(P) - days, len(P)):
         hist = P.iloc[: i + 1]
