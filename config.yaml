@@ -60,7 +60,8 @@ sleeves:
   # ---------------------------------------------------------------- MULTI-MERCADO (NO APROBADO)
   # Materias primas, divisas, bonos y bolsas en ETFs, con el efectivo en BIL. Se probó el
   # 25-sep-2026 con criterios declarados antes: perdió 1.4% anual (2012-2026) contra 9.8% del
-  # 60/40 y falló los 5 criterios (reports/multi_market_informe.md). Queda apagado.
+  # 60/40 y falló los 5 criterios. La versión con rebalanceo mensual (experimento 2) dio 3.1%
+  # anual y tampoco pasó (reports/multi_market_informe.md). Queda apagado.
   multi:
     enabled: false
 
