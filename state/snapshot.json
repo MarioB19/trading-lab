@@ -214,7 +214,7 @@
     "esta vela ya se oper\u00f3"
    ],
    "status": "skip",
-   "last_run_utc": "2026-09-26 01:06"
+   "last_run_utc": "2026-09-26 01:54"
   },
   "stocks": {
    "label": "Acciones y ETFs",
@@ -375,20 +375,21 @@
     }
    ],
    "notes": [
-    "Alpaca paper no disponible (faltan ALPACA_KEY_ID / ALPACA_SECRET_KEY); uso el simulado interno"
+    "Alpaca paper no disponible (faltan ALPACA_KEY_ID / ALPACA_SECRET_KEY); uso el simulado interno",
+    "esta vela ya se oper\u00f3"
    ],
-   "status": "ok",
-   "last_run_utc": "2026-09-26 01:06"
+   "status": "skip",
+   "last_run_utc": "2026-09-26 01:54"
   }
  },
- "generated_utc": "2026-09-26 01:06",
+ "generated_utc": "2026-09-26 01:54",
  "mode": "paper",
  "research": {
-  "generated": "2026-09-25 12:09 UTC",
+  "generated": "2026-09-26 01:48 UTC",
   "combined": {
-   "cagr": 0.2140868076109006,
-   "max_dd": -0.2647582470358134,
-   "p_loss_12m": 0.2236,
+   "cagr": 0.1824578310978977,
+   "max_dd": -0.27153953925370544,
+   "p_loss_12m": 0.2444,
    "crypto_share": 0.3
   },
   "crypto": {
@@ -396,43 +397,43 @@
    "oos_start": "2021-01-01",
    "recommended": "CANDIDATA: top5 \u00b7 vol 40% \u00b7 con filtro BTC \u00b7 freno",
    "strategy": {
-    "cagr": 0.38171291186152123,
-    "sharpe": 1.2343334217577402,
-    "max_dd": -0.37533001322938064
+    "cagr": 0.3227004460957936,
+    "sharpe": 1.0970446795545996,
+    "max_dd": -0.41631401689754055
    },
    "benchmark_name": "Comprar y aguantar BTC",
    "benchmark": {
-    "cagr": 0.20456344417646855,
-    "sharpe": 0.6115871330004534,
+    "cagr": 0.20468044171400135,
+    "sharpe": 0.6117478088856954,
     "max_dd": -0.7666881595920354
    },
    "tactical": {
-    "cagr": 0.38171291186152123,
-    "sharpe": 1.2343334217577402,
-    "max_dd": -0.37533001322938064
+    "cagr": 0.3227004460957936,
+    "sharpe": 1.0970446795545996,
+    "max_dd": -0.41631401689754055
    },
    "placebo_p": 0.0,
-   "p_loss_12m": 0.2492
+   "p_loss_12m": 0.2812
   },
   "stocks": {
    "label": "Acciones y ETFs",
    "oos_start": "2010-01-01",
    "recommended": "60/40 (SPY/IEF)",
    "strategy": {
-    "cagr": 0.09895917829294376,
-    "sharpe": 0.9957763791070966,
-    "max_dd": -0.21578334381880404
+    "cagr": 0.0989591721055032,
+    "sharpe": 0.9957761616582715,
+    "max_dd": -0.2157834867560986
    },
    "benchmark_name": "Comprar y aguantar SPY",
    "benchmark": {
-    "cagr": 0.14252223195309477,
-    "sharpe": 0.8667754623815389,
-    "max_dd": -0.33717268745960094
+    "cagr": 0.1425221941910968,
+    "sharpe": 0.8667747246377154,
+    "max_dd": -0.33717268745960116
    },
    "tactical": {
-    "cagr": 0.04527486106207124,
-    "sharpe": 0.5266081375209232,
-    "max_dd": -0.16907069298032118
+    "cagr": 0.045218721219039804,
+    "sharpe": 0.5260217640796205,
+    "max_dd": -0.16907009335593293
    },
    "placebo_p": 0.34,
    "p_loss_12m": 0.1338
