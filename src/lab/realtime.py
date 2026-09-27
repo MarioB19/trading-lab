@@ -32,12 +32,12 @@ import numpy as np
 import pandas as pd
 
 from .bot import (EQUITY_FIELDS, ROOT, append_csv, book_value, compute_targets, fetch_prices,
-                  is_capped, load_config, load_env, load_state, make_broker, research_summary, save_json,
-                  sleeve_params)
-from .data import make_exchange, yahoo_last
+                  init_sleeve_cash, is_capped, load_config, load_env, load_state, make_broker, research_summary,
+                  save_json, sleeve_params)
+from .data import make_exchange, usd_mxn_now, yahoo_last
 from .portfolio import drawdown_multiplier, with_provisional_close
 
-LIVE_FIELDS = ["time_utc", "sleeve", "mode", "equity", "drawdown", "exposure", "brake_now", "action"]
+LIVE_FIELDS = ["time_utc", "sleeve", "mode", "equity", "drawdown", "exposure", "brake_now", "action", "usd_mxn"]
 REALTIME_DEFAULTS = {"enabled": True, "action": "observe", "every_minutes": 60, "alert_kill_margin": 0.05,
                      "max_price_age_minutes": 90}
 
@@ -113,7 +113,9 @@ def check_sleeve(name: str, sc: dict, st: dict, rt: dict, mode: str, now: pd.Tim
                 "alerts": alerts, "updated_utc": now.strftime("%Y-%m-%d %H:%M")}
 
     capped = is_capped(broker, mode)
-    value, equity, cash_in = book_value(positions, cash, px, sc["capital"], capped)
+    own_cash = init_sleeve_cash(st, sc, positions, px) if capped else None
+    value, equity, cash_in = book_value(positions, cash, px, sc["capital"], capped, own_cash,
+                                        bool(sc.get("compound", True)))
     peak = max(float(st.get("peak") or 0.0), equity)
     dd = equity / peak - 1 if peak > 0 else 0.0
     p = sleeve_params(sc)
@@ -183,6 +185,10 @@ def tick(cfg: dict, mode: str, now: pd.Timestamp | None = None) -> dict:
     snap = json.loads(paths["snapshot"].read_text()) if paths["snapshot"].exists() else {}
     out = {"updated_utc": now.strftime("%Y-%m-%d %H:%M"), "mode": mode, "action": rt["action"],
            "every_minutes": rt["every_minutes"], "sleeves": {}, "research": research_summary()}
+    try:  # informativo: si falla, la revisión sigue
+        out["fx"] = usd_mxn_now()
+    except Exception as exc:  # noqa: BLE001
+        print(f"[aviso] tipo de cambio: {exc}")
     rows = []
     for name, sc in cfg["sleeves"].items():
         if not sc.get("enabled"):
@@ -203,7 +209,7 @@ def tick(cfg: dict, mode: str, now: pd.Timestamp | None = None) -> dict:
         if r.get("status") == "ok":
             rows.append({"time_utc": out["updated_utc"], "sleeve": name, "mode": mode, "equity": r["equity"],
                          "drawdown": r["drawdown"], "exposure": r["exposure"], "brake_now": r["brake_now"],
-                         "action": rt["action"]})
+                         "action": rt["action"], "usd_mxn": (out.get("fx") or {}).get("rate", "")})
         print(f"[{mode} · {rt['action']}] {name}: {r.get('status')} | capital {r.get('equity', '-')} | "
               f"caída {r.get('drawdown', '-')} | {'; '.join(r.get('alerts', []) + r.get('notes', []))}")
     save_json(live_path, out)

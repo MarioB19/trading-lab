@@ -52,6 +52,12 @@ La misma lógica que funciona en cripto **no funcionó en acciones**: su timing 
 
 **Combinado 30% cripto / 70% ETFs (2021 a hoy):** 18.2% anual, caída máxima −27%, 24% de probabilidad de perder en un periodo de 12 meses. La racha más larga sin recuperar el máximo fue de 835 días.
 
+## Dólares, pesos e interés compuesto
+
+- **Todo se opera en dólares (USD):** las criptos en los mercados contra dólar de Bitso y las acciones en Alpaca.
+- **Tipo de cambio:** cada corrida guarda el USD/MXN del libro de Bitso (donde se cambiarían los pesos), en `state/equity.csv` (`usd_mxn`, cierre de cada día) y en `state/live.json` (el del momento). El tablero muestra el valor en pesos y separa el resultado en pesos en dos: lo que ganó el bot y lo que se movió el dólar.
+- **Interés compuesto (`compound: true`):** cada día el bot reparte el capital completo del bloque, con lo ganado incluido. En el simulado interno la cuenta es el bloque. En una cuenta externa (Alpaca o dinero real), el bot lleva aparte el efectivo del bloque (`sleeve_cash` en `state/state.json`): suma lo que vende, resta lo que compra y nunca usa más efectivo del que de verdad hay en la cuenta. Con `compound: false`, lo que el bloque gane por encima de `capital` se queda en efectivo.
+
 ## Qué tan real es el simulado
 
 - **Criptos:** cada orden simulada se llena contra el libro de órdenes real de Bitso en ese momento: comisión real (0.36%), diferencial real y profundidad real. Si no hay suficiente oferta, se llena más cara o en parte. Solo el dinero es ficticio.
@@ -88,7 +94,7 @@ Con $1,000 USD en cada bloque, simulando 12 meses a partir de pedazos del period
 ## Candados de seguridad
 
 - **Simulado por defecto.** El dinero real exige tres cosas a la vez: `mode: live` en `config.yaml`, la variable `CONFIRMO_DINERO_REAL=si` y las llaves del broker.
-- **Capital máximo por bloque** (`capital`). El bot nunca maneja más que eso, aunque tengas más en la cuenta.
+- **Capital por bloque** (`capital`). El bloque arranca con eso y solo crece o se achica con sus propias ganancias y pérdidas (interés compuesto). Aunque tengas más dinero en la cuenta, el bot no lo toca.
 - **Freno por caída:** la exposición baja de forma gradual si el bloque cae más de 10% desde su máximo de 6 meses (solo en el bloque táctico).
 - **Kill switch:** si el bloque cae 45% (cripto) o 25% (acciones) desde su máximo, vende todo y se apaga hasta que lo rearmes a mano. La peor caída histórica de la estrategia cripto, con costos reales, fue 42%, y con otro universo de monedas llegó a 50%: es probable que algún día se active. La revisión de cada hora avisa en el tablero cuando faltan 5 puntos.
 - **Datos:** no opera con datos viejos. Un precio que salta más de 40% en un día solo permite reducir ese activo. Un activo sin precio bloquea el día en vez de valuarse en cero.
@@ -116,7 +122,7 @@ El repositorio ya corre solo en modo simulado. Para ir subiendo de nivel:
 ```bash
 python -m venv .venv && source .venv/bin/activate    # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
-python -m pytest -q -W ignore                         # 54 pruebas
+python -m pytest -q -W ignore                         # 60 pruebas
 python -m lab.research_multi --refresh                # investigación completa (~2 min)
 python -m lab.bot                                     # corrida del día, simulada
 python -m lab.bot --replay 365                        # el bot re-juega un año y se compara con el backtest

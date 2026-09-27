@@ -133,6 +133,26 @@ def yahoo_last(symbol: str) -> tuple[float, pd.Timestamp]:
     return float(meta["regularMarketPrice"]), pd.Timestamp(meta["regularMarketTime"], unit="s")
 
 
+# ============================================================ tipo de cambio
+def usd_mxn_now() -> dict:
+    """Pesos por dólar en este momento. Fuente: libro USD/MXN de Bitso (donde se cambiarían los
+    pesos a dólares); si no responde, Yahoo Finance. Punto medio entre compra y venta."""
+    try:
+        ex = make_exchange("bitso")
+        t = ex.fetch_ticker("USD/MXN")
+        bid, ask = float(t["bid"]), float(t["ask"])
+        return {"rate": round((bid + ask) / 2, 4), "bid": bid, "ask": ask, "source": "Bitso USD/MXN",
+                "time_utc": pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%d %H:%M")}
+    except Exception:  # noqa: BLE001
+        p, t = yahoo_last("MXN=X")
+        return {"rate": round(p, 4), "source": "Yahoo Finance", "time_utc": t.strftime("%Y-%m-%d %H:%M")}
+
+
+def usd_mxn_daily(days: int = 400) -> pd.Series:
+    """Cierre diario USD/MXN de Bitso (00:00 UTC, igual que las velas de cripto). Fila D = cierre del día D."""
+    return fetch_daily_closes(make_exchange("bitso"), "USD/MXN", days=days)
+
+
 # Criptos que alguna vez fueron grandes, INCLUYENDO las que se desplomaron o murieron
 # (LUNA, FTT, EOS, NEO, IOTA...). Elegir solo las que hoy siguen vivas inflaría el backtest.
 CRYPTO_RESEARCH = {

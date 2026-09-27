@@ -24,7 +24,7 @@ import numpy as np
 import pandas as pd
 
 from .brokers import AlpacaBroker, BitsoBroker, BookSimBroker, Fill, SimBroker
-from .data import DATA_DIR, ROOT, fetch_daily_closes, make_exchange, yahoo_daily
+from .data import DATA_DIR, ROOT, fetch_daily_closes, make_exchange, usd_mxn_daily, usd_mxn_now, yahoo_daily
 from .portfolio import PortfolioParams, clean, drawdown_multiplier, listed_universe, target_weights
 
 SLEEVE_DEFAULTS = {
@@ -36,7 +36,7 @@ SLEEVE_DEFAULTS = {
                      "XLM", "TRX", "HBAR", "NEAR", "UNI", "ATOM"],
         "data": {"source": "ccxt", "exchange": "kraken", "fallback_exchange": "bitso"},
         "quote": "USD", "paper_broker": "bitso_book", "live_broker": "bitso",
-        "capital": 300.0, "fee": 0.0036, "slippage": 0.001, "band": 0.02,
+        "capital": 300.0, "compound": True, "fee": 0.0036, "slippage": 0.001, "band": 0.02,
         "kill_drawdown": 0.45, "max_order_value": 300.0, "min_order_value": 5.0,
         "max_data_age_hours": 36, "benchmark": "BTC", "min_history": 250,
     },
@@ -50,7 +50,7 @@ SLEEVE_DEFAULTS = {
                      "XLK", "XLF", "XLE", "XLV", "XLI", "XLP", "XLU", "XLY", "XLB"],
         "data": {"source": "yahoo"},
         "quote": "USD", "paper_broker": "sim", "live_broker": "alpaca",
-        "capital": 700.0, "fee": 0.0, "slippage": 0.0005, "band": 0.05,
+        "capital": 700.0, "compound": True, "fee": 0.0, "slippage": 0.0005, "band": 0.05,
         "kill_drawdown": 0.25, "max_order_value": 700.0, "min_order_value": 1.0,
         "max_data_age_hours": 100, "benchmark": "SPY", "min_history": 250,
     },
@@ -74,7 +74,7 @@ DEFAULT_CONFIG = {"mode": "paper", "max_price_jump": 0.40, "sleeves": SLEEVE_DEF
 TRADE_FIELDS = ["run_at_utc", "sleeve", "mode", "broker", "candle", "asset", "side", "qty", "price",
                 "value", "fee", "status", "note", "ref_price", "cost_bps"]
 EQUITY_FIELDS = ["date", "sleeve", "mode", "equity", "cash", "exposure", "drawdown", "brake",
-                 "benchmark_price", "n_positions"]
+                 "benchmark_price", "n_positions", "usd_mxn"]
 
 
 # ------------------------------------------------------------------ config y estado
@@ -204,18 +204,35 @@ def compute_targets(sc: dict, prices: pd.DataFrame) -> tuple[pd.Series, pd.DataF
 
 
 # ------------------------------------------------------------------ valuación
-def book_value(positions: dict, cash: float, px: pd.Series, capital: float, capped: bool) -> tuple[dict, float, float]:
+def book_value(positions: dict, cash: float, px: pd.Series, capital: float, capped: bool,
+               sleeve_cash: float | None = None, compound: bool = True) -> tuple[dict, float, float]:
     """(valor por activo, capital del bloque, efectivo del bloque) a los precios `px`.
 
-    En una cuenta externa (real o paper de Alpaca, que trae $100k virtuales) el bot solo
-    maneja `capital`; así el simulado se comporta igual que lo haría el real.
+    Simulado interno: la cuenta ES el bloque, así que todo cuenta y la ganancia se reinvierte.
+    Cuenta externa (real, o paper de Alpaca que trae $100k virtuales): el bloque es solo su
+    parte de la cuenta. Su efectivo se lleva aparte (`sleeve_cash`, en state.json) y nunca
+    pasa del efectivo que de verdad hay (sin apalancamiento). Así el bloque ve sus propias
+    ganancias y pérdidas.
+      compound=True: lo ganado se reinvierte (interés compuesto).
+      compound=False: nunca opera más de `capital`; lo ganado arriba del tope queda en efectivo.
     """
     value = {a: q * float(px[a]) for a, q in positions.items() if a in px.index and np.isfinite(px[a])}
-    equity = cash + sum(value.values())
-    if capped:
+    posval = sum(value.values())
+    if not capped:
+        return value, cash + posval, cash
+    own = cash if sleeve_cash is None else max(0.0, min(float(sleeve_cash), cash))
+    equity = posval + own
+    if not compound:
         equity = min(equity, float(capital))
-        cash = max(0.0, equity - sum(value.values()))  # efectivo dentro del capital asignado
-    return value, equity, cash
+    return value, equity, max(0.0, equity - posval)
+
+
+def init_sleeve_cash(st: dict, sc: dict, positions: dict, px: pd.Series) -> float:
+    """Efectivo propio del bloque en una cuenta externa. La primera vez: capital menos lo ya invertido."""
+    if st.get("sleeve_cash") is None:
+        posval = sum(q * float(px[a]) for a, q in positions.items() if a in px.index and np.isfinite(px[a]))
+        st["sleeve_cash"] = max(0.0, float(sc["capital"]) - posval)
+    return float(st["sleeve_cash"])
 
 
 def is_capped(broker, mode: str) -> bool:
@@ -256,7 +273,9 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
         notes.append(f"sin precio confiable para {', '.join(missing)}: no se opera hoy")
         return res
     capped = is_capped(broker, mode)
-    value, equity, _ = book_value(positions, cash, px, sc["capital"], capped)
+    compound = bool(sc.get("compound", True))
+    own_cash = init_sleeve_cash(st, sc, positions, px) if capped else None
+    value, equity, _ = book_value(positions, cash, px, sc["capital"], capped, own_cash, compound)
     w_now = {a: v / equity for a, v in value.items()} if equity > 0 else {}
 
     peak = max(float(st.get("peak") or 0), equity)
@@ -321,15 +340,24 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
     run_at = (now.tz_localize(None) if now.tzinfo else now).strftime("%Y-%m-%d %H:%M")
     buffer = sc["fee"] + sc["slippage"] + 0.005
     fills: list[Fill] = []
+
+    def book(f: Fill) -> None:
+        """En cuenta externa, el efectivo del bloque se mueve con lo que el propio bloque compra y vende."""
+        fills.append(f)
+        if capped and f.status in ("filled", "partial", "submitted") and f.qty > 0:
+            amt = f.qty * f.price
+            st["sleeve_cash"] = max(0.0, float(st["sleeve_cash"]) + ((amt - f.fee) if f.side == "sell" else -(amt + f.fee)))
+
     for a, diff in sorted(orders, key=lambda x: x[1]):  # primero ventas (liberan efectivo)
         price = float(px[a])
         if diff < 0:
             qty = positions.get(a, 0.0) if desired.get(a, 0.0) == 0 else min(-diff * equity / price, positions.get(a, 0.0))
             if qty * price < minv:
                 continue
-            fills.append(broker.execute(a, "sell", qty, price))
+            book(broker.execute(a, "sell", qty, price))
         else:
-            val = min(diff * equity, sc["max_order_value"], broker.cash() * (1 - buffer))
+            avail = broker.cash() if not capped else min(broker.cash(), float(st["sleeve_cash"]))
+            val = min(diff * equity, sc["max_order_value"], avail * (1 - buffer))
             if val < minv:
                 if diff * equity >= minv:
                     notes.append(f"{a}: sin efectivo suficiente para comprar")
@@ -340,7 +368,7 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
                 if qty == 0:
                     notes.append(f"{a}: no admite fracciones y no alcanza para una acción entera")
                     continue
-            fills.append(broker.execute(a, "buy", qty, price))
+            book(broker.execute(a, "buy", qty, price))
     for f in fills:
         # costo real de ejecutar: precio contra la referencia (a favor = negativo) + comisión
         cost_bps = ""
@@ -358,7 +386,14 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
     # valuación después de operar
     positions = broker.positions()
     cash = broker.cash()
-    value, eq_after, cash = book_value(positions, cash, px, sc["capital"], capped)
+    # órdenes de Alpaca que se llenan al abrir: ya salieron del efectivo del bloque pero la
+    # posición todavía no aparece; se cuentan "en tránsito" para no ver una caída falsa
+    transit = sum((f.qty * f.price + f.fee) if f.side == "buy" else -(f.qty * f.price - f.fee)
+                  for f in fills if capped and f.status == "submitted" and f.qty > 0)
+    value, eq_after, cash = book_value(positions, cash, px, sc["capital"], capped,
+                                       st.get("sleeve_cash") if capped else None, compound)
+    eq_after += transit
+    cash += max(0.0, transit)
     st["peak"] = max(peak, eq_after)
     st["last_candle"] = cstr
     exposure = sum(value.values()) / eq_after if eq_after > 0 else 0.0
@@ -375,6 +410,7 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
     tbl = tbl.replace([np.inf, -np.inf], np.nan)
     res["snapshot"] = {
         "label": sc["label"], "strategy": sc["strategy"], "broker": broker.name, "mode": mode,
+        "compound": compound,
         "candle": cstr, "equity": round(eq_after, 2), "cash": round(cash, 2), "capital": sc["capital"],
         "exposure": round(exposure, 4), "peak": round(st["peak"], 2),
         "drawdown": round(eq_after / st["peak"] - 1, 4), "brake": round(brake, 3),
@@ -550,6 +586,13 @@ def main(argv: list[str] | None = None) -> int:
 
     now = pd.Timestamp.now(tz="UTC").tz_localize(None)
     snapshot = json.loads(paths["snapshot"].read_text()) if paths["snapshot"].exists() else {"sleeves": {}}
+    fx_now, fx_daily = None, pd.Series(dtype=float)
+    if not args.offline:  # el tipo de cambio es informativo: si falla, el bot opera igual
+        try:
+            fx_now = usd_mxn_now()
+            fx_daily = usd_mxn_daily(30)
+        except Exception as exc:  # noqa: BLE001
+            print(f"[aviso] tipo de cambio: {exc}")
     eq_all = pd.read_csv(paths["equity"]) if paths["equity"].exists() else pd.DataFrame(columns=EQUITY_FIELDS)
     trades, eq_rows, failures = [], [], 0
     names = [args.sleeve] if args.sleeve else [n for n, s in cfg["sleeves"].items() if s.get("enabled")]
@@ -578,6 +621,9 @@ def main(argv: list[str] | None = None) -> int:
         r["notes"][:0] = notes
         trades += r["trades"]
         if r["equity_row"]:
+            day = pd.Timestamp(r["equity_row"]["date"])
+            fx = fx_daily.get(day) if len(fx_daily) else None
+            r["equity_row"]["usd_mxn"] = round(float(fx), 4) if fx is not None else (fx_now or {}).get("rate", "")
             eq_rows.append(r["equity_row"])
         prev = snapshot["sleeves"].get(name, {})
         snap = r["snapshot"] or prev
@@ -588,6 +634,8 @@ def main(argv: list[str] | None = None) -> int:
               f"capital {snap.get('equity', '-')} | {'; '.join(r['notes'])}")
 
     snapshot.update({"generated_utc": now.strftime("%Y-%m-%d %H:%M"), "mode": mode, "research": research_summary()})
+    if fx_now:
+        snapshot["fx"] = fx_now
     save_json(paths["state"], state)
     append_csv(paths["trades"], TRADE_FIELDS, trades)
     append_csv(paths["equity"], EQUITY_FIELDS, eq_rows)

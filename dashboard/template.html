@@ -29,7 +29,7 @@ button:hover{background:var(--surface-2)}
 .banner.crit{background:var(--crit-bg);border-color:transparent}
 .kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
 .wrap>*,.sec>*,.kpi,.sleeve,.panel,.rcard,.sec,.tbl{min-width:0}
-.kpi{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;display:grid;gap:2px}
+.kpi{background:var(--surface);border:1px solid var(--rule);border-radius:10px;padding:14px 16px;display:grid;gap:2px;align-content:start}
 .kpi .lab{font-size:12.5px;color:var(--muted)}
 .kpi .val{font-family:"IBM Plex Mono",monospace;font-size:24px;font-weight:500;font-variant-numeric:tabular-nums}
 .kpi .sub{font-size:12.5px;color:var(--ink-2)}
@@ -37,7 +37,8 @@ button:hover{background:var(--surface-2)}
 .sleeves{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,480px),1fr));gap:14px}
 .sleeve{background:var(--surface);border:1px solid var(--rule);border-radius:12px;padding:16px;display:grid;gap:14px;align-content:start}
 .sleeve header{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between}
-.sleeve header .id{display:flex;align-items:center;gap:10px}
+.sleeve header .id{display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px;min-width:0}
+.kpis.top{grid-template-columns:repeat(auto-fit,minmax(min(100%,300px),1fr))}
 .swatch{width:12px;height:12px;border-radius:3px;display:inline-block}
 .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
 @media (max-width:520px){.stats{grid-template-columns:repeat(2,1fr)}}
@@ -93,7 +94,7 @@ svg.spark{width:100%;height:46px;display:block}
     </div>
   </div>
   <div id="banner" hidden></div>
-  <div class="kpis" id="kpis"></div>
+  <div class="kpis top" id="kpis"></div>
   <section class="sec">
     <div class="sec-h"><h2>En vivo</h2><span class="muted" id="rt-note" style="font-size:12.5px"></span></div>
     <div class="sleeves" id="rt"></div>
@@ -117,6 +118,7 @@ svg.spark{width:100%;height:46px;display:block}
   </section>
   <div class="foot">
     <p>El bot revisa cada hora en GitHub Actions y opera una vez al día, tras el cierre de las 00:00 UTC (18:00 en el centro de México). Guarda su estado en <span class="mono">state/</span>; este tablero lee esos archivos con tu conector de GitHub y nadie más puede verlos.</p>
+    <p>Las cantidades están en dólares (USD). Los pesos usan el tipo de cambio USD/MXN de Bitso: el de este momento y el del día en que empezó cada bloque. El resultado en pesos incluye lo que ganó el bot y lo que se movió el dólar.</p>
     <p>Resultados de backtest: fuera de muestra, con comisiones. No garantizan resultados futuros. No es asesoría financiera.</p>
   </div>
 </div>
@@ -153,6 +155,7 @@ svg.spark{width:100%;height:46px;display:block}
   const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
   const minus = s => s.replace("-", "−");
   const usd = (x, d = 2) => x == null || isNaN(x) ? "–" : minus((x < 0 ? "-" : "") + "$" + Math.abs(x).toLocaleString("en-US", { minimumFractionDigits: d, maximumFractionDigits: d }));
+  const mxn = (x, d = 0, sign = false) => x == null || isNaN(x) ? "–" : (sign && x > 0 ? "+" : "") + usd(x, d) + " MXN";
   const pct = (x, d = 1, sign = false) => x == null || isNaN(x) ? "–" : minus((sign && x > 0 ? "+" : "") + (x * 100).toFixed(d) + "%");
   const num = (x, d = 4) => x == null || isNaN(x) ? "–" : (+x).toLocaleString("en-US", { maximumFractionDigits: d });
   const cls = x => x > 0.00005 ? "pos" : x < -0.00005 ? "neg" : "";
@@ -187,12 +190,28 @@ svg.spark{width:100%;height:46px;display:block}
     const expoVal = sleeves.reduce((a, [k, s]) => { const x = eqNow(k) || s; return a + (+x.equity || 0) * (+x.exposure || 0); }, 0);
     const worst = sleeves.reduce((m, [k, s]) => Math.min(m, +(eqNow(k) || s).drawdown || 0), 0);
     const rtWhen = S.rt && S.rt.updated_utc;
+    // tipo de cambio: el de este momento y el del día en que empezó cada bloque
+    const fx = (S.rt && S.rt.fx) || snap.fx || null;
+    const fxNow = fx ? +fx.rate : null;
+    const fxStart = k => { const r = S.equity.find(r => r.sleeve === k && (!snap.mode || r.mode === snap.mode) && +r.usd_mxn > 0); return r ? { rate: +r.usd_mxn, date: r.date } : null; };
+    const starts = sleeves.map(([k, s]) => ({ cap: +s.capital || 0, fx: fxStart(k) }));
+    const haveFx = fxNow && starts.length && starts.every(x => x.fx);
+    const startMxn = haveFx ? starts.reduce((a, x) => a + x.cap * x.fx.rate, 0) : null;
+    const pnlMxn = haveFx ? tot * fxNow - startMxn : null;
+    const botMxn = haveFx ? (tot - cap) * fxNow : null;
+    const fxMxn = haveFx ? starts.reduce((a, x) => a + x.cap * (fxNow - x.fx.rate), 0) : null;
+    const fx0 = haveFx ? starts[0].fx : null;
+    S.fxNow = fxNow;
     const kills = sleeves.filter(([, s]) => s.kill_switch).length;
     const blocked = sleeves.filter(([, s]) => ["blocked", "error"].includes(s.status)).length;
     const lastRun = sleeves.map(([, s]) => s.last_run_utc).filter(Boolean).sort().pop();
     document.getElementById("kpis").innerHTML = [
-      kpi(rtWhen ? "Capital ahora" : "Capital total", usd(tot), `<span class="${cls(tot - cap)}">${usd(tot - cap)} (${pct(cap ? tot / cap - 1 : 0, 2, true)})</span> vs ${usd(cap, 0)} asignados` +
-          (rtWhen ? `<br>Al último cierre: ${usd(totClose)}` : "")),
+      kpi((rtWhen ? "Capital ahora" : "Capital total") + " (dólares)", usd(tot), `<span class="${cls(tot - cap)}">${usd(tot - cap)} (${pct(cap ? tot / cap - 1 : 0, 2, true)})</span> vs ${usd(cap, 0)} asignados` +
+          (fxNow ? `<br>≈ ${mxn(tot * fxNow)}` : "") + (rtWhen ? `<br>Al último cierre: ${usd(totClose)}` : "")),
+      fxNow ? kpi("Dólar hoy", "$" + fxNow.toFixed(2), `pesos por dólar · ${esc(fx.source || "")}${fx.time_utc ? ", " + when(utc(fx.time_utc)) : ""}` +
+          (fx0 ? `<br>Al empezar (${esc(fx0.date)}): $${fx0.rate.toFixed(2)} · <span class="${cls(fxNow - fx0.rate)}">${pct(fxNow / fx0.rate - 1, 2, true)}</span>` : "")) : "",
+      haveFx ? kpi("Resultado en pesos", `<span class="${cls(pnlMxn)}">${mxn(pnlMxn, 0, true)}</span>`,
+          `Por el bot: <span class="${cls(botMxn)}">${mxn(botMxn, 0, true)}</span> · por el tipo de cambio: <span class="${cls(fxMxn)}">${mxn(fxMxn, 0, true)}</span><br>Invertido: ${mxn(startMxn)} → hoy ${mxn(tot * fxNow)}`) : "",
       kpi("Invertido ahora", pct(tot ? expoVal / tot : 0, 0), `${usd(expoVal)} en activos · ${usd(tot - expoVal)} en efectivo`),
       kpi("Peor caída actual", pct(worst, 1), kills ? `<span class="neg">Kill switch activo en ${kills} bloque(s)</span>` : "Kill switch armado en ambos bloques"),
       kpi("Última revisión", rtWhen ? when(utc(rtWhen)) : lastRun ? when(utc(lastRun)) : "–",
@@ -246,7 +265,7 @@ svg.spark{width:100%;height:46px;display:block}
     const maxW = Math.max(0.01, ...assets.map(a => Math.max(a.weight || 0, a.target || 0)));
     return `<article class="sleeve">
       <header><div class="id"><span class="swatch" style="background:${color}"></span><h3>${esc(s.label || k)}</h3>
-        <span class="chip">${tactical ? "Táctico" : "Pasivo"}</span><span class="chip">${esc(s.broker || "")}</span></div>${statusChip(s.status)}</header>
+        <span class="chip">${tactical ? "Táctico" : "Pasivo"}</span><span class="chip">${esc(s.broker || "")}</span>${s.compound !== false ? '<span class="chip" title="Lo ganado se reinvierte">Interés compuesto</span>' : ""}</div>${statusChip(s.status)}</header>
       <div class="stats">
         <div class="stat"><span class="lab">Capital</span><span class="val">${usd(+s.equity)}</span></div>
         <div class="stat"><span class="lab">Resultado</span><span class="val ${cls(pnl)}">${pct(s.capital ? pnl / s.capital : 0, 2, true)}</span></div>
@@ -342,7 +361,7 @@ svg.spark{width:100%;height:46px;display:block}
         <header><div class="id"><span class="swatch" style="background:${color}"></span><h3>${esc(s.label || labelOf(k))}</h3></div>
           <span class="chip ${(s.alerts || []).length ? "warn" : "good"}"><i></i>${(s.alerts || []).length ? "Con avisos" : "Todo en orden"}</span></header>
         <div class="stats">
-          <div class="stat"><span class="lab">Capital ahora</span><span class="val">${usd(+s.equity)}</span></div>
+          <div class="stat"><span class="lab">Capital ahora</span><span class="val">${usd(+s.equity)}</span>${S.fxNow ? `<span class="muted" style="font-size:12px">≈ ${mxn(+s.equity * S.fxNow)}</span>` : ""}</div>
           <div class="stat"><span class="lab">Desde el cierre</span><span class="val ${cls(s.change_since_close)}">${pct(s.change_since_close, 2, true)}</span></div>
           <div class="stat"><span class="lab">Caída desde máximo</span><span class="val ${(+s.drawdown || 0) < -0.1 ? "neg" : ""}">${pct(+s.drawdown, 1)}</span></div>
           <div class="stat"><span class="lab">Margen al kill switch</span><span class="val">${pct(room, 0)}</span></div>
