@@ -90,6 +90,20 @@ class BookSimBroker(SimBroker):
         m = self.ex.markets.get(f"{asset}/{self.quote}")
         return {"tradable": bool(m) and m.get("active") is not False, "fractionable": True}
 
+    def _is_dust(self, asset: str, qty: float) -> bool:
+        """Residuo menor que la unidad mínima de Bitso: no se puede vender (pasa igual con dinero real)."""
+        sym = f"{asset}/{self.quote}"
+        if sym not in self.ex.markets:
+            return False
+        try:
+            return float(self.ex.amount_to_precision(sym, qty)) <= 0
+        except Exception:  # noqa: BLE001  ccxt lo rechaza por ser menor que la precisión
+            return True
+
+    def positions(self) -> dict[str, float]:
+        """Sin residuos invendibles: no cuentan como posición ni bloquean el día si les falta precio."""
+        return {k: v for k, v in super().positions().items() if not self._is_dust(k, v)}
+
     def execute(self, asset: str, side: str, qty: float, ref_price: float) -> Fill:
         sym = f"{asset}/{self.quote}"
         m = self.ex.markets.get(sym)
@@ -119,6 +133,9 @@ class BookSimBroker(SimBroker):
             return Fill(asset, side, 0.0, mid, 0.0, "failed", f"debajo del mínimo de Bitso (${min_cost})", mid)
         avg = cost / got
         got, fee = self._apply(asset, side, got, avg)
+        left = self.l["positions"].get(asset)
+        if side == "sell" and left is not None and self._is_dust(asset, left):
+            self.l["positions"].pop(asset)  # el redondeo de Bitso deja un residuo que no se puede vender
         status = "filled" if got >= qty * 0.999 else "partial"
         return Fill(asset, side, got, avg, fee, status, "" if status == "filled" else "profundidad insuficiente", mid)
 

@@ -96,6 +96,25 @@ def test_book_sim_walks_real_book_with_real_fee():
     assert b.asset_info("SOL")["tradable"] is False and b.execute("SOL", "buy", 1, 10).status == "failed"
 
 
+def test_book_sim_drops_unsellable_dust():
+    from lab.brokers import BookSimBroker
+
+    class Truncating(FakeBitso):
+        def amount_to_precision(self, sym, q):
+            v = int(q * 1e6) / 1e6  # Bitso trunca a la precisión del mercado
+            if v <= 0:
+                raise ValueError("menor que la precisión mínima")
+            return f"{v:.6f}"
+
+    ex = Truncating(asks=[[100.0, 5.0]], bids=[[99.0, 5.0]])
+    led = {"cash": 0.0, "positions": {"ETH": 1.0000005, "XYZ": 2.0}}
+    b = BookSimBroker(led, taker_fee=0.0036, exchange=ex)
+    f = b.execute("ETH", "sell", 1.0000005, 99.5)
+    assert f.qty == pytest.approx(1.0) and "ETH" not in led["positions"]  # el residuo no queda
+    led["positions"]["ETH"] = 5e-9  # residuo de una corrida anterior
+    assert "ETH" not in b.positions() and b.positions()["XYZ"] == 2.0
+
+
 def test_trades_csv_migrates_new_columns(tmp_path):
     from lab.bot import append_csv, TRADE_FIELDS
     p = tmp_path / "t.csv"
