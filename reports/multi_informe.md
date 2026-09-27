@@ -4,23 +4,23 @@ Estrategia: tendencia + momentum ajustado por riesgo + paridad de riesgo + volat
 
 ## Criptomonedas
 
-Datos 2014-01-01 a 2026-09-23; fuera de muestra desde 2021; costo 0.45% por lado; candidata: top5 · vol 40% · con filtro BTC · freno.
+Datos 2014-01-01 a 2026-09-26; fuera de muestra desde 2021; costo 0.45% por lado; candidata: top5 · vol 40% · con filtro BTC · freno.
 
 | Estrategia | Rend. anual | Sharpe | Caída máx. | Exposición media |
 |---|---:|---:|---:|---:|
-| CANDIDATA: top5 · vol 40% · con filtro BTC · freno | 32.3% | 1.10 | −42% | 34% |
-| Optimizador (elige la mejor cada año) | 47.4% | 1.13 | −50% | 38% |
-| Comprar y aguantar BTC | 20.5% | 0.61 | −77% | 100% |
-| Pesos iguales, rebalanceo mensual | 19.2% | 0.60 | −78% | 84% |
-| Regla de tendencia solo BTC | 17.0% | 0.62 | −56% | 53% |
+| CANDIDATA: top5 · vol 40% · con filtro BTC · freno | 33.2% | 1.12 | −42% | 34% |
+| Optimizador (elige la mejor cada año) | 49.9% | 1.16 | −50% | 38% |
+| Comprar y aguantar BTC | 20.4% | 0.61 | −77% | 100% |
+| Pesos iguales, rebalanceo mensual | 20.0% | 0.61 | −78% | 84% |
+| Regla de tendencia solo BTC | 17.0% | 0.61 | −56% | 53% |
 
 - Placebo (pesos desfasados al azar): p = 0.000.
-- Mejor variante de 39 en todo el periodo: top3 · vol sin · con filtro BTC · freno (DSR vs 0: 0.993; DSR vs referencia: 0.288).
-- Bootstrap de la candidata: vs Comprar y aguantar BTC: P(más rendimiento) 66%, P(menor caída) 97%; vs Pesos iguales, rebalanceo mensual: P(más rendimiento) 73%, P(menor caída) 100%; vs Regla de tendencia solo BTC: P(más rendimiento) 83%, P(menor caída) 87%
-- Costos: 0.30% → 37.9%, 0.45% → 32.3%, 0.60% → 26.8%, 1.00% → 14.7%
+- Mejor variante de 39 en todo el periodo: top3 · vol sin · con filtro BTC · freno (DSR vs 0: 0.994; DSR vs referencia: 0.305).
+- Bootstrap de la candidata: vs Comprar y aguantar BTC: P(más rendimiento) 66%, P(menor caída) 98%; vs Pesos iguales, rebalanceo mensual: P(más rendimiento) 73%, P(menor caída) 100%; vs Regla de tendencia solo BTC: P(más rendimiento) 84%, P(menor caída) 87%
+- Costos: 0.30% → 38.9%, 0.45% → 33.2%, 0.60% → 27.7%, 1.00% → 15.4%
 - Kill switch: a 35%: se habría activado el 2023-06-09; a 45%: no se habría activado.
-- 12 meses con $1,000: peor 5% $719, mediana $1,227, P(pérdida) 28%, P(caída >30%) 20% (referencia: P(pérdida) 41%, P(caída >30%) 81%).
-- Solo con las 16 criptos operables hoy en Bitso: 33.1% anual, caída máx. −39% (estas sobrevivieron, así que es optimista).
+- 12 meses con $1,000: peor 5% $731, mediana $1,224, P(pérdida) 28%, P(caída >30%) 20% (referencia: P(pérdida) 40%, P(caída >30%) 81%).
+- Solo con las 16 criptos operables hoy en Bitso: 34.1% anual, caída máx. −39% (estas sobrevivieron, así que es optimista).
 - **Qué usa el bot en este bloque:** CANDIDATA: top5 · vol 40% · con filtro BTC · freno.
 
 | Año | Candidata | Referencia |
@@ -32,26 +32,26 @@ Datos 2014-01-01 a 2026-09-23; fuera de muestra desde 2021; costo 0.45% por lado
 | 2023 | 34% | 155% |
 | 2024 | 45% | 121% |
 | 2025 | −11% | −6% |
-| 2026 | 40% | −4% |
+| 2026 | 46% | −4% |
 
 ## Acciones y ETFs
 
-Datos 1998-01-02 a 2026-09-24; fuera de muestra desde 2010; costo 0.05% por lado; candidata: top5 · vol 10% · sin filtro · freno.
+Datos 1998-01-02 a 2026-09-25; fuera de muestra desde 2010; costo 0.05% por lado; candidata: top5 · vol 10% · sin filtro · freno.
 
 | Estrategia | Rend. anual | Sharpe | Caída máx. | Exposición media |
 |---|---:|---:|---:|---:|
-| CANDIDATA: top5 · vol 10% · sin filtro · freno | 4.5% | 0.53 | −17% | 86% |
+| CANDIDATA: top5 · vol 10% · sin filtro · freno | 4.6% | 0.53 | −17% | 86% |
 | Optimizador (elige la mejor cada año) | 4.3% | 0.47 | −17% | 88% |
 | Comprar y aguantar SPY | 14.3% | 0.87 | −34% | 100% |
-| Pesos iguales, rebalanceo mensual | 10.3% | 0.78 | −29% | 94% |
+| Pesos iguales, rebalanceo mensual | 10.4% | 0.78 | −29% | 94% |
 | 60/40 (SPY/IEF) | 9.9% | 1.00 | −22% | 100% |
 
-- Placebo (pesos desfasados al azar): p = 0.340.
-- Mejor variante de 18 en todo el periodo: top5 · vol 10% · sin filtro · sin freno (DSR vs 0: 0.843; DSR vs referencia: 0.006).
-- Bootstrap de la candidata: vs Comprar y aguantar SPY: P(más rendimiento) 0%, P(menor caída) 89%; vs Pesos iguales, rebalanceo mensual: P(más rendimiento) 2%, P(menor caída) 78%; vs 60/40 (SPY/IEF): P(más rendimiento) 1%, P(menor caída) 40%
-- Costos: 0.02% → 6.2%, 0.05% → 4.5%, 0.20% → −3.3%, 0.50% → −16.3%
+- Placebo (pesos desfasados al azar): p = 0.350.
+- Mejor variante de 18 en todo el periodo: top5 · vol 10% · sin filtro · sin freno (DSR vs 0: 0.840; DSR vs referencia: 0.006).
+- Bootstrap de la candidata: vs Comprar y aguantar SPY: P(más rendimiento) 0%, P(menor caída) 88%; vs Pesos iguales, rebalanceo mensual: P(más rendimiento) 2%, P(menor caída) 78%; vs 60/40 (SPY/IEF): P(más rendimiento) 1%, P(menor caída) 40%
+- Costos: 0.02% → 6.2%, 0.05% → 4.6%, 0.20% → −3.3%, 0.50% → −16.2%
 - Kill switch: a 35%: no se habría activado; a 25%: no se habría activado.
-- 12 meses con $1,000: peor 5% $908, mediana $1,046, P(pérdida) 30%, P(caída >30%) 0% (referencia: P(pérdida) 16%, P(caída >30%) 4%).
+- 12 meses con $1,000: peor 5% $909, mediana $1,049, P(pérdida) 30%, P(caída >30%) 0% (referencia: P(pérdida) 16%, P(caída >30%) 4%).
 - **Qué usa el bot en este bloque:** 60/40 (SPY/IEF).
 
 | Año | Candidata | Referencia |
@@ -77,11 +77,11 @@ Datos 1998-01-02 a 2026-09-24; fuera de muestra desde 2010; costo 0.05% por lado
 | 2023 | 4% | 26% |
 | 2024 | 4% | 25% |
 | 2025 | 5% | 18% |
-| 2026 | 4% | 13% |
+| 2026 | 4% | 14% |
 
 ## Combinado de ejemplo
 
-30% cripto (candidata) / 70% ETFs (60/40 pasivo) sin rebalancear entre cuentas: 18.2% anual, caída máx. −27%, P(pérdida en 12 meses) 24%.
+30% cripto (candidata) / 70% ETFs (60/40 pasivo) sin rebalancear entre cuentas: 18.6% anual, caída máx. −27%, P(pérdida en 12 meses) 25%.
 
 ## Limitaciones
 
