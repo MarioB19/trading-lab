@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-09-27 21:17",
+ "updated_utc": "2026-09-27 21:42",
  "mode": "paper",
  "action": "observe",
  "every_minutes": 60,
@@ -9,58 +9,58 @@
    "label": "Criptomonedas",
    "strategy": "tactical",
    "broker": "simulado \u00b7 libro real de Bitso",
-   "updated_utc": "2026-09-27 21:17",
-   "prices_as_of_utc": "2026-09-27 21:17",
-   "equity": 308.69,
+   "updated_utc": "2026-09-27 21:42",
+   "prices_as_of_utc": "2026-09-27 21:42",
+   "equity": 307.6,
    "cash": 76.68,
-   "exposure": 0.7516,
-   "peak": 308.69,
+   "exposure": 0.7507,
+   "peak": 307.6,
    "drawdown": 0.0,
    "kill_drawdown": 0.45,
-   "kill_at_equity": 169.78,
+   "kill_at_equity": 169.18,
    "brake_now": 1.0,
    "kill_switch": false,
-   "change_since_close": 0.0085,
+   "change_since_close": 0.0038,
    "positions": [
     {
      "asset": "ETH",
      "qty": 0.02428053,
-     "price": 2689.74,
-     "value": 65.31,
-     "weight": 0.2116,
-     "change_since_close": -0.0021
+     "price": 2681.89,
+     "value": 65.12,
+     "weight": 0.2117,
+     "change_since_close": -0.005
     },
     {
      "asset": "LINK",
      "qty": 3.65744289,
-     "price": 14.06643,
-     "value": 51.45,
-     "weight": 0.1667,
-     "change_since_close": -0.0061
+     "price": 13.98701,
+     "value": 51.16,
+     "weight": 0.1663,
+     "change_since_close": -0.0117
     },
     {
      "asset": "LTC",
      "qty": 0.6808246,
-     "price": 71.55,
-     "value": 48.71,
-     "weight": 0.1578,
-     "change_since_close": -0.0143
+     "price": 70.94,
+     "value": 48.3,
+     "weight": 0.157,
+     "change_since_close": -0.0227
     },
     {
      "asset": "NEAR",
      "qty": 6.27660259,
-     "price": 5.5225,
-     "value": 34.66,
-     "weight": 0.1123,
-     "change_since_close": 0.0941
+     "price": 5.5404,
+     "value": 34.77,
+     "weight": 0.1131,
+     "change_since_close": 0.0977
     },
     {
      "asset": "UNI",
      "qty": 3.27025933,
-     "price": 9.7485,
-     "value": 31.88,
-     "weight": 0.1033,
-     "change_since_close": 0.0045
+     "price": 9.6558,
+     "value": 31.58,
+     "weight": 0.1027,
+     "change_since_close": -0.0051
     }
    ],
    "alerts": [],
@@ -69,38 +69,38 @@
    "signal_now": [
     {
      "asset": "SOL",
-     "target_now": 0.1824,
+     "target_now": 0.1829,
      "weight_now": 0.0,
      "move": "entrar\u00eda"
     },
     {
      "asset": "LTC",
-     "target_now": 0.1676,
-     "weight_now": 0.1578,
+     "target_now": 0.167,
+     "weight_now": 0.157,
      "move": "igual"
     },
     {
      "asset": "LINK",
      "target_now": 0.1627,
-     "weight_now": 0.1667,
+     "weight_now": 0.1663,
      "move": "igual"
     },
     {
      "asset": "UNI",
      "target_now": 0.1027,
-     "weight_now": 0.1033,
+     "weight_now": 0.1027,
      "move": "igual"
     },
     {
      "asset": "NEAR",
-     "target_now": 0.0966,
-     "weight_now": 0.1123,
+     "target_now": 0.0967,
+     "weight_now": 0.1131,
      "move": "igual"
     },
     {
      "asset": "ETH",
      "target_now": 0.0,
-     "weight_now": 0.2116,
+     "weight_now": 0.2117,
      "move": "saldr\u00eda"
     }
    ]
@@ -110,7 +110,7 @@
    "label": "Acciones y ETFs",
    "strategy": "passive",
    "broker": "simulado",
-   "updated_utc": "2026-09-27 21:17",
+   "updated_utc": "2026-09-27 21:42",
    "prices_as_of_utc": "2026-09-25 20:00",
    "equity": 702.89,
    "cash": 2.1,
@@ -148,12 +148,12 @@
   }
  },
  "research": {
-  "generated": "2026-09-27 12:42 UTC",
+  "generated": "2026-09-27 21:35 UTC",
   "combined": {
-   "cagr": 0.18587921459183088,
-   "max_dd": -0.2715395176424933,
-   "p_loss_12m": 0.2452,
-   "crypto_share": 0.3
+   "cagr": 0.2368722813060513,
+   "max_dd": -0.32440996263634736,
+   "p_loss_12m": 0.2642,
+   "crypto_share": 0.5
   },
   "crypto": {
    "label": "Criptomonedas",
@@ -183,20 +183,20 @@
    "oos_start": "2010-01-01",
    "recommended": "60/40 (SPY/IEF)",
    "strategy": {
-    "cagr": 0.09900913469666017,
-    "sharpe": 0.9961493214242313,
-    "max_dd": -0.21578330355971875
+    "cagr": 0.0990091285131105,
+    "sharpe": 0.9961487146709905,
+    "max_dd": -0.21578335698185303
    },
    "benchmark_name": "Comprar y aguantar SPY",
    "benchmark": {
-    "cagr": 0.1428569983746586,
-    "sharpe": 0.8685598305600419,
-    "max_dd": -0.3371726378600284
+    "cagr": 0.14285699208064284,
+    "sharpe": 0.8685595353243595,
+    "max_dd": -0.3371726378600286
    },
    "tactical": {
-    "cagr": 0.045570889616973975,
-    "sharpe": 0.5297417328415678,
-    "max_dd": -0.16907089698184596
+    "cagr": 0.04551853485664914,
+    "sharpe": 0.5291926116422183,
+    "max_dd": -0.16907029567221987
    },
    "placebo_p": 0.35,
    "p_loss_12m": 0.1344
@@ -279,10 +279,10 @@
   }
  },
  "fx": {
-  "rate": 17.7155,
-  "bid": 17.715,
-  "ask": 17.716,
+  "rate": 17.7085,
+  "bid": 17.708,
+  "ask": 17.709,
   "source": "Bitso USD/MXN",
-  "time_utc": "2026-09-27 21:17"
+  "time_utc": "2026-09-27 21:42"
  }
 }
