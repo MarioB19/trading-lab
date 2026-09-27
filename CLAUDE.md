@@ -1,5 +1,7 @@
 # Reglas del repositorio para Claude
 
+Las mismas reglas están en `AGENTS.md` (para Codex); si cambias una, cambia las dos.
+
 Laboratorio y bot de inversión con dinero potencialmente real. El objetivo es no engañarse, no maximizar el backtest.
 
 ## Comandos

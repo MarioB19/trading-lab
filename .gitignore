@@ -5,3 +5,7 @@ __pycache__/
 .venv/
 state/*.tmp
 data/
+
+# macOS y discos externos
+.DS_Store
+._*
