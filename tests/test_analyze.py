@@ -122,3 +122,60 @@ def test_trades_csv_migrates_new_columns(tmp_path):
     append_csv(p, TRADE_FIELDS, [{"run_at_utc": "2026-01-02", "sleeve": "crypto", "asset": "SOL", "cost_bps": 41.2}])
     df = pd.read_csv(p)
     assert list(df.columns) == TRADE_FIELDS and len(df) == 2 and df["cost_bps"].iloc[1] == pytest.approx(41.2)
+
+
+class FakeBitsoLive(FakeBitso):
+    """Libro fijo más operaciones públicas que aparecen mientras la orden límite espera."""
+
+    def __init__(self, asks, bids, trades):
+        super().__init__(asks, bids)
+        self.trades = trades  # [(precio, cantidad)]
+        self.now = 1_000_000
+
+    def milliseconds(self):
+        return self.now
+
+    def fetch_trades(self, sym, since=None, limit=100):
+        return [{"timestamp": self.now + 1, "price": p, "amount": q} for p, q in self.trades]
+
+
+def _maker_broker(ex, led, **mk):
+    from lab.brokers import BookSimBroker
+    clock = {"t": 0.0}
+    return BookSimBroker(led, taker_fee=0.0036, exchange=ex,
+                         maker={"wait_s": 60, "poll_s": 15, "budget_s": 100, "fee": 0.003, **mk},
+                         sleep=lambda s: clock.__setitem__("t", clock["t"] + s), clock=lambda: clock["t"])
+
+
+def test_maker_fill_at_best_bid_with_maker_fee():
+    ex = FakeBitsoLive(asks=[[101.0, 5.0]], bids=[[99.0, 5.0]], trades=[(98.5, 3.0)])  # venden por debajo de 99
+    led = {"cash": 1000.0, "positions": {}}
+    f = _maker_broker(ex, led).execute("ETH", "buy", 2.0, 100.0)
+    assert f.qty == pytest.approx(2.0) and f.price == pytest.approx(99.0)
+    assert f.fee == pytest.approx(2 * 99.0 * 0.003) and f.ref == pytest.approx(100.0)
+    assert "100% como maker" in f.note
+    cost_bps = ((f.price / f.ref - 1) + f.fee / (f.qty * f.price)) * 1e4
+    assert cost_bps == pytest.approx(-100 + 30, abs=0.1)  # gana medio diferencial y paga 0.30%
+
+
+def test_maker_not_filled_falls_back_to_market():
+    ex = FakeBitsoLive(asks=[[101.0, 5.0]], bids=[[99.0, 5.0]], trades=[(99.0, 3.0), (100.5, 1.0)])  # nada cruza 99
+    led = {"cash": 1000.0, "positions": {}}
+    f = _maker_broker(ex, led).execute("ETH", "buy", 2.0, 100.0)
+    assert f.qty == pytest.approx(2.0) and f.price == pytest.approx(101.0)
+    assert f.fee == pytest.approx(2 * 101.0 * 0.0036) and "0% como maker, resto a mercado" in f.note
+
+
+def test_maker_partial_then_market_and_budget():
+    ex = FakeBitsoLive(asks=[[101.0, 5.0]], bids=[[99.0, 5.0]], trades=[(98.0, 0.5)])
+    led = {"cash": 1000.0, "positions": {}}
+    b = _maker_broker(ex, led)
+    f = b.execute("ETH", "buy", 2.0, 100.0)
+    assert f.qty == pytest.approx(2.0) and f.price == pytest.approx((0.5 * 99 + 1.5 * 101) / 2)
+    assert f.fee == pytest.approx(0.5 * 99 * 0.003 + 1.5 * 101 * 0.0036)
+    assert "25% como maker" in f.note
+    assert led["cash"] == pytest.approx(1000 - 0.5 * 99 * 1.003 - 1.5 * 101 * 1.0036)
+    ex.trades = []
+    f2 = b.execute("ETH", "buy", 1.0, 100.0)   # quedan 40 s de presupuesto: espera y luego a mercado
+    f3 = b.execute("ETH", "buy", 1.0, 100.0)   # presupuesto agotado: directo a mercado
+    assert "como maker" in f2.note and f3.note == "" and f3.price == pytest.approx(101.0)

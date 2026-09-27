@@ -27,13 +27,18 @@ sleeves:
     quote: USD
     paper_broker: bitso_book  # simulado contra el libro de órdenes REAL de Bitso (dinero ficticio)
     live_broker: bitso        # real: Bitso, pares contra USD
-    capital: 300              # USD al empezar. En dinero real, el bot nunca toca dinero fuera del bloque
+    capital: 500              # USD. 300 al empezar; 500 desde el 27-sep-2026 (reparto 50/50). Cambiarlo es una aportación o un retiro
     compound: true            # interés compuesto: lo que gane el bloque se reinvierte (y lo que pierda se descuenta)
     fee: 0.0036               # comisión real de Bitso en mercados contra USD, nivel más bajo (taker)
     slippage: 0.001           # solo si el libro no responde; normalmente se mide en el libro real
+    # Órdenes límite (solo simulado por ahora): cada orden se pone primero al mejor precio del libro
+    # como "maker" (0.30% de comisión) y espera hasta 2 minutos; lo que no se llene va a mercado.
+    # Se cuenta como llenado solo lo que el mercado negocia atravesando ese precio (conservador).
+    # Con dinero real se sigue operando a mercado hasta que el simulado muestre que conviene.
+    execution: {maker_first: true, wait_s: 120, poll_s: 15, budget_s: 480, maker_fee: 0.003}
     band: 0.02              # no mover un activo por menos de 2 puntos de peso
     kill_drawdown: 0.45     # peor caída histórica con costos reales: 42%. A 45% se apaga el bloque
-    max_order_value: 300
+    max_order_value: 500
     min_order_value: 5
     benchmark: BTC
 
@@ -49,13 +54,13 @@ sleeves:
     quote: USD
     paper_broker: alpaca_paper  # usa tu cuenta paper de Alpaca si hay llaves; si no, el simulado interno
     live_broker: alpaca
-    capital: 700            # USD al empezar
+    capital: 500            # USD. 700 al empezar; 500 desde el 27-sep-2026 (reparto 50/50)
     compound: true          # interés compuesto: lo que gane el bloque se reinvierte
     fee: 0.0
     slippage: 0.0005
     band: 0.05              # rebalancea cuando un ETF se desvía más de 5 puntos
     kill_drawdown: 0.25
-    max_order_value: 700
+    max_order_value: 500
     min_order_value: 1
     benchmark: SPY
 

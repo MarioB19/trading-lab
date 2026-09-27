@@ -15,7 +15,7 @@ Datos 2014-01-01 a 2026-09-26; fuera de muestra desde 2021; costo 0.45% por lado
 | Regla de tendencia solo BTC | 17.0% | 0.61 | −56% | 53% |
 
 - Placebo (pesos desfasados al azar): p = 0.000.
-- Mejor variante de 39 en todo el periodo: top3 · vol sin · con filtro BTC · freno (DSR vs 0: 0.994; DSR vs referencia: 0.305).
+- Mejor variante de 43 en todo el periodo: top3 · vol sin · con filtro BTC · freno (DSR vs 0: 0.993; DSR vs referencia: 0.296).
 - Bootstrap de la candidata: vs Comprar y aguantar BTC: P(más rendimiento) 66%, P(menor caída) 98%; vs Pesos iguales, rebalanceo mensual: P(más rendimiento) 73%, P(menor caída) 100%; vs Regla de tendencia solo BTC: P(más rendimiento) 84%, P(menor caída) 87%
 - Costos: 0.30% → 38.9%, 0.45% → 33.2%, 0.60% → 27.7%, 1.00% → 15.4%
 - Kill switch: a 35%: se habría activado el 2023-06-09; a 45%: no se habría activado.
@@ -47,7 +47,7 @@ Datos 1998-01-02 a 2026-09-25; fuera de muestra desde 2010; costo 0.05% por lado
 | 60/40 (SPY/IEF) | 9.9% | 1.00 | −22% | 100% |
 
 - Placebo (pesos desfasados al azar): p = 0.350.
-- Mejor variante de 18 en todo el periodo: top5 · vol 10% · sin filtro · sin freno (DSR vs 0: 0.840; DSR vs referencia: 0.006).
+- Mejor variante de 18 en todo el periodo: top5 · vol 10% · sin filtro · sin freno (DSR vs 0: 0.839; DSR vs referencia: 0.006).
 - Bootstrap de la candidata: vs Comprar y aguantar SPY: P(más rendimiento) 0%, P(menor caída) 88%; vs Pesos iguales, rebalanceo mensual: P(más rendimiento) 2%, P(menor caída) 78%; vs 60/40 (SPY/IEF): P(más rendimiento) 1%, P(menor caída) 40%
 - Costos: 0.02% → 6.2%, 0.05% → 4.6%, 0.20% → −3.3%, 0.50% → −16.2%
 - Kill switch: a 35%: no se habría activado; a 25%: no se habría activado.
@@ -81,7 +81,7 @@ Datos 1998-01-02 a 2026-09-25; fuera de muestra desde 2010; costo 0.05% por lado
 
 ## Combinado de ejemplo
 
-30% cripto (candidata) / 70% ETFs (60/40 pasivo) sin rebalancear entre cuentas: 18.6% anual, caída máx. −27%, P(pérdida en 12 meses) 25%.
+50% cripto (candidata) / 50% ETFs (60/40 pasivo) sin rebalancear entre cuentas: 23.7% anual, caída máx. −32%, P(pérdida en 12 meses) 26%.
 
 ## Limitaciones
 

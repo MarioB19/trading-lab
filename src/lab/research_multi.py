@@ -49,7 +49,9 @@ SLEEVES = {
                  "regime_asset": ["BTC", None], "dd_brake": [True, False],
                  # cada cuánto revisa: "1d" es el bot diario; las demás se prueban con velas por hora
                  # en lab.research_rt (reports/tiempo_real_preregistro.md) y cuentan como intentos aquí
-                 "check": ["1d", "4h", "1h", "vigia"]},
+                 "check": ["1d", "4h", "1h", "vigia"],
+                 # estrategias de corto plazo probadas en lab.research_short (reports/corto_plazo_preregistro.md)
+                 "short_term": ["C1", "C2", "C3", "C4"]},
         "costs_test": [0.003, 0.0045, 0.006, 0.01], "benchmark": "BTC", "kill_dd": 0.45,
         "passive": None,
     },
@@ -154,6 +156,7 @@ def run_sleeve(sleeve: str, refresh: bool = False, candidate: str | None = None)
     # 1) todas las variantes --------------------------------------------------------------
     g = dict(cfg["grid"])
     rt_trials = [c for c in g.pop("check", ["1d"]) if c != "1d"]  # se simulan en lab.research_rt
+    rt_trials += g.pop("short_term", [])                           # se simulan en lab.research_short
     combos = [dict(zip(g, vals)) for vals in itertools.product(*g.values())]
     runs = {}
     for d in combos:
@@ -260,8 +263,19 @@ def run_sleeve(sleeve: str, refresh: bool = False, candidate: str | None = None)
     return res, series
 
 
+def crypto_share() -> float:
+    """Parte de cripto según el capital de cada bloque en config.yaml (lo que usa el bot)."""
+    import yaml
+
+    f = ROOT / "config.yaml"
+    sl = (yaml.safe_load(f.read_text()) or {}).get("sleeves", {}) if f.exists() else {}
+    c = float((sl.get("crypto") or {}).get("capital", 300))
+    k = float((sl.get("stocks") or {}).get("capital", 700))
+    return c / (c + k) if c + k > 0 else 0.3
+
+
 def combined(series: dict, crypto_share: float = 0.3, stocks_key: str = "passive") -> dict:
-    """Ejemplo: 30% cripto y 70% ETFs, cada bloque en su cuenta, sin rebalancear entre ellos."""
+    """Cripto y ETFs en la proporción del bot, cada bloque en su cuenta, sin rebalancear entre ellos."""
     c, s = series["crypto"]["candidate"], series["stocks"][stocks_key]
     c.index, s.index = c.index.astype("datetime64[ns]"), s.index.astype("datetime64[ns]")
     start = max(c.index[0], s.index[0])
@@ -335,7 +349,7 @@ def run(refresh: bool = False) -> dict:
     res, series = {}, {}
     for sl in ("crypto", "stocks"):
         res[sl], series[sl] = run_sleeve(sl, refresh)
-    res["combined"] = combined(series)
+    res["combined"] = combined(series, crypto_share())
     res["generated"] = pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%d %H:%M UTC")
     res["runtime_s"] = round(time.time() - t0, 1)
     REPORTS.mkdir(exist_ok=True)

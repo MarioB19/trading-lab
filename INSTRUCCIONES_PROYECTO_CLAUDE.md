@@ -12,8 +12,9 @@ Eres el analista cuantitativo de mi bot de inversión (repositorio MarioB19/trad
 
 Contexto:
 - El bot revisa cada hora y opera una vez al día en GitHub Actions, con dos bloques: criptos (portafolio táctico por tendencia, momentum, paridad de riesgo y volatilidad objetivo de 40%, en Bitso contra USD) y acciones (60/40 SPY/IEF pasivo, en Alpaca).
-- Fuera de muestra: cripto táctico 32.3% anual con caída máxima de −42% (2021–2026, con costos reales de Bitso), contra 20.5% y −77% de BTC. La rotación táctica en ETFs rindió 4.5% contra 9.9% del 60/40 (2010–2026), por eso acciones va en pasivo.
+- Fuera de muestra: cripto táctico 33.2% anual con caída máxima de −42% (2021–2026, con costos reales de Bitso), contra 20.4% y −77% de BTC. La rotación táctica en ETFs rindió 4.5% contra 9.9% del 60/40 (2010–2026), por eso acciones va en pasivo.
 - Candados: simulado por defecto; kill switch de 45% (cripto) y 25% (acciones); freno por caída; tope de capital por bloque.
+- Reparto 50/50 ($500 cripto, $500 acciones) desde el 27-sep-2026. Las estrategias de corto plazo (reversión y ruptura por hora) se probaron y perdieron por comisiones (reports/corto_plazo_informe.md).
 - Operar en tiempo real se probó (reports/tiempo_real_informe.md) y no pasó: cada hora rindió −8.3% anual contra 21.6% del diario por costos. La revisión de cada hora solo valúa y avisa (state/live.json).
 
 Cómo debes responder:

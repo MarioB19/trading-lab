@@ -296,9 +296,14 @@ svg.spark{width:100%;height:46px;display:block}
     if (rows.length < 2) {
       return `<div class="panel"><h3>${esc(s.label || k)}</h3>${legend}<div class="empty">La curva aparece a partir de la segunda corrida diaria.<br>Hoy: ${usd(rows.length ? +rows[0].equity : +s.equity)}</div></div>`;
     }
-    const e0 = +rows[0].equity, b0 = +rows[0].benchmark_price;
+    const b0 = +rows[0].benchmark_price;
     const dates = rows.map(r => r.date);
-    const eq = rows.map(r => 100 * (+r.equity) / e0);
+    // rendimiento ponderado en el tiempo: una aportación o un retiro (columna flow) no mueve la curva
+    const eq = [100];
+    for (let i = 1; i < rows.length; i++) {
+      const prev = +rows[i - 1].equity, flow = +rows[i].flow || 0;
+      eq.push(prev > 0 ? eq[i - 1] * ((+rows[i].equity) - flow) / prev : eq[i - 1]);
+    }
     const bm = rows.map(r => b0 ? 100 * (+r.benchmark_price) / b0 : null);
     CH[k] = { dates, series: [{ name: s.label || k, v: eq, c: color }, { name: "Comprar y aguantar " + bname, v: bm, c: "--bench" }] };
     const all = eq.concat(bm.filter(x => x != null));

@@ -256,6 +256,57 @@ def with_provisional_close(daily: pd.DataFrame, prices_now: pd.Series, day: pd.T
     return pd.concat([base, row])
 
 
+# ------------------------------------------------------------------ corto plazo (velas por hora)
+# Probadas en reports/corto_plazo_preregistro.md. Solo compras; lo no invertido queda en efectivo.
+def _hourly_eligible(H: pd.DataFrame, min_history: int) -> np.ndarray:
+    return ((H.notna().cumsum() >= min_history) & H.notna()).values
+
+
+def reversal_weights(H: pd.DataFrame, every: int = 4, k: int = 3, lookback: int = 24,
+                     threshold: float | None = None, min_history: int = 720) -> pd.DataFrame:
+    """Cada `every` horas compra en partes iguales (1/k cada una) las k criptos que más cayeron en
+    `lookback` horas; con `threshold`, solo las que cayeron más que eso. Entre revisiones se mantiene."""
+    Hc = clean(H)
+    r = (Hc / Hc.shift(lookback) - 1).values
+    elig = _hourly_eligible(H, min_history)
+    hours = np.asarray(H.index.hour)
+    W = np.full(H.shape, np.nan)
+    for t in range(len(H)):
+        if hours[t] % every:
+            continue
+        row = np.zeros(H.shape[1])
+        ok = elig[t] & np.isfinite(r[t])
+        if threshold is not None:
+            ok &= r[t] < -threshold
+        idx = np.flatnonzero(ok)
+        if len(idx):
+            row[idx[np.argsort(r[t][idx], kind="stable")][:k]] = 1.0 / k
+        W[t] = row
+    return pd.DataFrame(W, index=H.index, columns=H.columns).ffill().fillna(0.0)
+
+
+def breakout_weights(H: pd.DataFrame, entry: int = 24, exit: int = 12, slots: int = 5,
+                     min_history: int = 720) -> pd.DataFrame:
+    """Entra si el precio supera el máximo de las `entry` horas anteriores; sale si baja del mínimo
+    de las `exit` horas anteriores. Peso 1/slots por cripto (partes iguales si hay más de `slots`)."""
+    Hc = clean(H)
+    hi = Hc.shift(1).rolling(entry, min_periods=entry).max().values
+    lo = Hc.shift(1).rolling(exit, min_periods=exit).min().values
+    px = Hc.values
+    elig = _hourly_eligible(H, min_history)
+    inside = np.zeros(H.shape[1], bool)
+    W = np.zeros(H.shape)
+    for t in range(len(H)):
+        p = px[t]
+        enter = elig[t] & np.isfinite(p) & np.isfinite(hi[t]) & (p > hi[t])
+        leave = ~elig[t] | ~np.isfinite(p) | (np.isfinite(lo[t]) & (p < lo[t]))
+        inside = (inside | enter) & ~leave
+        n = inside.sum()
+        if n:
+            W[t, inside] = 1.0 / max(n, slots)
+    return pd.DataFrame(W, index=H.index, columns=H.columns)
+
+
 # ------------------------------------------------------------------ universos
 def crypto_universe(mcap: pd.DataFrame, prices: pd.DataFrame, top_n: int = 15,
                     min_history: int = 250) -> pd.DataFrame:

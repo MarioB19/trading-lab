@@ -28,15 +28,15 @@ Resultados **fuera de muestra**, con comisiones y deslizamiento incluidos. Las r
 
 | | Rend. anual | Sharpe | Caída máxima |
 |---|---:|---:|---:|
-| Portafolio táctico (lo que usa el bot) | 32.3% | 1.10 | −42% |
-| Comprar y aguantar BTC | 20.5% | 0.61 | −77% |
-| Pesos iguales en el top 15, rebalanceo mensual | 19.2% | 0.60 | −78% |
-| Regla de tendencia solo en BTC | 17.0% | 0.62 | −56% |
+| Portafolio táctico (lo que usa el bot) | 33.2% | 1.12 | −42% |
+| Comprar y aguantar BTC | 20.4% | 0.61 | −77% |
+| Pesos iguales en el top 15, rebalanceo mensual | 20.0% | 0.61 | −78% |
+| Regla de tendencia solo en BTC | 17.0% | 0.61 | −56% |
 
 - Ninguna de 200 versiones placebo (mismos pesos desfasados en el tiempo) igualó a la estrategia.
 - El universo de prueba incluye monedas que se desplomaron (LUNA, FTT, EOS, NEO…) y se eligió con la capitalización de cada día.
-- Tiene 66% de probabilidad de ganar más que BTC y 97% de caer menos (bootstrap). Tras corregir por las 39 variantes probadas (36 diarias y 3 de tiempo real), que gane *más* que BTC no es estadísticamente seguro. Que caiga mucho menos sí lo es.
-- Los costos pesan mucho: con 0.30% por operación rendiría 37.9%; con 0.60%, 26.8%; con 1%, 14.7%. Por eso el bot opera en los mercados contra dólares de Bitso (0.36% de comisión) y no contra pesos (0.78%).
+- Tiene 67% de probabilidad de ganar más que BTC y 98% de caer menos (bootstrap). Tras corregir por las 43 variantes probadas (36 diarias, 3 de tiempo real y 4 de corto plazo), que gane *más* que BTC no es estadísticamente seguro. Que caiga mucho menos sí lo es.
+- Los costos pesan mucho: con 0.30% por operación rendiría 38.9%; con 0.60%, 27.7%; con 1%, 15.4%. Por eso el bot opera en los mercados contra dólares de Bitso (0.36% de comisión) y no contra pesos (0.78%).
 
 **Acciones y ETFs, 2010 a hoy** (costo 0.05%)
 
@@ -50,17 +50,21 @@ La misma lógica que funciona en cripto **no funcionó en acciones**: su timing 
 
 **Multi-mercado (materias primas, divisas, bonos y bolsas en 19 ETFs), probado el 25-sep-2026:** perdió 1.4% anual de 2012 a hoy y falló los cinco criterios declarados antes de la prueba; la versión con rebalanceo mensual dio 3.1% anual y tampoco pasó. Queda apagado. Detalle en `reports/multi_market_informe.md`.
 
-**Combinado 30% cripto / 70% ETFs (2021 a hoy):** 18.2% anual, caída máxima −27%, 24% de probabilidad de perder en un periodo de 12 meses. La racha más larga sin recuperar el máximo fue de 835 días.
+**Combinado 50% cripto / 50% ETFs, el reparto del bot desde el 27-sep-2026 (2021 a hoy):** 23.7% anual, caída máxima −32%, 26% de probabilidad de perder en un periodo de 12 meses. La racha más larga sin recuperar el máximo fue de 835 días. Con el reparto anterior (30/70) era 18.2% anual, −27% y 24%.
+
+**Estrategias de corto plazo, probadas el 27-sep-2026:** comprar las criptos que más cayeron en 24 horas (reversión) o las que rompen su máximo de 24 o 72 horas (ruptura), con velas por hora. Antes de comisiones, tres de ellas ganaban (de 54% a 128% anual, aunque parte de eso es un rebote entre precio de compra y de venta que no se puede capturar), pero operan cientos de veces al año y con 0.45% por operación todas pierden casi todo. Las dos mejores solo serían rentables con costos por debajo de 0.15–0.18% por operación; Bitso cobra como mínimo 0.30%. Ninguna pasó los criterios. Detalle en `reports/corto_plazo_informe.md`.
 
 ## Dólares, pesos e interés compuesto
 
 - **Todo se opera en dólares (USD):** las criptos en los mercados contra dólar de Bitso y las acciones en Alpaca.
 - **Tipo de cambio:** cada corrida guarda el USD/MXN del libro de Bitso (donde se cambiarían los pesos), en `state/equity.csv` (`usd_mxn`, cierre de cada día) y en `state/live.json` (el del momento). El tablero muestra el valor en pesos y separa el resultado en pesos en dos: lo que ganó el bot y lo que se movió el dólar.
+- **Aportaciones y retiros:** para meter o sacar dinero de un bloque basta con cambiar su `capital` en `config.yaml`. En la siguiente corrida del bloque, el bot lo registra como aportación o retiro (columna `flow` en `equity.csv`), vende o compra lo necesario, y reescala el máximo, el freno y la gráfica para que no cuente como ganancia ni como pérdida. Solo mueve la contabilidad del bot: los depósitos y traspasos reales entre cuentas los haces tú.
 - **Interés compuesto (`compound: true`):** cada día el bot reparte el capital completo del bloque, con lo ganado incluido. En el simulado interno la cuenta es el bloque. En una cuenta externa (Alpaca o dinero real), el bot lleva aparte el efectivo del bloque (`sleeve_cash` en `state/state.json`): suma lo que vende, resta lo que compra y nunca usa más efectivo del que de verdad hay en la cuenta. Con `compound: false`, lo que el bloque gane por encima de `capital` se queda en efectivo.
 
 ## Qué tan real es el simulado
 
-- **Criptos:** cada orden simulada se llena contra el libro de órdenes real de Bitso en ese momento: comisión real (0.36%), diferencial real y profundidad real. Si no hay suficiente oferta, se llena más cara o en parte. Solo el dinero es ficticio.
+- **Criptos:** cada orden simulada se llena contra el libro de órdenes real de Bitso en ese momento: comisión real, diferencial real y profundidad real. Si no hay suficiente oferta, se llena más cara o en parte. Solo el dinero es ficticio.
+- **Órdenes límite (desde el 27-sep-2026, solo simulado):** cada orden se pone primero al mejor precio del libro como "maker" (0.30% de comisión, sin pagar el diferencial) y espera hasta 2 minutos. Solo cuenta como llenado lo que el mercado negocia atravesando ese precio. Lo que no se llene se opera a mercado (0.36% más el diferencial). La nota de cada operación dice qué parte fue maker, y `cost_bps` mide el costo total, incluido lo que se movió el precio mientras esperaba. Si en 4 semanas el costo medido baja de forma consistente, se considera para dinero real.
 - **Acciones:** con llaves de Alpaca paper, las órdenes van a esa cuenta de práctica, que las ejecuta con precios reales del mercado. Sin llaves, se simulan al cierre con 0.05% de deslizamiento.
 - **Cada operación registra su costo real** (`cost_bps` en `state/trades.csv`) y el tablero muestra el promedio contra lo que supone el backtest.
 
@@ -87,8 +91,8 @@ Con $1,000 USD en cada bloque, simulando 12 meses a partir de pedazos del period
 
 | | Peor 5% de los casos | Mediana | P(terminar con pérdida) | P(caída >30% en el camino) |
 |---|---:|---:|---:|---:|
-| Cripto táctico | $719 | $1,227 | 28% | 20% |
-| BTC comprar y aguantar | $450 | $1,145 | 41% | 81% |
+| Cripto táctico | $731 | $1,224 | 28% | 20% |
+| BTC comprar y aguantar | $448 | $1,166 | 40% | 81% |
 | 60/40 | $945 | $1,104 | 13% | 0.1% |
 
 ## Candados de seguridad
@@ -122,7 +126,7 @@ El repositorio ya corre solo en modo simulado. Para ir subiendo de nivel:
 ```bash
 python -m venv .venv && source .venv/bin/activate    # Windows: .venv\Scripts\activate
 pip install -e ".[dev]"
-python -m pytest -q -W ignore                         # 60 pruebas
+python -m pytest -q -W ignore                         # 71 pruebas
 python -m lab.research_multi --refresh                # investigación completa (~2 min)
 python -m lab.bot                                     # corrida del día, simulada
 python -m lab.bot --replay 365                        # el bot re-juega un año y se compara con el backtest
@@ -130,6 +134,7 @@ python -m lab.bot --status
 python -m lab.bot --reset-kill-switch crypto
 python -m lab.realtime --once                         # revisión en tiempo real (valúa y avisa)
 python -m lab.research_rt                             # prueba de operar cada hora / 4 horas / vigía (~20 min la primera vez)
+python -m lab.research_short                          # prueba de estrategias de corto plazo (~6 min)
 ```
 
 ## Tiempo real 24/7 en un servidor (opcional)
@@ -154,6 +159,7 @@ docker run -d --restart=always -v "$PWD:/app" trading-lab \
 | `src/lab/bot.py` | Bot diario por bloques, candados y archivos para el tablero |
 | `src/lab/realtime.py` | Revisión en tiempo real: valuación a precio de mercado, caída, señal provisional y avisos |
 | `src/lab/research_rt.py` | Prueba pre-registrada de operar cada hora, cada 4 horas o con vigía (velas por hora) |
+| `src/lab/research_short.py` | Prueba pre-registrada de estrategias de corto plazo: reversión y ruptura (velas por hora) |
 | `src/lab/brokers.py` | Simulado interno, Alpaca (paper/real) y Bitso |
 | `src/lab/data.py` | CoinMetrics, Yahoo Finance y exchanges vía ccxt |
 | `src/lab/research.py`, `btc_bot.py` | El estudio original de BTC solo (`reports/informe.md`) |

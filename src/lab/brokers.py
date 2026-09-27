@@ -43,13 +43,14 @@ class SimBroker:
     def pending(self) -> int:
         return 0
 
-    def _apply(self, asset: str, side: str, qty: float, px: float) -> tuple[float, float]:
+    def _apply(self, asset: str, side: str, qty: float, px: float,
+               fee_rate: float | None = None) -> tuple[float, float]:
         """Mueve efectivo y posición en el libro contable. Devuelve (cantidad, comisión)."""
         pos = self.l["positions"]
         if side == "sell":
             qty = min(qty, pos.get(asset, 0.0))
         notional = qty * px
-        fee = notional * self.fee
+        fee = notional * (self.fee if fee_rate is None else fee_rate)
         if side == "buy":
             self.l["cash"] -= notional + fee
             pos[asset] = pos.get(asset, 0.0) + qty
@@ -75,8 +76,15 @@ class BookSimBroker(SimBroker):
     """
 
     def __init__(self, ledger: dict, taker_fee: float, quote: str = "USD", min_order_value: float = 1.0,
-                 fallback_slippage: float = 0.002, exchange=None):
+                 fallback_slippage: float = 0.002, exchange=None, maker: dict | None = None,
+                 sleep=None, clock=None):
+        """maker: {"wait_s", "poll_s", "budget_s", "fee"}. Si está, cada orden primero se pone como
+        orden límite al mejor precio del libro (maker) y solo lo que no se llene se opera a mercado."""
         super().__init__(ledger, taker_fee, fallback_slippage, min_order_value)
+        self.maker = dict(maker or {})
+        self._sleep = sleep or time.sleep
+        self._clock = clock or time.monotonic
+        self._maker_left = float(self.maker.get("budget_s", 0.0))
         if exchange is None:
             from .data import make_exchange
 
@@ -104,6 +112,36 @@ class BookSimBroker(SimBroker):
         """Sin residuos invendibles: no cuentan como posición ni bloquean el día si les falta precio."""
         return {k: v for k, v in super().positions().items() if not self._is_dust(k, v)}
 
+    def _maker_fill(self, sym: str, side: str, qty: float, price: float) -> float | None:
+        """Orden límite simulada a `price` (mejor compra si compras, mejor venta si vendes).
+
+        Cuenta como llenada solo lo que el mercado negocia ATRAVESANDO ese precio mientras se espera
+        (conservador: no supone que la orden estaba primera en la fila), o todo si el libro la cruza.
+        """
+        wait = min(float(self.maker.get("wait_s", 0)), self._maker_left)
+        poll = max(1.0, float(self.maker.get("poll_s", 15)))
+        if wait < poll:
+            return None  # sin tiempo de espera disponible: se opera a mercado directamente
+        since = self.ex.milliseconds()
+        start = self._clock()
+        got = 0.0
+        while self._clock() - start < wait and got < qty:
+            self._sleep(poll)
+            try:
+                trades = self.ex.fetch_trades(sym, since=since, limit=100)
+                through = [t for t in trades if (t.get("timestamp") or 0) >= since and
+                           (t["price"] < price if side == "buy" else t["price"] > price)]
+                got = min(qty, sum(float(t["amount"]) for t in through))
+                top = self.ex.fetch_order_book(sym, limit=5)
+                crossed = (top["asks"] and top["asks"][0][0] <= price) if side == "buy" else \
+                          (top["bids"] and top["bids"][0][0] >= price)
+                if crossed:
+                    got = qty
+            except Exception:  # noqa: BLE001  sin datos: se deja de esperar
+                break
+        self._maker_left = max(0.0, self._maker_left - (self._clock() - start))
+        return got
+
     def execute(self, asset: str, side: str, qty: float, ref_price: float) -> Fill:
         sym = f"{asset}/{self.quote}"
         m = self.ex.markets.get(sym)
@@ -111,11 +149,32 @@ class BookSimBroker(SimBroker):
             return Fill(asset, side, 0.0, ref_price, 0.0, "failed", "Bitso no tiene este mercado", ref_price)
         if side == "sell":
             qty = min(qty, self.l["positions"].get(asset, 0.0))
+        if not self.maker.get("wait_s"):
+            return self._taker(asset, sym, m, side, qty, ref_price)
+        mk = self._maker_leg(asset, sym, m, side, qty, ref_price)
+        if mk is None:
+            return self._taker(asset, sym, m, side, qty, ref_price)
+        mq, mpx, mfee, mid0 = mk
+        min_cost = max(self.min_order_value, ((m.get("limits") or {}).get("cost") or {}).get("min") or 0.0)
+        rest = qty - mq
+        tk = self._taker(asset, sym, m, side, rest, ref_price) if rest * mpx >= min_cost else None
+        tq = tk.qty if tk is not None and tk.status != "failed" else 0.0
+        tot = mq + tq
+        if tot <= 0:
+            return tk or Fill(asset, side, 0.0, mpx, 0.0, "failed", "no se llenó", mid0)
+        avg = (mq * mpx + tq * (tk.price if tq else 0.0)) / tot
+        fee = mfee + (tk.fee if tq else 0.0)
+        status = "filled" if tot >= qty * 0.999 else "partial"
+        note = f"límite: {mq / tot:.0%} como maker" + (", resto a mercado" if tq else "")
+        return Fill(asset, side, tot, avg, fee, status, note, mid0)
+
+    def _taker(self, asset: str, sym: str, m: dict, side: str, qty: float, ref_price: float) -> Fill:
+        """Orden a mercado: recorre el libro real con la comisión taker."""
         try:
             qty = float(self.ex.amount_to_precision(sym, qty))
             book = self.ex.fetch_order_book(sym, limit=100)
         except Exception as exc:  # noqa: BLE001  sin libro: deslizamiento supuesto
-            f = super().execute(asset, side, qty, ref_price)
+            f = SimBroker.execute(self, asset, side, qty, ref_price)
             f.note = f"libro no disponible, se supuso {self.slip:.2%} ({str(exc)[:60]})"
             return f
         if not book["bids"] or not book["asks"]:
@@ -133,11 +192,38 @@ class BookSimBroker(SimBroker):
             return Fill(asset, side, 0.0, mid, 0.0, "failed", f"debajo del mínimo de Bitso (${min_cost})", mid)
         avg = cost / got
         got, fee = self._apply(asset, side, got, avg)
+        self._drop_dust(asset, side)
+        status = "filled" if got >= qty * 0.999 else "partial"
+        return Fill(asset, side, got, avg, fee, status, "" if status == "filled" else "profundidad insuficiente", mid)
+
+    def _drop_dust(self, asset: str, side: str) -> None:
         left = self.l["positions"].get(asset)
         if side == "sell" and left is not None and self._is_dust(asset, left):
             self.l["positions"].pop(asset)  # el redondeo de Bitso deja un residuo que no se puede vender
-        status = "filled" if got >= qty * 0.999 else "partial"
-        return Fill(asset, side, got, avg, fee, status, "" if status == "filled" else "profundidad insuficiente", mid)
+
+    def _maker_leg(self, asset: str, sym: str, m: dict, side: str, qty: float, ref_price: float):
+        """(cantidad, precio, comisión, medio del libro al empezar) de la parte maker, o None."""
+        try:
+            qty = float(self.ex.amount_to_precision(sym, qty))
+            top = self.ex.fetch_order_book(sym, limit=5)
+        except Exception:  # noqa: BLE001
+            return None
+        if not top["bids"] or not top["asks"]:
+            return None
+        mid = (top["bids"][0][0] + top["asks"][0][0]) / 2
+        price = top["bids"][0][0] if side == "buy" else top["asks"][0][0]
+        got = self._maker_fill(sym, side, qty, price)
+        if got is None:
+            return None
+        if got <= 0:
+            return (0.0, price, 0.0, mid)
+        try:
+            got = float(self.ex.amount_to_precision(sym, got))
+        except Exception:  # noqa: BLE001  menor que la unidad mínima
+            return (0.0, price, 0.0, mid)
+        got, fee = self._apply(asset, side, got, price, float(self.maker.get("fee", 0.003)))
+        self._drop_dust(asset, side)
+        return (got, price, fee, mid)
 
 
 class AlpacaBroker:

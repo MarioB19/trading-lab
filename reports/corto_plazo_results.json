@@ -1,0 +1,346 @@
+{
+ "generated": "2026-09-27 21:33 UTC",
+ "data": {
+  "first": "2020-01-01 01:00:00",
+  "last": "2026-09-27 00:00:00",
+  "oos_start": "2021-01-01",
+  "cost": 0.0045,
+  "band": 0.02,
+  "assets": [
+   "BTC",
+   "ETH",
+   "SOL",
+   "XRP",
+   "ADA",
+   "DOGE",
+   "LINK",
+   "AVAX",
+   "LTC",
+   "BCH",
+   "XLM",
+   "TRX",
+   "HBAR",
+   "NEAR",
+   "UNI",
+   "ATOM"
+  ]
+ },
+ "reference": {
+  "label": "R0 \u00b7 bot diario actual",
+  "cagr": 0.21620818728987556,
+  "vol": 0.29288969523340486,
+  "sharpe": 0.8138330283043587,
+  "max_dd": -0.5030749699636526,
+  "exposure": 0.2855395505128826,
+  "worst_day": -0.08809032259978045,
+  "rebalances_per_year": 138.68257756563244,
+  "cost_drag_per_year": 0.1214402956849916,
+  "sharpe_at_0.60%": 0.6946285169071069,
+  "cagr_at_0.30%": 0.2587533256038288,
+  "with_kill_switch": -0.0013308459241722082
+ },
+ "variants": {
+  "C1": {
+   "label": "Reversi\u00f3n: las 3 que m\u00e1s cayeron en 24 h, cada 4 h",
+   "cagr": -0.9988385139868275,
+   "vol": 0.7843014559839135,
+   "sharpe": -8.135208956507165,
+   "max_dd": -1.0,
+   "exposure": 0.9946176523815249,
+   "worst_day": -0.31157894982374046,
+   "rebalances_per_year": 1766.634844868735,
+   "cost_drag_per_year": 7.250045745563945,
+   "sharpe_at_0.60%": -11.230325209833351,
+   "cagr_at_0.30%": -0.9868551228890208,
+   "sharpe_at_0.30%": -5.04400647901138,
+   "with_kill_switch": 0.0,
+   "cagr_no_costs": 0.66419844113097,
+   "cagr_by_cost": {
+    "0.05%": -0.2565327640881935,
+    "0.10%": -0.6680039373687582,
+    "0.15%": -0.851810244916608,
+    "0.20%": -0.9338823593467062
+   },
+   "bootstrap": {
+    "p_sharpe_better": 0.0,
+    "p_return_better": 0.0,
+    "p_drawdown_smaller": 0.0
+   },
+   "placebo": {
+    "actual_sharpe": -8.135208956507165,
+    "placebo_median": -8.190467429737744,
+    "p_value": 0.41,
+    "n": 100
+   },
+   "criteria": [
+    {
+     "id": 1,
+     "name": "Sharpe fuera de muestra mayor que R0",
+     "value": [
+      -8.135208956507165,
+      0.8138330283043587
+     ],
+     "pass": false
+    },
+    {
+     "id": 2,
+     "name": "Bootstrap: P(Sharpe mejor que R0) \u2265 80%",
+     "value": 0.0,
+     "pass": false
+    },
+    {
+     "id": 3,
+     "name": "Placebo p < 0.05",
+     "value": 0.41,
+     "pass": false
+    },
+    {
+     "id": 4,
+     "name": "Ca\u00edda m\u00e1xima no peor que R0 por m\u00e1s de 1 punto",
+     "value": [
+      -1.0,
+      -0.5030749699636526
+     ],
+     "pass": false
+    },
+    {
+     "id": 5,
+     "name": "Con 0.60% por operaci\u00f3n, Sharpe mayor que R0 con 0.60%",
+     "value": [
+      -11.230325209833351,
+      0.6946285169071069
+     ],
+     "pass": false
+    }
+   ],
+   "verdict": "no aprobada"
+  },
+  "C2": {
+   "label": "Reversi\u00f3n con umbral: ca\u00edda de m\u00e1s de 5% en 24 h",
+   "cagr": -0.7056652673895754,
+   "vol": 0.4790148137466097,
+   "sharpe": -2.3005498844776646,
+   "max_dd": -0.9993039263133044,
+   "exposure": 0.21311593351172411,
+   "worst_day": -0.25861362655597186,
+   "rebalances_per_year": 712.4033412887828,
+   "cost_drag_per_year": 2.043792023893754,
+   "sharpe_at_0.60%": -3.660081999898495,
+   "cagr_at_0.30%": -0.4171062836840671,
+   "sharpe_at_0.30%": -0.8899621314311175,
+   "with_kill_switch": -0.04628258294760401,
+   "cagr_no_costs": 1.2804970627551682,
+   "cagr_by_cost": {
+    "0.05%": 0.8171341411666078,
+    "0.10%": 0.4477897906302666,
+    "0.15%": 0.15341354081145897,
+    "0.20%": -0.08119032588069586
+   },
+   "bootstrap": {
+    "p_sharpe_better": 0.0,
+    "p_return_better": 0.0,
+    "p_drawdown_smaller": 0.0
+   },
+   "placebo": {
+    "actual_sharpe": -2.3005498844776646,
+    "placebo_median": -5.142394493071432,
+    "p_value": 0.0,
+    "n": 100
+   },
+   "criteria": [
+    {
+     "id": 1,
+     "name": "Sharpe fuera de muestra mayor que R0",
+     "value": [
+      -2.3005498844776646,
+      0.8138330283043587
+     ],
+     "pass": false
+    },
+    {
+     "id": 2,
+     "name": "Bootstrap: P(Sharpe mejor que R0) \u2265 80%",
+     "value": 0.0,
+     "pass": false
+    },
+    {
+     "id": 3,
+     "name": "Placebo p < 0.05",
+     "value": 0.0,
+     "pass": true
+    },
+    {
+     "id": 4,
+     "name": "Ca\u00edda m\u00e1xima no peor que R0 por m\u00e1s de 1 punto",
+     "value": [
+      -0.9993039263133044,
+      -0.5030749699636526
+     ],
+     "pass": false
+    },
+    {
+     "id": 5,
+     "name": "Con 0.60% por operaci\u00f3n, Sharpe mayor que R0 con 0.60%",
+     "value": [
+      -3.660081999898495,
+      0.6946285169071069
+     ],
+     "pass": false
+    }
+   ],
+   "verdict": "no aprobada"
+  },
+  "C3": {
+   "label": "Ruptura: m\u00e1ximo de 24 h / m\u00ednimo de 12 h",
+   "cagr": -0.9757805451907655,
+   "vol": 0.5746998475608576,
+   "sharpe": -6.155996010243972,
+   "max_dd": -0.9999999997363851,
+   "exposure": 0.5987539313292879,
+   "worst_day": -0.11804590335808407,
+   "rebalances_per_year": 2543.5011933174223,
+   "cost_drag_per_year": 3.739580463896146,
+   "sharpe_at_0.60%": -8.19238942037822,
+   "cagr_at_0.30%": -0.9155533140603997,
+   "sharpe_at_0.30%": -4.046353281582058,
+   "with_kill_switch": -0.00978449633655809,
+   "cagr_no_costs": 0.02364133029799853,
+   "cagr_by_cost": {
+    "0.05%": -0.3244288322203883,
+    "0.10%": -0.5541924224498289,
+    "0.15%": -0.7058446178630471,
+    "0.20%": -0.8059296752391528
+   },
+   "bootstrap": {
+    "p_sharpe_better": 0.0,
+    "p_return_better": 0.0,
+    "p_drawdown_smaller": 0.0
+   },
+   "placebo": {
+    "actual_sharpe": -6.155996010243972,
+    "placebo_median": -6.15433807698039,
+    "p_value": 0.51,
+    "n": 100
+   },
+   "criteria": [
+    {
+     "id": 1,
+     "name": "Sharpe fuera de muestra mayor que R0",
+     "value": [
+      -6.155996010243972,
+      0.8138330283043587
+     ],
+     "pass": false
+    },
+    {
+     "id": 2,
+     "name": "Bootstrap: P(Sharpe mejor que R0) \u2265 80%",
+     "value": 0.0,
+     "pass": false
+    },
+    {
+     "id": 3,
+     "name": "Placebo p < 0.05",
+     "value": 0.51,
+     "pass": false
+    },
+    {
+     "id": 4,
+     "name": "Ca\u00edda m\u00e1xima no peor que R0 por m\u00e1s de 1 punto",
+     "value": [
+      -0.9999999997363851,
+      -0.5030749699636526
+     ],
+     "pass": false
+    },
+    {
+     "id": 5,
+     "name": "Con 0.60% por operaci\u00f3n, Sharpe mayor que R0 con 0.60%",
+     "value": [
+      -8.19238942037822,
+      0.6946285169071069
+     ],
+     "pass": false
+    }
+   ],
+   "verdict": "no aprobada"
+  },
+  "C4": {
+   "label": "Ruptura: m\u00e1ximo de 72 h / m\u00ednimo de 36 h",
+   "cagr": -0.5757031827361576,
+   "vol": 0.5679817370536732,
+   "sharpe": -1.226730531093611,
+   "max_dd": -0.9981715580689721,
+   "exposure": 0.5938824487670981,
+   "worst_day": -0.1614591821671134,
+   "rebalances_per_year": 1099.5298329355608,
+   "cost_drag_per_year": 1.2868630079228622,
+   "sharpe_at_0.60%": -1.963183556633761,
+   "cagr_at_0.30%": -0.3479900453219048,
+   "sharpe_at_0.30%": -0.4782400041947012,
+   "with_kill_switch": 0.0948395124370709,
+   "cagr_no_costs": 0.5384116011865963,
+   "cagr_by_cost": {
+    "0.05%": 0.3334249317541975,
+    "0.10%": 0.15571737196675373,
+    "0.15%": 0.0016632713794801912,
+    "0.20%": -0.1318817463374976
+   },
+   "bootstrap": {
+    "p_sharpe_better": 0.0,
+    "p_return_better": 0.0,
+    "p_drawdown_smaller": 0.0
+   },
+   "placebo": {
+    "actual_sharpe": -1.226730531093611,
+    "placebo_median": -1.8503765715720393,
+    "p_value": 0.0,
+    "n": 100
+   },
+   "criteria": [
+    {
+     "id": 1,
+     "name": "Sharpe fuera de muestra mayor que R0",
+     "value": [
+      -1.226730531093611,
+      0.8138330283043587
+     ],
+     "pass": false
+    },
+    {
+     "id": 2,
+     "name": "Bootstrap: P(Sharpe mejor que R0) \u2265 80%",
+     "value": 0.0,
+     "pass": false
+    },
+    {
+     "id": 3,
+     "name": "Placebo p < 0.05",
+     "value": 0.0,
+     "pass": true
+    },
+    {
+     "id": 4,
+     "name": "Ca\u00edda m\u00e1xima no peor que R0 por m\u00e1s de 1 punto",
+     "value": [
+      -0.9981715580689721,
+      -0.5030749699636526
+     ],
+     "pass": false
+    },
+    {
+     "id": 5,
+     "name": "Con 0.60% por operaci\u00f3n, Sharpe mayor que R0 con 0.60%",
+     "value": [
+      -1.963183556633761,
+      0.6946285169071069
+     ],
+     "pass": false
+    }
+   ],
+   "verdict": "no aprobada"
+  }
+ },
+ "winner": null,
+ "runtime_s": 377.7
+}

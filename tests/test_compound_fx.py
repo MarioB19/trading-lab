@@ -92,3 +92,56 @@ def test_equity_rows_record_usd_mxn(monkeypatch, tmp_path):
     eq = pd.read_csv(st / "equity.csv")
     assert eq["usd_mxn"].iloc[-1] == pytest.approx(17.25)  # cierre del día de la vela
     assert json.loads((st / "snapshot.json").read_text())["fx"]["rate"] == 17.5
+
+
+# ------------------------------------------------------------ aportaciones y retiros (cambio de capital)
+def _sim_two_days(cap1, cap2, last_mult=1.0):
+    sc = _stocks_sc(capital=cap1)
+    P = _prices(last_mult=last_mult)
+    st: dict = {}
+    br = SimBroker(st.setdefault("ledger", {"cash": float(cap1), "positions": {}}), 0.0, 0.0, 1.0)
+    eq = pd.Series(dtype=float)
+    r1 = bot.run_sleeve("stocks", sc, P.iloc[:-1], br, st, P.index[-2] + pd.Timedelta(days=1, hours=2), "paper", eq, 10.0)
+    eq.loc[P.index[-2]] = r1["equity_row"]["equity"]
+    sc["capital"] = cap2
+    r2 = bot.run_sleeve("stocks", sc, P, br, st, P.index[-1] + pd.Timedelta(days=1, hours=2), "paper", eq, 10.0)
+    return st, br, r1, r2
+
+
+def test_withdrawal_sells_and_is_not_a_loss():
+    st, br, r1, r2 = _sim_two_days(700, 500)
+    assert r2["equity_row"]["flow"] == pytest.approx(-200)
+    assert r2["equity_row"]["equity"] == pytest.approx(r1["equity_row"]["equity"] - 200, abs=2)
+    assert br.cash() >= -1e-6 and any(t["side"] == "sell" for t in r2["trades"])
+    assert r2["equity_row"]["drawdown"] > -0.01 and not st.get("kill_switch")  # no es una caída
+    assert st["capital_base"] == 500
+
+
+def test_deposit_is_invested_and_is_not_a_gain():
+    st, br, r1, r2 = _sim_two_days(300, 500, last_mult=1.0)
+    assert r2["equity_row"]["flow"] == pytest.approx(200)
+    assert r2["equity_row"]["equity"] == pytest.approx(r1["equity_row"]["equity"] + 200, abs=2)
+    assert any(t["side"] == "buy" for t in r2["trades"])
+    assert r2["snapshot"]["peak"] == pytest.approx(r2["equity_row"]["equity"], rel=0.01)
+
+
+def test_withdrawal_in_external_account_moves_sleeve_cash(monkeypatch):
+    monkeypatch.setattr(bot, "SimBroker", type("Otro", (), {}))
+    sc = _stocks_sc(capital=700)
+    P = _prices()
+    st: dict = {}
+    br = FakeAlpaca({"cash": 100_000.0, "positions": {}}, 0.0, 0.0, 1.0)
+    eq = pd.Series(dtype=float)
+    r1 = bot.run_sleeve("stocks", sc, P.iloc[:-1], br, st, P.index[-2] + pd.Timedelta(days=1, hours=2), "paper", eq, 10.0)
+    sc["capital"] = 500
+    r2 = bot.run_sleeve("stocks", sc, P, br, st, P.index[-1] + pd.Timedelta(days=1, hours=2), "paper", eq, 10.0)
+    assert r2["equity_row"]["equity"] == pytest.approx(r1["equity_row"]["equity"] - 200, abs=2)
+    held = sum(q * float(P.iloc[-1][a]) for a, q in br.positions().items())
+    assert held == pytest.approx(500 * 0.997, rel=0.02) and st["sleeve_cash"] >= -1e-6
+
+
+def test_equity_history_rescales_before_flows():
+    rows = pd.DataFrame({"date": ["2026-01-01", "2026-01-02", "2026-01-03"], "sleeve": "x", "mode": "paper",
+                         "equity": [700.0, 710.0, 505.0], "flow": ["", "", -200]})
+    h = bot.equity_history(rows, "x", "paper")
+    assert h.iloc[-1] == 505 and h.iloc[1] == pytest.approx(510) and h.iloc[0] == pytest.approx(700 * 510 / 710)

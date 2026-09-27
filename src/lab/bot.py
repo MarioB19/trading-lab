@@ -37,6 +37,8 @@ SLEEVE_DEFAULTS = {
         "data": {"source": "ccxt", "exchange": "kraken", "fallback_exchange": "bitso"},
         "quote": "USD", "paper_broker": "bitso_book", "live_broker": "bitso",
         "capital": 300.0, "compound": True, "fee": 0.0036, "slippage": 0.001, "band": 0.02,
+        # simulado: primero orden límite (maker, 0.30%); lo que no se llene en `wait_s` va a mercado
+        "execution": {"maker_first": True, "wait_s": 120, "poll_s": 15, "budget_s": 480, "maker_fee": 0.003},
         "kill_drawdown": 0.45, "max_order_value": 300.0, "min_order_value": 5.0,
         "max_data_age_hours": 36, "benchmark": "BTC", "min_history": 250,
     },
@@ -74,7 +76,7 @@ DEFAULT_CONFIG = {"mode": "paper", "max_price_jump": 0.40, "sleeves": SLEEVE_DEF
 TRADE_FIELDS = ["run_at_utc", "sleeve", "mode", "broker", "candle", "asset", "side", "qty", "price",
                 "value", "fee", "status", "note", "ref_price", "cost_bps"]
 EQUITY_FIELDS = ["date", "sleeve", "mode", "equity", "cash", "exposure", "drawdown", "brake",
-                 "benchmark_price", "n_positions", "usd_mxn"]
+                 "benchmark_price", "n_positions", "usd_mxn", "flow"]
 
 
 # ------------------------------------------------------------------ config y estado
@@ -203,6 +205,26 @@ def compute_targets(sc: dict, prices: pd.DataFrame) -> tuple[pd.Series, pd.DataF
     return W.loc[last], table
 
 
+# ------------------------------------------------------------------ historia de capital
+def equity_history(eq_all: pd.DataFrame, name: str, mode: str) -> pd.Series:
+    """Capital diario del bloque, reescalado por aportaciones y retiros (columna `flow`).
+
+    Así el freno y el pico miden solo lo que ganó o perdió el bloque: tras un retiro de 40%, los
+    días anteriores se multiplican por 0.6 en vez de parecer una caída de 40%.
+    """
+    if not len(eq_all):
+        return pd.Series(dtype=float)
+    h = eq_all[(eq_all["sleeve"] == name) & (eq_all["mode"] == mode)]
+    if not len(h):
+        return pd.Series(dtype=float)
+    eq = h["equity"].astype(float).to_numpy().copy()
+    flows = pd.to_numeric(h["flow"], errors="coerce").fillna(0.0).to_numpy() if "flow" in h else np.zeros(len(h))
+    for i in range(1, len(eq)):
+        if flows[i] and eq[i - 1] > 0:
+            eq[:i] *= (eq[i - 1] + flows[i]) / eq[i - 1]
+    return pd.Series(eq, index=pd.to_datetime(h["date"]).values)
+
+
 # ------------------------------------------------------------------ valuación
 def book_value(positions: dict, cash: float, px: pd.Series, capital: float, capped: bool,
                sleeve_cash: float | None = None, compound: bool = True) -> tuple[dict, float, float]:
@@ -220,7 +242,8 @@ def book_value(positions: dict, cash: float, px: pd.Series, capital: float, capp
     posval = sum(value.values())
     if not capped:
         return value, cash + posval, cash
-    own = cash if sleeve_cash is None else max(0.0, min(float(sleeve_cash), cash))
+    # puede ser negativo justo después de un retiro: el bloque debe vender para cubrirlo
+    own = cash if sleeve_cash is None else min(float(sleeve_cash), cash)
     equity = posval + own
     if not compound:
         equity = min(equity, float(capital))
@@ -277,6 +300,34 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
     own_cash = init_sleeve_cash(st, sc, positions, px) if capped else None
     value, equity, _ = book_value(positions, cash, px, sc["capital"], capped, own_cash, compound)
     w_now = {a: v / equity for a, v in value.items()} if equity > 0 else {}
+
+    # ¿cambió el capital asignado en config.yaml? Es una aportación (+) o un retiro (−) de este bloque.
+    # Solo mueve la contabilidad del bot (nunca dinero entre cuentas): en el simulado, el efectivo del
+    # libro; en una cuenta externa, el efectivo que el bloque puede usar. El pico, el freno y la gráfica
+    # se reescalan para que la aportación no cuente como ganancia ni el retiro como pérdida.
+    flow = 0.0
+    base = st.get("capital_base")
+    if base is None:
+        st["capital_base"] = base = float(sc["capital"])
+    delta = float(sc["capital"]) - float(base)
+    if abs(delta) > 1e-9 and equity > 0:
+        if capped:
+            st["sleeve_cash"] = float(st["sleeve_cash"]) + delta
+        else:
+            broker.l["cash"] = float(broker.l["cash"]) + delta
+        cash = broker.cash()
+        e0 = equity
+        value, equity, _ = book_value(positions, cash, px, sc["capital"], capped,
+                                      st.get("sleeve_cash") if capped else None, compound)
+        w_now = {a: v / equity for a, v in value.items()} if equity > 0 else {}
+        factor = equity / e0
+        if st.get("peak"):
+            st["peak"] = float(st["peak"]) * factor
+        eq_hist = eq_hist * factor
+        flow = delta
+        st["capital_base"] = float(sc["capital"])
+        notes.append(f"{'aportación' if delta > 0 else 'retiro'} de ${abs(delta):,.2f}: el bloque ahora "
+                     f"tiene ${equity:,.2f}" + (" y vende para cubrirlo" if delta < 0 else ""))
 
     peak = max(float(st.get("peak") or 0), equity)
     p = sleeve_params(sc)
@@ -346,7 +397,7 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
         fills.append(f)
         if capped and f.status in ("filled", "partial", "submitted") and f.qty > 0:
             amt = f.qty * f.price
-            st["sleeve_cash"] = max(0.0, float(st["sleeve_cash"]) + ((amt - f.fee) if f.side == "sell" else -(amt + f.fee)))
+            st["sleeve_cash"] = float(st["sleeve_cash"]) + ((amt - f.fee) if f.side == "sell" else -(amt + f.fee))
 
     for a, diff in sorted(orders, key=lambda x: x[1]):  # primero ventas (liberan efectivo)
         price = float(px[a])
@@ -402,7 +453,7 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
                          "cash": round(cash, 2), "exposure": round(exposure, 4),
                          "drawdown": round(eq_after / st["peak"] - 1, 4), "brake": round(brake, 3),
                          "benchmark_price": round(float(px[bench]), 6) if bench in px.index else "",
-                         "n_positions": len(value)}
+                         "n_positions": len(value), "flow": round(flow, 2) if flow else ""}
     tbl = table.copy()
     tbl["weight"] = pd.Series({a: v / eq_after for a, v in value.items()}) if eq_after > 0 else 0.0
     tbl["weight"] = tbl["weight"].fillna(0.0)
@@ -447,8 +498,11 @@ def make_broker(name: str, sc: dict, mode: str, st: dict, notes: list[str]):
             notes.append(f"Alpaca paper no disponible ({exc}); uso el simulado interno")
     st.setdefault("ledger", {"cash": float(sc["capital"]), "positions": {}})
     if sc["paper_broker"] == "bitso_book":
+        ex = sc.get("execution") or {}
+        maker = ({"wait_s": ex.get("wait_s", 120), "poll_s": ex.get("poll_s", 15), "budget_s": ex.get("budget_s", 480),
+                  "fee": ex.get("maker_fee", 0.003)} if ex.get("maker_first") else None)
         try:
-            return BookSimBroker(st["ledger"], sc["fee"], sc["quote"], minv, sc["slippage"])
+            return BookSimBroker(st["ledger"], sc["fee"], sc["quote"], minv, sc["slippage"], maker=maker)
         except Exception as exc:  # noqa: BLE001
             notes.append(f"libro de Bitso no disponible ({str(exc)[:80]}); uso deslizamiento supuesto")
     return SimBroker(st["ledger"], sc["fee"], sc["slippage"], minv)
@@ -612,8 +666,7 @@ def main(argv: list[str] | None = None) -> int:
             P = offline_prices(name, sc) if args.offline else fetch_prices(name, sc, now, notes)
             run_now = P.index[-1] + pd.Timedelta(days=1, minutes=10) if args.offline else now
             broker = make_broker(name, sc, mode, st, notes)
-            h = eq_all[(eq_all["sleeve"] == name) & (eq_all["mode"] == mode)] if len(eq_all) else eq_all
-            eq_hist = pd.Series(h["equity"].astype(float).values, index=pd.to_datetime(h["date"])) if len(h) else pd.Series(dtype=float)
+            eq_hist = equity_history(eq_all, name, mode)
             r = run_sleeve(name, sc, P, broker, st, run_now, mode, eq_hist, cfg["max_price_jump"])
         except Exception as exc:  # noqa: BLE001  un bloque que falla no detiene al otro
             failures += 1

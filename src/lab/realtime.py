@@ -31,7 +31,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from .bot import (EQUITY_FIELDS, ROOT, append_csv, book_value, compute_targets, fetch_prices,
+from .bot import (EQUITY_FIELDS, ROOT, append_csv, book_value, compute_targets, equity_history, fetch_prices,
                   init_sleeve_cash, is_capped, load_config, load_env, load_state, make_broker, research_summary,
                   save_json, sleeve_params)
 from .data import make_exchange, usd_mxn_now, yahoo_last
@@ -197,8 +197,7 @@ def tick(cfg: dict, mode: str, now: pd.Timestamp | None = None) -> dict:
         if st.get("mode") and st["mode"] != mode:
             out["sleeves"][name] = {"status": "skip", "notes": [f"el bloque está en modo {st['mode']}"]}
             continue
-        h = eq_all[(eq_all["sleeve"] == name) & (eq_all["mode"] == mode)] if len(eq_all) else eq_all
-        eq_hist = pd.Series(h["equity"].astype(float).values, index=pd.to_datetime(h["date"])) if len(h) else pd.Series(dtype=float)
+        eq_hist = equity_history(eq_all, name, mode)
         try:
             ref = pd.Series({a["asset"]: a["price"] for a in snap.get("sleeves", {}).get(name, {}).get("assets", [])
                              if a.get("price")}, dtype=float)
