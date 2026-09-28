@@ -1,0 +1,243 @@
+{
+  "code_commit": "f6c19fdcac943978011b3e096280beb7d0528884",
+  "run_id": "d29350d13e8d4a9196ace417bbd5822a",
+  "first_attempt_at": "2026-09-28T02:59:25.900723+00:00",
+  "retry_at": "2026-09-28T03:00:15.651727+00:00",
+  "counts_before": {
+    "documents": 8,
+    "trades": 12,
+    "equity": 4,
+    "orders": 0,
+    "events": 1
+  },
+  "counts_after": {
+    "documents": 8,
+    "trades": 12,
+    "equity": 4,
+    "orders": 0,
+    "events": 1
+  },
+  "observed_days": 1,
+  "frozen_inputs": 2,
+  "retry_no_duplicate": true,
+  "portfolios_unchanged": true,
+  "backup_verified": true,
+  "backup_files": {
+    "comparison.sqlite3": "0e79f0315dd7585c6c3940efad93aac779de3d02655f0ba3b0ed00aada3caa68",
+    "inputs/crypto-d78bbaabec031393a5175a267b3ad667f19d8aad3cda616ce9a7e371fb407f67.csv": "d78bbaabec031393a5175a267b3ad667f19d8aad3cda616ce9a7e371fb407f67",
+    "inputs/stocks-acc37f3743f65fbad654b92cb181bc5c0a85d1f0844c08bdfd9735818969b725.csv": "acc37f3743f65fbad654b92cb181bc5c0a85d1f0844c08bdfd9735818969b725"
+  },
+  "restore_all_tables_equal": [
+    "documents",
+    "equity",
+    "events",
+    "live_equity",
+    "orders",
+    "trades"
+  ],
+  "restore_identity_equal": true,
+  "restore_result": {
+    "restored_at": "2026-09-28T03:00:46.454182+00:00",
+    "backup_manifest_sha256": "214c7839c51428e8ef46d298501ca6753307260da639a905ff926160298f6295",
+    "summary": {
+      "experiment_id": "aggressive-v2",
+      "run_id": "d29350d13e8d4a9196ace417bbd5822a",
+      "config_sha256": "4fe0885b787d4ba341e4a8e606d4bd25aa0f2078427d1db99bba4194174381e1",
+      "code_commit": "f6c19fdcac943978011b3e096280beb7d0528884",
+      "preregistration": {
+        "path": "reports/aggressive_v2_preregistro.md",
+        "commit": "1fe6c8c586b6a9899190b4f987807daf9134846c",
+        "sha256": "174469f5bb28fe3199a5f0a6fc13c199630fb15d4640417c0fc6b0e08123d455",
+        "code_commit": "f6c19fdcac943978011b3e096280beb7d0528884",
+        "criteria": {
+          "walk_forward": "Parámetros fijos; sin búsqueda ni reentrenamiento. Continuidad de cartera/kill entre años. Al menos 3 años completos y superioridad de retorno neto en al menos la mitad. CAGR cripto >= control + 0.03 y Sharpe >= control. Total agregado es comparación secundaria.",
+          "placebo": "Timing de la candidata: 200 desplazamientos, seed 5, p finito=(1+extremos)/(201), p<0.05. No demuestra por sí solo ventaja incremental frente al control.",
+          "bootstrap": "2000 remuestreos emparejados, bloques de 30 días, seed 11; frecuencia de retorno mayor >=0.80 y Sharpe mayor >=0.80. Frecuencias bootstrap, no probabilidades de ganancias futuras.",
+          "cost_stress": "Costo base cripto 0.0045 por lado, ETFs 0.0005. A 0.006 cripto exigir CAGR y Sharpe no inferiores al control. A 0.01 resultado informativo incluso si falla; no cambiar criterio tras verlo.",
+          "drawdown": "Caída cripto no peor que control en más de 0.05 y no inferior a -0.50. Kill switch 0.45 sin rearme en ambas; el límite de ejecución no garantiza una pérdida máxima."
+        },
+        "metadata": {
+          "protocol_version": 1,
+          "status": "approved",
+          "approved_by": "Brandon",
+          "approved_at_utc": "2026-09-28T02:25:26.828931+00:00",
+          "approval_scope": "Corrección de disponibilidad documentada, commits locales, comparación simulada y preparación funcional autorizados por Brandon; dinero real no activado.",
+          "experiment_id": "aggressive-v2",
+          "hypothesis": "Una concentración de hasta tres criptos y volatilidad objetivo de 60% mejora el rendimiento neto frente al control top5/40%, con deterioro de drawdown acotado, manteniendo todos los demás controles.",
+          "evaluation_window": "Reevaluación retrospectiva 2021-01-01 a 2026-09-26; historia de señales desde 2019; datos previamente inspeccionados, no holdout virgen. Paper prospectivo comienza después del preregistro y debe acumular 28 días completos verificados.",
+          "config_sha256": "4fe0885b787d4ba341e4a8e606d4bd25aa0f2078427d1db99bba4194174381e1",
+          "variant_ids": [
+            "crypto:2b12bfad2351b6e2494a",
+            "crypto:95174601ed2699fa924a"
+          ],
+          "criteria": {
+            "walk_forward": "Parámetros fijos; sin búsqueda ni reentrenamiento. Continuidad de cartera/kill entre años. Al menos 3 años completos y superioridad de retorno neto en al menos la mitad. CAGR cripto >= control + 0.03 y Sharpe >= control. Total agregado es comparación secundaria.",
+            "placebo": "Timing de la candidata: 200 desplazamientos, seed 5, p finito=(1+extremos)/(201), p<0.05. No demuestra por sí solo ventaja incremental frente al control.",
+            "bootstrap": "2000 remuestreos emparejados, bloques de 30 días, seed 11; frecuencia de retorno mayor >=0.80 y Sharpe mayor >=0.80. Frecuencias bootstrap, no probabilidades de ganancias futuras.",
+            "cost_stress": "Costo base cripto 0.0045 por lado, ETFs 0.0005. A 0.006 cripto exigir CAGR y Sharpe no inferiores al control. A 0.01 resultado informativo incluso si falla; no cambiar criterio tras verlo.",
+            "drawdown": "Caída cripto no peor que control en más de 0.05 y no inferior a -0.50. Kill switch 0.45 sin rearme en ambas; el límite de ejecución no garantiza una pérdida máxima."
+          }
+        },
+        "proof_kind": "git-content-ancestry-v1",
+        "attestation_sha256": "3012f6d1b2e78073948bb085b4105df238de25c501fd4418567bd0e523927186"
+      },
+      "mode": "paper",
+      "live_authorized": false,
+      "counts": {
+        "documents": 8,
+        "trades": 12,
+        "equity": 4,
+        "orders": 0,
+        "events": 1
+      },
+      "health": {
+        "status": "ok",
+        "last_attempt": "2026-09-28T03:00:15.651727+00:00",
+        "last_success": "2026-09-28T02:59:25.900723+00:00",
+        "unresolved_errors": 0
+      },
+      "observations": 1
+    },
+    "scheduled": false,
+    "live_authorized": false
+  },
+  "first_cycle_max_rss_bytes": 128024576,
+  "first_cycle_seconds": 24.48,
+  "rss_platform": "macOS ARM64, no equivale a memoria medida en GCP",
+  "mode": "paper",
+  "live_authorized": false,
+  "verified_at": "2026-09-28T03:03:51.728834+00:00",
+  "data_dir": "runtime-data/delivery-20260928/aggressive-v2",
+  "backup_dir": "runtime-data/delivery-20260928/backups/aggressive-v2-first",
+  "restored_dir": "runtime-data/delivery-20260928/restored-aggressive-v2",
+  "context": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-f6c19fdcac94/context",
+  "attestation_file_sha256": "2c65e3ce4842a4aa84800d2b1f5741d153c0d1b0b52eb77bcf057f4133c34d15",
+  "attestation_canonical_sha256": "3012f6d1b2e78073948bb085b4105df238de25c501fd4418567bd0e523927186",
+  "scheduler_installed": false,
+  "gcp_connected": false,
+  "private_broker_connected": false,
+  "paper_portfolios": {
+    "control": {
+      "equity_usd": 998.15,
+      "pnl_usd": -1.85,
+      "return_pct": -0.185,
+      "drawdown_pct": -0.185,
+      "max_drawdown_pct": -0.185,
+      "fees_usd": 1.2819,
+      "modeled_cost_usd": 1.851243,
+      "kill_switch": false,
+      "blocks": {
+        "crypto": {
+          "equity_usd": 498.4,
+          "pnl_usd": -1.6,
+          "return_pct": -0.32,
+          "cash_usd": 142.6,
+          "exposure": 0.7139,
+          "drawdown_pct": -0.32,
+          "fees_usd": 1.2819,
+          "slippage_usd": 0.320218,
+          "modeled_cost_usd": 1.602118,
+          "fills": 5,
+          "traded_notional_usd": 356.11,
+          "kill_switch": false,
+          "candle": "2026-09-27",
+          "max_drawdown_pct": -0.32
+        },
+        "stocks": {
+          "equity_usd": 499.75,
+          "pnl_usd": -0.25,
+          "return_pct": -0.05,
+          "cash_usd": 1.5,
+          "exposure": 0.997,
+          "drawdown_pct": -0.05,
+          "fees_usd": 0.0,
+          "slippage_usd": 0.249125,
+          "modeled_cost_usd": 0.249125,
+          "fills": 2,
+          "traded_notional_usd": 498.5,
+          "kill_switch": false,
+          "candle": "2026-09-25",
+          "max_drawdown_pct": -0.05
+        }
+      }
+    },
+    "aggressive": {
+      "equity_usd": 997.81,
+      "pnl_usd": -2.19,
+      "return_pct": -0.219,
+      "drawdown_pct": -0.219,
+      "max_drawdown_pct": -0.219,
+      "fees_usd": 1.5552,
+      "modeled_cost_usd": 2.192763,
+      "kill_switch": false,
+      "blocks": {
+        "crypto": {
+          "equity_usd": 498.06,
+          "pnl_usd": -1.94,
+          "return_pct": -0.388,
+          "cash_usd": 66.46,
+          "exposure": 0.8666,
+          "drawdown_pct": -0.39,
+          "fees_usd": 1.5552,
+          "slippage_usd": 0.388438,
+          "modeled_cost_usd": 1.943638,
+          "fills": 3,
+          "traded_notional_usd": 431.98,
+          "kill_switch": false,
+          "candle": "2026-09-27",
+          "max_drawdown_pct": -0.388
+        },
+        "stocks": {
+          "equity_usd": 499.75,
+          "pnl_usd": -0.25,
+          "return_pct": -0.05,
+          "cash_usd": 1.5,
+          "exposure": 0.997,
+          "drawdown_pct": -0.05,
+          "fees_usd": 0.0,
+          "slippage_usd": 0.249125,
+          "modeled_cost_usd": 0.249125,
+          "fills": 2,
+          "traded_notional_usd": 498.5,
+          "kill_switch": false,
+          "candle": "2026-09-25",
+          "max_drawdown_pct": -0.05
+        }
+      }
+    }
+  },
+  "http_status": {
+    "/healthz": 200,
+    "/readyz": 503,
+    "/api/comparison": 200
+  },
+  "browser": {
+    "url": "http://127.0.0.1:8847/",
+    "historical_metrics_visible": true,
+    "seven_failed_gates_visible": true,
+    "paper_observed_days_visible": 1,
+    "console_errors_and_warnings": []
+  },
+  "files": {
+    "runtime-data/delivery-20260928/first-paper.log": "1ee6e006f6795ef82e0f5b9a70692df7916d6c7614a314f3df74cc0693da459d",
+    "runtime-data/delivery-20260928/retry-paper.log": "bc083540bc432243f3c76ed22c3d722a28612e2bf3e0cf756a7bd198659d4056",
+    "runtime-data/delivery-20260928/first-comparison.json": "9b017b2fb07e070a14beb877cb53ec46af9bbf4a7c9b8f685495f47b510696d9",
+    "runtime-data/delivery-20260928/before-retry.json": "16a9a869480bbdf73ee979a62ebc80b755c24a3ebeb8835047e9b058c7ac674c",
+    "runtime-data/delivery-20260928/after-retry.json": "24806c4dfededf213635c57e6e6ccb91748dd250a065d106af9cf38fdec8baf5",
+    "runtime-data/delivery-20260928/backup-verified.json": "ace7f8d8bcdd3213d9c085cd1b16050b6427410dcf1a1e8efc9e7990e11830b0",
+    "runtime-data/delivery-20260928/restored-inspect.json": "24806c4dfededf213635c57e6e6ccb91748dd250a065d106af9cf38fdec8baf5",
+    "runtime-data/delivery-20260928/panel-http.json": "9f4e28dfdbdf6fdcc07a2d73c718ffb630a337b1ac4977b19a9eee4f087de0f4"
+  },
+  "validation": {
+    "python_tests_passed": 317,
+    "python_tests_seconds": 82.13,
+    "test_log": "runtime-data/delivery-20260928/final-tests.log",
+    "test_log_sha256": "257b96a574d918631e4898292027ec7fb745b4fab5a4bb82cb66462ec4c7d17a",
+    "replay_max_difference_pct": 0.458,
+    "terraform_mock_plans_passed": 3,
+    "mount_cases_passed": 9,
+    "paper_shell_checks_passed": 14,
+    "protected_files_baseline": "12a54c296d41e960ccc35f311979fa7ddb3dc060",
+    "config_and_state_unchanged": true
+  }
+}

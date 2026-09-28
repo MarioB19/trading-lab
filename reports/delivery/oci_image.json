@@ -1,0 +1,15 @@
+{
+  "status": "passed",
+  "archive": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-f6c19fdcac94/trading-lab-linux-amd64.oci.tar",
+  "archive_sha256": "63354bfd35afb098da3a6a42694973c06d819b3a143b28e10dd505e3f7f0f6d2",
+  "archive_size_bytes": 119414272,
+  "image": {
+    "manifest_digest": "sha256:97c202f9cdfee3b9183a81f6675f769aac79e42d78a654844a38543ae910de33",
+    "config_digest": "sha256:e0052856c8386c284d27f807d9191542ee9e7146014ed8170371983b897b2fbf",
+    "architecture": "amd64",
+    "os": "linux",
+    "user": "10001:10001",
+    "source_sha": "f6c19fdcac943978011b3e096280beb7d0528884",
+    "layer_count": 15
+  }
+}

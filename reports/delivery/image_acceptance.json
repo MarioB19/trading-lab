@@ -1,0 +1,88 @@
+{
+  "archive": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-f6c19fdcac94/trading-lab-linux-amd64.oci.tar",
+  "archive_sha256": "63354bfd35afb098da3a6a42694973c06d819b3a143b28e10dd505e3f7f0f6d2",
+  "archive_size_bytes": 119414272,
+  "attestation_smoke": {
+    "attestation_sha256": "3012f6d1b2e78073948bb085b4105df238de25c501fd4418567bd0e523927186",
+    "attestation_valid": true,
+    "code_commit": "f6c19fdcac943978011b3e096280beb7d0528884",
+    "market_data_used": false,
+    "status": "passed",
+    "tampering_rejected": true
+  },
+  "builder_shutdown": {
+    "artifacts_preserved": true,
+    "cache_preserved": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/buildkit-state.ext4",
+    "exit_code": 143,
+    "oom_killed": false,
+    "own_loop_detached_verified": true,
+    "status": "exited"
+  },
+  "context": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-f6c19fdcac94/context",
+  "context_file_count": 69,
+  "context_manifest_sha256": "a6e813b99dc533a501a6c4f68c978c5d7d543da475fad6a6788bdc919a75bca3",
+  "deployed": false,
+  "docker_shared_cleanup": false,
+  "evidence": {
+    "build-metadata.json": {
+      "path": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-f6c19fdcac94/build-metadata.json",
+      "sha256": "32ec1f5d590bb93865d12046536b551c5c5f81aeed12869777c2bd817adffcee"
+    },
+    "build.log": {
+      "path": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-f6c19fdcac94/build.log",
+      "sha256": "e2b711aac3558f792885356aa8ac3caadb7042aa1bc613a3946550a785d95f20"
+    },
+    "oci-verification.json": {
+      "path": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-f6c19fdcac94/oci-verification.json",
+      "sha256": "113481fa3c6dbcf5d7021cb9ba66ad8ffd7ede22f9d4fe99ba8352c7f48fbbf0"
+    },
+    "smoke.log": {
+      "path": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-f6c19fdcac94/smoke.log",
+      "sha256": "04a92ba7a73254dcd4bdc09e2e3d07a6b2b4a98fe87b5559f7c30a707fe0b226"
+    },
+    "source-manifest.json": {
+      "path": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-f6c19fdcac94/source-manifest.json",
+      "sha256": "98cb1fa4070090f25408be1ce4ce746e4dff107cfa3dbb0a389b31df9b06bc2e"
+    }
+  },
+  "gcp_connected": false,
+  "image": {
+    "architecture": "amd64",
+    "config_digest": "sha256:e0052856c8386c284d27f807d9191542ee9e7146014ed8170371983b897b2fbf",
+    "layer_count": 15,
+    "manifest_digest": "sha256:97c202f9cdfee3b9183a81f6675f769aac79e42d78a654844a38543ae910de33",
+    "os": "linux",
+    "source_sha": "f6c19fdcac943978011b3e096280beb7d0528884",
+    "user": "10001:10001"
+  },
+  "preregistration_commit": "1fe6c8c586b6a9899190b4f987807daf9134846c",
+  "proof_canonical_sha256": "3012f6d1b2e78073948bb085b4105df238de25c501fd4418567bd0e523927186",
+  "proof_file_sha256": "2c65e3ce4842a4aa84800d2b1f5741d153c0d1b0b52eb77bcf057f4133c34d15",
+  "published": false,
+  "required_attestation_build_check": true,
+  "runtime_smoke": {
+    "build_id": "f6c19fdcac943978011b3e096280beb7d0528884",
+    "checks": [
+      "paper_config",
+      "runtime_imports",
+      "no_operational_data_in_image",
+      "empty_api_health_ready",
+      "read_only_panel",
+      "legacy_import",
+      "sqlite_integrity",
+      "backup_checksum",
+      "restore_disabled"
+    ],
+    "config_sha256": "bad7256f2e61ab689f0d44b89b6ddfc0b2a0cedd1a927db541cae205f0ff1318",
+    "external_effects": false,
+    "machine": "x86_64",
+    "peak_rss_kib": 115656,
+    "status": "passed",
+    "synthetic_only": true,
+    "uid": 10001
+  },
+  "smoke_execution": "Linux AMD64 BuildKit RUN with network=none; synthetic test layers are not exported in the release OCI",
+  "source_sha": "f6c19fdcac943978011b3e096280beb7d0528884",
+  "status": "passed",
+  "verified_at_utc": "2026-09-28T03:11:24.472213+00:00"
+}
