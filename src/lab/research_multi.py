@@ -1,26 +1,29 @@
 """Investigación del portafolio multi-activo: criptos y ETFs.
 
-    python -m lab.research_multi            # datos en caché
-    python -m lab.research_multi --refresh  # descarga datos al día (~1 min)
+    python -m lab.research_multi --describe  # plan, hashes e IDs, sin simulación
 
-Genera reports/multi_results.json y reports/multi_informe.md.
+Ejecutar requiere preregistro comprometido antes del código. Ver docs/RESEARCH_PROTOCOL.md.
+Los resultados históricos en reports/ no se sobrescriben.
 """
 from __future__ import annotations
 
 import argparse
+import copy
 import itertools
 import json
 import time
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 
 from .backtest import perf, sharpe
 from .data import MULTI_MARKET, ROOT, load_crypto_panel, load_etf_panel
+from .experiments import ExperimentRun, ResearchGateError, canonical_hash, variant_id
 from .portfolio import (PortfolioParams, crypto_universe, equal_weight_buy_hold, fixed_weights,
                         listed_universe, simulate_portfolio, target_weights)
 from .strategies import trend_ensemble
-from .validation import bootstrap_compare, deflated_sharpe, monte_carlo
+from .validation import bootstrap_compare, deflated_sharpe, finite_randomization_pvalue, monte_carlo
 
 REPORTS = ROOT / "reports"
 # Criptos con par en USD en Bitso (septiembre 2026) que existen en los datos de investigación
@@ -86,7 +89,48 @@ def key_of(d: dict) -> str:
     if "cash_asset" in d:
         cash = " · efectivo en " + d["cash_asset"] if d["cash_asset"] else " · efectivo sin rendir"
     reb = {"monthly": " · mensual", "daily": ""}.get(d.get("rebalance", "daily"), "")
-    return f"top{d['top_k']} · vol {vt} · {rg} · {br}{cash}{reb}"
+    cov = " · Ledoit-Wolf" if d.get("cov_estimator", "sample") == "ledoit_wolf" else ""
+    return f"top{d['top_k']} · vol {vt} · {rg} · {br}{cash}{reb}{cov}"
+
+
+def grid_variants(cfg: dict) -> tuple[list[dict], list[str]]:
+    """Grid explícito; las variantes horarias históricas no se vuelven a ejecutar."""
+    grid = dict(cfg["grid"])
+    historical = [c for c in grid.pop("check", ["1d"]) if c != "1d"]
+    historical += grid.pop("short_term", [])
+    return [dict(zip(grid, vals)) for vals in itertools.product(*grid.values())], historical
+
+
+def research_plan(multi_market: bool = False, candidate: str = "multi", universe: str = "historical",
+                  cov_estimator: str = "sample", refresh: bool = False) -> tuple[dict, list[dict]]:
+    """Describe sin descargar ni simular. Esta salida se congela en el preregistro.
+
+    Pedir Ledoit-Wolf añade sample y ledoit_wolf al grid para contar ambos intentos;
+    la candidata de investigación usa el estimador solicitado. No toca el bot.
+    """
+    if universe not in {"historical", "bitso"} or cov_estimator not in {"sample", "ledoit_wolf"}:
+        raise ValueError("universo o estimador desconocido")
+    if multi_market and candidate not in {"multi", "multi_monthly"}:
+        raise ValueError("candidata multi-mercado desconocida")
+    config = {"protocol_version": 1, "engine_version": "causal-wf-v2", "refresh": refresh,
+              "multi_market": multi_market, "sleeves": {}}
+    variants = []
+    for sleeve in (("multi", "crypto") if multi_market else ("crypto", "stocks")):
+        cfg = copy.deepcopy(SLEEVES[sleeve])
+        cfg["grid"]["cov_estimator"] = (["sample", "ledoit_wolf"]
+                                                if cov_estimator == "ledoit_wolf" else ["sample"])
+        selected = copy.deepcopy(CANDIDATES[candidate if sleeve == "multi" else sleeve])
+        selected["cov_estimator"] = cov_estimator
+        scope = universe if sleeve == "crypto" else "historical"
+        config["sleeves"][sleeve] = {"config": cfg, "candidate": selected, "universe": scope}
+        combos, historical = grid_variants(cfg)
+        config["sleeves"][sleeve]["legacy_external_trial_labels"] = historical
+        for params in combos:
+            full = params_for(sleeve, params).to_dict()
+            variants.append({"id": variant_id(sleeve, full, scope), "sleeve": sleeve,
+                             "params": full, "universe": scope, "status": "declared"})
+    config["crypto_share"] = crypto_share()
+    return config, variants
 
 
 def params_for(sleeve: str, d: dict) -> PortfolioParams:
@@ -94,9 +138,12 @@ def params_for(sleeve: str, d: dict) -> PortfolioParams:
     return PortfolioParams.from_dict({**cfg["base"], "ann": cfg["ann"], **d})
 
 
-def load_sleeve(sleeve: str, refresh: bool):
+def load_sleeve(sleeve: str, refresh: bool, universe: str = "historical"):
     if sleeve == "crypto":
         P, M = load_crypto_panel(refresh)
+        if universe == "bitso":
+            P = P[[asset for asset in BITSO_TRADABLE if asset in P.columns]]
+            return P, listed_universe(P)
         return P, crypto_universe(M, P, top_n=15)
     if sleeve == "multi":
         P = load_etf_panel(MULTI_MARKET, refresh=refresh, name="multi_prices")
@@ -112,18 +159,28 @@ def win(df: pd.DataFrame, start: str) -> pd.DataFrame:
 
 
 def walk_forward(P, runs, first_year, train_start, ann, cfg):
-    """Cada enero elige la variante con mejor Sharpe pasado; la aplica ese año."""
+    """Elige con datos hasta el año previo; conserva cartera y parámetros por decisión.
+
+    La señal del último cierre del año previo gobierna el primer retorno del año.
+    Nunca se aplican retrospectivamente parámetros elegidos para un año posterior.
+    """
+    if not runs or not len(P) or P.index[-1].year < first_year:
+        raise ValueError("walk-forward requiere variantes y al menos un año de evaluación")
     stitched = pd.DataFrame(0.0, index=P.index, columns=P.columns)
+    initial = PortfolioParams(dd_brake=False, regime_asset=None, ann=ann)
+    schedule = pd.Series([initial] * len(P), index=P.index, dtype=object)
     picks = []
     for year in range(first_year, P.index[-1].year + 1):
         scores = {k: sharpe(v["bt"]["ret"].loc[train_start:f"{year - 1}-12-31"], ann) for k, v in runs.items()}
         best = max(scores, key=scores.get)
-        sel = slice(f"{year - 1}-12-31" if year == first_year else f"{year}-01-01", f"{year}-12-31")
-        stitched.loc[sel] = runs[best]["W"].loc[sel]
+        decision_rows = np.flatnonzero(P.index.year == year) - 1
+        decision_rows = decision_rows[decision_rows >= 0]
+        stitched.iloc[decision_rows] = runs[best]["W"].reindex_like(P).iloc[decision_rows]
+        for pos in decision_rows:
+            schedule.iloc[pos] = runs[best]["params"]
         picks.append({"year": year, "pick": best, "train_sharpe": round(scores[best], 3)})
-    # el freno/parámetros del año se toman de la variante elegida más reciente
-    p = runs[picks[-1]["pick"]]["params"]
-    return simulate_portfolio(P, stitched, p, cfg["cost"], cfg["band"]), picks
+    return simulate_portfolio(P, stitched, initial, cfg["cost"], cfg["band"],
+                              params_by_date=schedule), picks
 
 
 def placebo(P, W, p, cfg, start, n=200, seed=5):
@@ -137,32 +194,63 @@ def placebo(P, W, p, cfg, start, n=200, seed=5):
         sims.append(sharpe(win(simulate_portfolio(P, Ws, p, cfg["cost"], cfg["band"]), start)["ret"], cfg["ann"]))
     sims = np.array(sims)
     return {"actual_sharpe": float(actual), "placebo_median": float(np.median(sims)),
-            "p_value": float((sims >= actual).mean()), "n": int(n)}
+            "p_value": finite_randomization_pvalue(actual, sims), "n": int(n)}
 
 
 def yearly(ret: pd.Series) -> dict:
     return {int(k): float(v) for k, v in ((1 + ret).groupby(ret.index.year).prod() - 1).items()}
 
 
-def run_sleeve(sleeve: str, refresh: bool = False, candidate: str | None = None) -> tuple[dict, dict]:
-    cfg = SLEEVES[sleeve]
-    cand_cfg = CANDIDATES[candidate or sleeve]
+def run_sleeve(sleeve: str, refresh: bool = False, candidate: str | None = None, *,
+               execution: ExperimentRun | None = None) -> tuple[dict, dict]:
+    if execution is None:
+        raise ResearchGateError("la investigación necesita una ejecución preregistrada")
+    plan = execution.manifest["config"]
+    if canonical_hash(plan) != execution.config_hash:
+        raise ResearchGateError("el plan cambió después de verificar el preregistro")
+    if refresh != plan["refresh"]:
+        raise ResearchGateError("refresh difiere del plan preregistrado")
+    spec = plan["sleeves"][sleeve]
+    cfg, cand_cfg, scope = spec["config"], spec["candidate"], spec["universe"]
     ann, start, oos = cfg["ann"], cfg["eval_start"], f"{cfg['oos_year']}-01-01"
-    P, elig = load_sleeve(sleeve, refresh)
+    P, elig = load_sleeve(sleeve, refresh, scope)
+    limitations = ["No representa un holdout histórico no inspeccionado ni garantiza rendimiento futuro.",
+                   "Retornos faltantes y deslistes no tienen un modelo de liquidación ejecutable.",
+                   "Costos constantes; no reproduce cola maker, latencia ni apertura siguiente de Alpaca."]
+    if sleeve == "crypto":
+        limitations += ["Lista retrospectiva; faltan fechas históricas de listado de pares Bitso.",
+                        "CoinMetrics/Yahoo; difiere de Kraken/Bitso de operación.",
+                        "Hay precios aproximados por capitalización y capitalizaciones extendidas."]
+    dataset = execution.freeze_dataset(sleeve, P, elig, {
+        "universe": scope, "sources": ["CoinMetrics", "Yahoo"] if sleeve == "crypto" else ["Yahoo adjusted"],
+        "bitso_listing_history_available": False if sleeve == "crypto" else None,
+        "point_in_time_complete": False, "limitations": limitations,
+    })
     res: dict = {"label": cfg["label"], "assets": list(P.columns), "first": str(P.index[0].date()),
                  "last": str(P.index[-1].date()), "eval_start": start, "oos_start": oos,
-                 "cost_per_side": cfg["cost"], "candidate": key_of(cand_cfg)}
+                 "cost_per_side": cfg["cost"], "candidate": key_of(cand_cfg),
+                 "universe": scope, "dataset": dataset, "limitations": limitations,
+                 "engine_version": "causal-wf-v2"}
 
     # 1) todas las variantes --------------------------------------------------------------
-    g = dict(cfg["grid"])
-    rt_trials = [c for c in g.pop("check", ["1d"]) if c != "1d"]  # se simulan en lab.research_rt
-    rt_trials += g.pop("short_term", [])                           # se simulan en lab.research_short
-    combos = [dict(zip(g, vals)) for vals in itertools.product(*g.values())]
+    combos, rt_trials = grid_variants(cfg)
     runs = {}
     for d in combos:
         p = params_for(sleeve, d)
-        W = target_weights(P, elig, p)
-        runs[key_of(d)] = {"params": p, "W": W, "bt": simulate_portfolio(P, W, p, cfg["cost"], cfg["band"])}
+        identity = variant_id(sleeve, p.to_dict(), scope)
+        execution.variant(identity, "started")
+        try:
+            W = target_weights(P, elig, p)
+            runs[key_of(d)] = {"params": p, "W": W, "bt": simulate_portfolio(P, W, p, cfg["cost"], cfg["band"])}
+        except Exception:
+            execution.variant(identity, "failed")
+            raise
+        execution.variant(identity, "completed")
+    res["trial_accounting"] = {"executed_in_this_run": len(runs), "legacy_external_labels": rt_trials,
+                               "legacy_external_count": len(rt_trials),
+                               "limitation": "DSR usa dispersión del grid diario; no incluye Sharpes de pruebas externas. "
+                                             "El ledger conserva intentos entre ejecuciones; DSR no corrige automáticamente "
+                                             "todas las decisiones de investigación anteriores."}
     cand = key_of(cand_cfg)
     pc = runs[cand]["params"]
 
@@ -241,7 +329,7 @@ def run_sleeve(sleeve: str, refresh: bool = False, candidate: str | None = None)
     res["today"] = {"date": str(last.date()), "cash": round(1 - float(W.loc[last].sum()), 4),
                     "assets": sorted(today, key=lambda x: -x["weight"])}
 
-    if sleeve == "crypto":
+    if sleeve == "crypto" and scope == "historical":
         # Lo que el bot puede operar HOY en Bitso (sesgo de supervivencia: estas sobrevivieron)
         bitso = [a for a in BITSO_TRADABLE if a in P.columns]
         Pb = P[bitso]
@@ -304,6 +392,8 @@ def markdown(res: dict) -> str:
         L += [f"## {r['label']}", "",
               f"Datos {r['first']} a {r['last']}; fuera de muestra desde {r['oos_start'][:4]}; "
               f"costo {r['cost_per_side']:.2%} por lado; candidata: {r['candidate']}.", "",
+              f"Universo: **{r.get('universe', 'historical')}**. Motor causal-wf-v2. "
+              "El corte cronológico no equivale a una muestra nunca inspeccionada.", "",
               "| Estrategia | Rend. anual | Sharpe | Caída máx. | Exposición media |", "|---|---:|---:|---:|---:|"]
         for k, p in r["oos"].items():
             L.append(f"| {k} | {pct(p['cagr'],1)} | {p['sharpe']:.2f} | {pct(p['max_dd'])} | {pct(p['exposure'])} |")
@@ -344,23 +434,25 @@ def markdown(res: dict) -> str:
     return "\n".join(L) + "\n"
 
 
-def run(refresh: bool = False) -> dict:
+def run(refresh: bool = False, *, execution: ExperimentRun | None = None) -> dict:
+    if execution is None:
+        raise ResearchGateError("la investigación necesita una ejecución preregistrada")
     t0 = time.time()
     res, series = {}, {}
     for sl in ("crypto", "stocks"):
-        res[sl], series[sl] = run_sleeve(sl, refresh)
-    res["combined"] = combined(series, crypto_share())
+        res[sl], series[sl] = run_sleeve(sl, refresh, execution=execution)
+    res["combined"] = combined(series, execution.manifest["config"]["crypto_share"])
     res["generated"] = pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%d %H:%M UTC")
     res["runtime_s"] = round(time.time() - t0, 1)
-    REPORTS.mkdir(exist_ok=True)
-    (REPORTS / "multi_results.json").write_text(json.dumps(res, indent=1, default=float))
-    (REPORTS / "multi_informe.md").write_text(markdown(res))
+    output = execution.directory
+    (output / "multi_results.json").write_text(json.dumps(res, indent=1, default=float))
+    (output / "multi_informe.md").write_text(markdown(res))
     # curvas semanales para el tablero
     curves = {}
     for sl, s in series.items():
         for k, r in s.items():
             curves[f"{sl}_{k}"] = (1 + r).cumprod().resample("W").last()
-    pd.DataFrame(curves).round(4).to_csv(REPORTS / "multi_curves.csv")
+    pd.DataFrame(curves).round(4).to_csv(output / "multi_curves.csv")
     return res
 
 
@@ -377,11 +469,14 @@ def combine(c: pd.Series, s: pd.Series, share: float) -> dict:
     return out
 
 
-def run_multi_market(refresh: bool = False, candidate: str = "multi") -> dict:
+def run_multi_market(refresh: bool = False, candidate: str = "multi", *,
+                     execution: ExperimentRun | None = None) -> dict:
     """Prueba del bloque multi-mercado contra los criterios declarados antes de correrla."""
+    if execution is None:
+        raise ResearchGateError("la investigación necesita una ejecución preregistrada")
     t0 = time.time()
-    res, ser = run_sleeve("multi", refresh, candidate)
-    _, cser = run_sleeve("crypto", False)
+    res, ser = run_sleeve("multi", refresh, candidate, execution=execution)
+    _, cser = run_sleeve("crypto", refresh, execution=execution)
     cand = "CANDIDATA: " + res["candidate"]
     ref = "60/40 (SPY/IEF)"
     o_c, o_r = res["oos"][cand], res["oos"][ref]
@@ -406,9 +501,8 @@ def run_multi_market(refresh: bool = False, candidate: str = "multi") -> dict:
     res["verdict"] = "aprobado" if all(c["pass"] for c in crit) else "no aprobado"
     res["generated"] = pd.Timestamp.now(tz="UTC").strftime("%Y-%m-%d %H:%M UTC")
     res["runtime_s"] = round(time.time() - t0, 1)
-    REPORTS.mkdir(exist_ok=True)
     suffix = "" if candidate == "multi" else "_" + candidate.split("_", 1)[1]
-    (REPORTS / f"multi_market{suffix}_results.json").write_text(json.dumps(res, indent=1, default=float))
+    (execution.directory / f"multi_market{suffix}_results.json").write_text(json.dumps(res, indent=1, default=float))
     return res
 
 
@@ -417,20 +511,49 @@ def main() -> None:
     ap.add_argument("--refresh", action="store_true")
     ap.add_argument("--multi-market", action="store_true", help="prueba del bloque multi-mercado")
     ap.add_argument("--candidate", default="multi", help="multi (diario) o multi_monthly (mensual)")
+    ap.add_argument("--universe", choices=("historical", "bitso"), default="historical")
+    ap.add_argument("--cov-estimator", choices=("sample", "ledoit_wolf"), default="sample")
+    ap.add_argument("--describe", action="store_true", help="describe plan/IDs sin descargar ni simular")
+    ap.add_argument("--experiment-id")
+    ap.add_argument("--preregistration", type=Path)
+    ap.add_argument("--preregistration-commit", help="SHA completo anterior a HEAD")
+    ap.add_argument("--output-root", type=Path, default=REPORTS / "experiments")
+    ap.add_argument("--ledger", type=Path, default=REPORTS / "experiments" / "ledger.jsonl")
     args = ap.parse_args()
+    config, variants = research_plan(args.multi_market, args.candidate, args.universe,
+                                     args.cov_estimator, args.refresh)
+    if args.describe:
+        print(json.dumps({"config": config, "config_sha256": canonical_hash(config), "variants": variants},
+                         indent=2, ensure_ascii=False))
+        return
+    if not all((args.experiment_id, args.preregistration, args.preregistration_commit)):
+        ap.error("ejecutar requiere --experiment-id, --preregistration y --preregistration-commit; "
+                 "--describe solo muestra el plan")
+    try:
+        preregistration = args.preregistration if args.preregistration.is_absolute() else ROOT / args.preregistration
+        execution = ExperimentRun(ROOT, args.experiment_id, preregistration, args.preregistration_commit,
+                                  config, variants, args.output_root, args.ledger)
+    except ResearchGateError as exc:
+        ap.error(str(exc))
+    try:
+        res = (run_multi_market(args.refresh, args.candidate, execution=execution) if args.multi_market
+               else run(args.refresh, execution=execution))
+    except BaseException:
+        execution.finish("failed")
+        raise
+    execution.finish("completed")
     if args.multi_market:
-        r = run_multi_market(args.refresh, args.candidate)
+        r = res
         print(pd.DataFrame(r["oos"]).T[["cagr", "sharpe", "max_dd", "exposure"]].round(3).to_string())
         for c in r["criteria"]:
             print(("PASA  " if c["pass"] else "FALLA ") + c["name"], c["value"])
         print("Veredicto:", r["verdict"])
         return
-    res = run(args.refresh)
     for sl in ("crypto", "stocks"):
         print(f"\n{res[sl]['label']} (fuera de muestra desde {res[sl]['oos_start'][:4]}):")
         print(pd.DataFrame(res[sl]["oos"]).T[["cagr", "sharpe", "max_dd", "exposure", "trades_per_year"]]
               .round(3).to_string())
-    print(f"\n{res['runtime_s']} s · reports/multi_informe.md")
+    print(f"\n{res['runtime_s']} s · {execution.directory / 'multi_informe.md'}")
 
 
 if __name__ == "__main__":

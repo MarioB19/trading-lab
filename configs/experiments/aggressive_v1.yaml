@@ -1,0 +1,323 @@
+# Experimento aislado. No modifica config.yaml ni autoriza dinero real.
+protocol_version: 1
+experiment_id: aggressive-v1
+engine_version: paired-paper-v1
+mode: paper
+initial_capital_usd: 1000.0
+baseline_config_sha256: bad7256f2e61ab689f0d44b89b6ddfc0b2a0cedd1a927db541cae205f0ff1318
+portfolios:
+  control:
+    crypto:
+      enabled: true
+      label: Criptomonedas
+      strategy: tactical
+      params:
+        top_k: 5
+        vol_target: 0.4
+        regime_asset: BTC
+        dd_brake: true
+        max_weight: 0.4
+        lookbacks:
+        - 20
+        - 50
+        - 100
+        - 200
+        mom_windows:
+        - 30
+        - 90
+        - 180
+        vol_halflife: 20
+        cov_window: 90
+        min_trend: 0.5
+        ann: 365
+        dd_start: 0.1
+        dd_full: 0.3
+        dd_floor: 0.25
+        dd_peak_window: 180
+        cash_asset: null
+        rebalance: daily
+        cov_estimator: sample
+      universe:
+      - BTC
+      - ETH
+      - SOL
+      - XRP
+      - ADA
+      - DOGE
+      - LINK
+      - AVAX
+      - LTC
+      - BCH
+      - XLM
+      - TRX
+      - HBAR
+      - NEAR
+      - UNI
+      - ATOM
+      data:
+        source: ccxt
+        exchange: kraken
+        fallback_exchange: bitso
+      quote: USD
+      paper_broker: sim
+      capital: 500.0
+      compound: true
+      fee: 0.0036
+      slippage: 0.0009
+      band: 0.02
+      execution:
+        maker_first: false
+      kill_drawdown: 0.45
+      max_order_value: 500.0
+      min_order_value: 5
+      max_data_age_hours: 36
+      benchmark: BTC
+      min_history: 250
+    stocks:
+      enabled: true
+      label: Acciones y ETFs
+      strategy: passive
+      mix:
+        SPY: 0.6
+        IEF: 0.4
+      params:
+        top_k: 5
+        vol_target: 0.1
+        regime_asset: null
+        dd_brake: true
+        max_weight: 0.35
+        lookbacks:
+        - 20
+        - 50
+        - 100
+        - 200
+        mom_windows:
+        - 21
+        - 63
+        - 126
+        vol_halflife: 20
+        cov_window: 63
+        min_trend: 0.5
+        ann: 252
+        dd_start: 0.1
+        dd_full: 0.3
+        dd_floor: 0.25
+        dd_peak_window: 126
+        cash_asset: null
+        rebalance: daily
+        cov_estimator: sample
+      universe:
+      - SPY
+      - QQQ
+      - IWM
+      - EFA
+      - EEM
+      - EWW
+      - TLT
+      - IEF
+      - GLD
+      - DBC
+      - VNQ
+      - XLK
+      - XLF
+      - XLE
+      - XLV
+      - XLI
+      - XLP
+      - XLU
+      - XLY
+      - XLB
+      data:
+        source: yahoo
+      quote: USD
+      paper_broker: sim
+      capital: 500.0
+      compound: true
+      fee: 0.0
+      slippage: 0.0005
+      band: 0.05
+      kill_drawdown: 0.25
+      max_order_value: 500.0
+      min_order_value: 1
+      max_data_age_hours: 100
+      benchmark: SPY
+      min_history: 250
+      execution:
+        maker_first: false
+  aggressive:
+    crypto:
+      enabled: true
+      label: Criptomonedas
+      strategy: tactical
+      params:
+        top_k: 3
+        vol_target: 0.6
+        regime_asset: BTC
+        dd_brake: true
+        max_weight: 0.4
+        lookbacks:
+        - 20
+        - 50
+        - 100
+        - 200
+        mom_windows:
+        - 30
+        - 90
+        - 180
+        vol_halflife: 20
+        cov_window: 90
+        min_trend: 0.5
+        ann: 365
+        dd_start: 0.1
+        dd_full: 0.3
+        dd_floor: 0.25
+        dd_peak_window: 180
+        cash_asset: null
+        rebalance: daily
+        cov_estimator: sample
+      universe:
+      - BTC
+      - ETH
+      - SOL
+      - XRP
+      - ADA
+      - DOGE
+      - LINK
+      - AVAX
+      - LTC
+      - BCH
+      - XLM
+      - TRX
+      - HBAR
+      - NEAR
+      - UNI
+      - ATOM
+      data:
+        source: ccxt
+        exchange: kraken
+        fallback_exchange: bitso
+      quote: USD
+      paper_broker: sim
+      capital: 500.0
+      compound: true
+      fee: 0.0036
+      slippage: 0.0009
+      band: 0.02
+      execution:
+        maker_first: false
+      kill_drawdown: 0.45
+      max_order_value: 500.0
+      min_order_value: 5
+      max_data_age_hours: 36
+      benchmark: BTC
+      min_history: 250
+    stocks:
+      enabled: true
+      label: Acciones y ETFs
+      strategy: passive
+      mix:
+        SPY: 0.6
+        IEF: 0.4
+      params:
+        top_k: 5
+        vol_target: 0.1
+        regime_asset: null
+        dd_brake: true
+        max_weight: 0.35
+        lookbacks:
+        - 20
+        - 50
+        - 100
+        - 200
+        mom_windows:
+        - 21
+        - 63
+        - 126
+        vol_halflife: 20
+        cov_window: 63
+        min_trend: 0.5
+        ann: 252
+        dd_start: 0.1
+        dd_full: 0.3
+        dd_floor: 0.25
+        dd_peak_window: 126
+        cash_asset: null
+        rebalance: daily
+        cov_estimator: sample
+      universe:
+      - SPY
+      - QQQ
+      - IWM
+      - EFA
+      - EEM
+      - EWW
+      - TLT
+      - IEF
+      - GLD
+      - DBC
+      - VNQ
+      - XLK
+      - XLF
+      - XLE
+      - XLV
+      - XLI
+      - XLP
+      - XLU
+      - XLY
+      - XLB
+      data:
+        source: yahoo
+      quote: USD
+      paper_broker: sim
+      capital: 500.0
+      compound: true
+      fee: 0.0
+      slippage: 0.0005
+      band: 0.05
+      kill_drawdown: 0.25
+      max_order_value: 500.0
+      min_order_value: 1
+      max_data_age_hours: 100
+      benchmark: SPY
+      min_history: 250
+      execution:
+        maker_first: false
+evaluation:
+  history_start: '2019-01-01'
+  start: '2021-01-01'
+  end: '2026-09-26'
+  min_complete_years: 3
+  min_history: 250
+  universe: bitso
+  historical_holdout_unseen: false
+  forward_min_days: 28
+  primary_sleeve: crypto
+  refresh: false
+costs:
+  crypto:
+    base: 0.0045
+    stress:
+    - 0.006
+    - 0.01
+  stocks:
+    base: 0.0005
+criteria:
+  cagr_delta_min: 0.03
+  sharpe_delta_min: 0.0
+  drawdown_delta_max: 0.05
+  max_drawdown_abs: 0.5
+  yearly_win_fraction_min: 0.5
+  bootstrap_n: 2000
+  bootstrap_block: 30
+  bootstrap_seed: 11
+  bootstrap_return_min: 0.8
+  bootstrap_sharpe_min: 0.8
+  placebo_n: 200
+  placebo_seed: 5
+  placebo_p_max: 0.05
+  stress_gate_cost: 0.006
+  stress_requires_cagr_and_sharpe_noninferiority: true
+  stress_informative_cost: 0.01
+execution_model: daily_close_simulated_fee_and_slippage_no_orderbook
+live_authorized: false
+max_price_jump: 0.4

@@ -11,6 +11,14 @@ from .strategies import ANN, PARAM_GRID, compute, label
 EULER = 0.5772156649
 
 
+def finite_randomization_pvalue(actual: float, simulations) -> float:
+    """Cola superior Monte Carlo: incluye la observación y nunca devuelve p=0."""
+    sims = np.asarray(simulations, dtype=float)
+    if sims.ndim != 1 or not len(sims) or not np.isfinite(sims).all() or not np.isfinite(actual):
+        raise ValueError("placebo requiere observación y simulaciones finitas no vacías")
+    return float((1 + np.count_nonzero(sims >= actual)) / (len(sims) + 1))
+
+
 # ------------------------------------------------ Sharpe probabilístico y deflactado
 def probabilistic_sharpe(ret: pd.Series, sr0_daily: float = 0.0) -> float:  # noqa: D401
     """P(el Sharpe verdadero > sr0), corrigiendo por colas gordas y asimetría (Bailey & López de Prado)."""
@@ -105,7 +113,7 @@ def placebo_shift_test(asset_ret: pd.Series, position: pd.Series, cost: float,
     sims = np.array([sr_of(np.roll(p, k)) for k in shifts])
     return {"actual_sharpe": float(actual), "placebo_median": float(np.median(sims)),
             "placebo_p95": float(np.percentile(sims, 95)),
-            "p_value": float((sims >= actual).mean()), "sims": sims}
+            "p_value": finite_randomization_pvalue(actual, sims), "sims": sims}
 
 
 # ------------------------------------------------ bootstrap por bloques

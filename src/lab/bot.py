@@ -24,6 +24,8 @@ import numpy as np
 import pandas as pd
 
 from .brokers import AlpacaBroker, BitsoBroker, BookSimBroker, Fill, SimBroker
+from .storage import SQLiteStore, execution_lock
+from .journal import JournalBroker
 from .data import DATA_DIR, ROOT, fetch_daily_closes, make_exchange, usd_mxn_daily, usd_mxn_now, yahoo_daily
 from .portfolio import PortfolioParams, clean, drawdown_multiplier, listed_universe, target_weights
 
@@ -74,7 +76,7 @@ DEFAULT_CONFIG = {"mode": "paper", "max_price_jump": 0.40, "sleeves": SLEEVE_DEF
                   "paths": {"state": "state/state.json", "trades": "state/trades.csv",
                             "equity": "state/equity.csv", "snapshot": "state/snapshot.json"}}
 TRADE_FIELDS = ["run_at_utc", "sleeve", "mode", "broker", "candle", "asset", "side", "qty", "price",
-                "value", "fee", "status", "note", "ref_price", "cost_bps"]
+                "value", "fee", "status", "note", "ref_price", "cost_bps", "order_id", "execution_id"]
 EQUITY_FIELDS = ["date", "sleeve", "mode", "equity", "cash", "exposure", "drawdown", "brake",
                  "benchmark_price", "n_positions", "usd_mxn", "flow"]
 
@@ -270,7 +272,16 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
     cstr = candle.date().isoformat()
     notes: list[str] = []
     res = {"trades": [], "equity_row": None, "snapshot": None, "status": "ok", "notes": notes}
-    if st.get("last_candle") == cstr:
+    if getattr(broker, "requires_journal", False):
+        raise RuntimeError("un broker externo requiere SQLite y el diario de órdenes")
+    if getattr(broker, "manages_ledger", False):
+        broker.candle = cstr
+        if broker.reconcile():
+            st["execution_pending"] = True
+            res["status"] = "pending"
+            notes.append("órdenes pendientes o de resultado desconocido; conciliación antes de operar")
+            return res
+    if st.get("last_candle") == cstr and not st.get("execution_pending"):
         res["status"] = "skip"
         notes.append("esta vela ya se operó")
         return res
@@ -280,8 +291,9 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
         notes.append(f"datos viejos: la última vela cerró hace {age_h:.0f} h")
         return res
     if broker.pending():
-        res["status"] = "blocked"
-        notes.append("hay órdenes de la corrida anterior esperando la apertura del mercado")
+        st["execution_pending"] = True
+        res["status"] = "pending"
+        notes.append("hay órdenes pendientes; se requiere conciliación")
         return res
 
     target, table = compute_targets(sc, prices)
@@ -312,7 +324,10 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
     delta = float(sc["capital"]) - float(base)
     if abs(delta) > 1e-9 and equity > 0:
         if capped:
-            st["sleeve_cash"] = float(st["sleeve_cash"]) + delta
+            if getattr(broker, "manages_ledger", False):
+                broker.adjust_capital(delta)
+            else:
+                st["sleeve_cash"] = float(st["sleeve_cash"]) + delta
         else:
             broker.l["cash"] = float(broker.l["cash"]) + delta
         cash = broker.cash()
@@ -340,6 +355,8 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
             notes.append(f"KILL SWITCH: caída de {sc['kill_drawdown']:.0%} desde el máximo. Se vende todo y "
                          "el bloque queda apagado hasta rearmarlo a mano.")
         st["kill_switch"] = True
+        if getattr(broker, "manages_ledger", False):
+            broker.checkpoint_risk()
         brake = 0.0
     desired = (target * brake).to_dict()
     cash_asset = sc.get("params", {}).get("cash_asset") if sc["strategy"] == "tactical" else None
@@ -395,11 +412,13 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
     def book(f: Fill) -> None:
         """En cuenta externa, el efectivo del bloque se mueve con lo que el propio bloque compra y vende."""
         fills.append(f)
-        if capped and f.status in ("filled", "partial", "submitted") and f.qty > 0:
+        if capped and not getattr(broker, "manages_ledger", False) and f.status in ("filled", "partial") and f.qty > 0:
             amt = f.qty * f.price
             st["sleeve_cash"] = float(st["sleeve_cash"]) + ((amt - f.fee) if f.side == "sell" else -(amt + f.fee))
 
     for a, diff in sorted(orders, key=lambda x: x[1]):  # primero ventas (liberan efectivo)
+        if fills and not fills[-1].terminal:
+            break  # no se encadena otra orden con efectivo o posición aún inciertos
         price = float(px[a])
         if diff < 0:
             qty = positions.get(a, 0.0) if desired.get(a, 0.0) == 0 else min(-diff * equity / price, positions.get(a, 0.0))
@@ -407,7 +426,8 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
                 continue
             book(broker.execute(a, "sell", qty, price))
         else:
-            avail = broker.cash() if not capped else min(broker.cash(), float(st["sleeve_cash"]))
+            available = getattr(broker, "available_cash", broker.cash)()
+            avail = available if not capped else min(available, float(st["sleeve_cash"]))
             val = min(diff * equity, sc["max_order_value"], avail * (1 - buffer))
             if val < minv:
                 if diff * equity >= minv:
@@ -430,23 +450,27 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
                               "candle": cstr, "asset": f.asset, "side": f.side, "qty": round(f.qty, 8),
                               "price": round(f.price, 6), "value": round(f.qty * f.price, 2),
                               "fee": round(f.fee, 4), "status": f.status, "note": f.note,
-                              "ref_price": round(f.ref, 6) if f.ref else "", "cost_bps": cost_bps})
+                              "ref_price": round(f.ref, 6) if f.ref else "", "cost_bps": cost_bps,
+                              "order_id": f.order_id, "execution_id": f.execution_id})
         if f.status == "failed":
             notes.append(f"orden fallida {f.side} {f.asset}: {f.note}")
 
     # valuación después de operar
     positions = broker.positions()
     cash = broker.cash()
-    # órdenes de Alpaca que se llenan al abrir: ya salieron del efectivo del bloque pero la
-    # posición todavía no aparece; se cuentan "en tránsito" para no ver una caída falsa
-    transit = sum((f.qty * f.price + f.fee) if f.side == "buy" else -(f.qty * f.price - f.fee)
-                  for f in fills if capped and f.status == "submitted" and f.qty > 0)
+    # Only confirmed fills move the ledger. Pending reservations remain cash.
     value, eq_after, cash = book_value(positions, cash, px, sc["capital"], capped,
-                                       st.get("sleeve_cash") if capped else None, compound)
-    eq_after += transit
-    cash += max(0.0, transit)
+                                      st.get("sleeve_cash") if capped else None, compound)
     st["peak"] = max(peak, eq_after)
-    st["last_candle"] = cstr
+    unfinished = any(not f.terminal or f.status in ("failed", "partial", "unknown") for f in fills)
+    liquidation_pending = bool(st.get("kill_switch")) and any(
+        q * float(px.get(a, 0)) >= minv for a, q in positions.items())
+    st["execution_pending"] = unfinished or liquidation_pending
+    if st["execution_pending"]:
+        res["status"] = "error" if any(f.status in ("failed", "unknown") for f in fills) else "pending"
+        notes.append("ejecución incompleta: se reintenta después de conciliar")
+    else:
+        st["last_candle"] = cstr
     exposure = sum(value.values()) / eq_after if eq_after > 0 else 0.0
     bench = sc.get("benchmark")
     res["equity_row"] = {"date": cstr, "sleeve": name, "mode": mode, "equity": round(eq_after, 2),
@@ -483,19 +507,22 @@ def _jsonable(v):
 
 
 # ------------------------------------------------------------------ brokers
-def make_broker(name: str, sc: dict, mode: str, st: dict, notes: list[str]):
+def make_broker(name: str, sc: dict, mode: str, st: dict, notes: list[str], store=None):
+    def external(broker):
+        if store is None:
+            raise RuntimeError("broker externo bloqueado: configura paths.database para propiedad y conciliación durable")
+        return JournalBroker(broker, store, name, mode, sc, st)
     minv = float(sc["min_order_value"])
     if mode == "live":
         if sc["live_broker"] == "bitso":
-            return BitsoBroker(sc["quote"], min_order_value=minv)
+            return external(BitsoBroker(sc["quote"], min_order_value=minv))
         if sc["live_broker"] == "alpaca":
-            return AlpacaBroker(paper=False, min_order_value=minv)
+            return external(AlpacaBroker(paper=False, min_order_value=minv))
         raise RuntimeError(f"broker real desconocido: {sc['live_broker']}")
     if sc["paper_broker"] == "alpaca_paper":
-        try:
-            return AlpacaBroker(paper=True, min_order_value=minv)
-        except RuntimeError as exc:
-            notes.append(f"Alpaca paper no disponible ({exc}); uso el simulado interno")
+        if os.environ.get("ALPACA_KEY_ID") or os.environ.get("ALPACA_SECRET_KEY"):
+            return external(AlpacaBroker(paper=True, min_order_value=minv))
+        notes.append("Alpaca paper sin llaves; uso el simulado interno")
     st.setdefault("ledger", {"cash": float(sc["capital"]), "positions": {}})
     if sc["paper_broker"] == "bitso_book":
         ex = sc.get("execution") or {}
@@ -558,7 +585,7 @@ def latest_closed_candle(sc: dict, now: pd.Timestamp) -> pd.Timestamp:
 
 def is_due(sc: dict, st: dict, now: pd.Timestamp) -> bool:
     last = st.get("last_candle")
-    return last is None or pd.Timestamp(last) < latest_closed_candle(sc, now)
+    return bool(st.get("execution_pending")) or last is None or pd.Timestamp(last) < latest_closed_candle(sc, now)
 
 
 # ------------------------------------------------------------------ principal
@@ -593,6 +620,29 @@ def research_summary() -> dict:
 
 
 def main(argv: list[str] | None = None) -> int:
+    # The runtime has its own lifetime lock; this lock also protects legacy CLI invocations.
+    probe = argparse.ArgumentParser(add_help=False)
+    probe.add_argument("--config", default=str(ROOT / "config.yaml"))
+    probe.add_argument("--live", action="store_true")
+    probe.add_argument("--status", action="store_true")
+    probe.add_argument("--replay", type=int)
+    parsed, _ = probe.parse_known_args(argv)
+    cfg = load_config(Path(parsed.config))
+    if parsed.live and (cfg["mode"] != "live" or os.environ.get("CONFIRMO_DINERO_REAL", "").lower() != "si"):
+        print("Bloqueado: dinero real exige mode: live y confirmación explícita en el entorno.")
+        return 2
+    if parsed.status or parsed.replay or any(a in ("-h", "--help") for a in (argv or sys.argv[1:])):
+        return _main(argv)
+    lock_path = ROOT / cfg["paths"].get("database", cfg["paths"]["state"])
+    try:
+        with execution_lock(lock_path):
+            return _main(argv)
+    except RuntimeError as exc:
+        print(f"Bloqueado: {exc}", file=sys.stderr)
+        return 2
+
+
+def _main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Bot multi-activo (simulado por defecto)")
     ap.add_argument("--config", default=str(ROOT / "config.yaml"))
     ap.add_argument("--live", action="store_true")
@@ -623,9 +673,10 @@ def main(argv: list[str] | None = None) -> int:
               "la bandera --live y CONFIRMO_DINERO_REAL=si.")
         return 2
 
-    state = load_state(paths["state"])
+    store = SQLiteStore(paths["database"]) if paths.get("database") else None
+    state = store.read_document("state", {"sleeves": {}}) if store else load_state(paths["state"])
     if args.status:
-        snap = json.loads(paths["snapshot"].read_text()) if paths["snapshot"].exists() else {}
+        snap = store.read_document("snapshot", {}) if store else (json.loads(paths["snapshot"].read_text()) if paths["snapshot"].exists() else {})
         for n, s in snap.get("sleeves", {}).items():
             print(f"{n}: capital {s.get('equity')} | caída {s.get('drawdown')} | exposición {s.get('exposure')} | "
                   f"kill {s.get('kill_switch')} | {s.get('status')} | {'; '.join(s.get('notes', []))}")
@@ -634,12 +685,14 @@ def main(argv: list[str] | None = None) -> int:
         st = state["sleeves"].setdefault(args.reset_kill_switch, {})
         st["kill_switch"] = False
         st["peak"] = 0.0
+        if store:
+            store.write_document("state", state)
         save_json(paths["state"], state)
         print(f"Kill switch de {args.reset_kill_switch} rearmado.")
         return 0
 
     now = pd.Timestamp.now(tz="UTC").tz_localize(None)
-    snapshot = json.loads(paths["snapshot"].read_text()) if paths["snapshot"].exists() else {"sleeves": {}}
+    snapshot = store.read_document("snapshot", {"sleeves": {}}) if store else (json.loads(paths["snapshot"].read_text()) if paths["snapshot"].exists() else {"sleeves": {}})
     fx_now, fx_daily = None, pd.Series(dtype=float)
     if not args.offline:  # el tipo de cambio es informativo: si falla, el bot opera igual
         try:
@@ -647,30 +700,43 @@ def main(argv: list[str] | None = None) -> int:
             fx_daily = usd_mxn_daily(30)
         except Exception as exc:  # noqa: BLE001
             print(f"[aviso] tipo de cambio: {exc}")
-    eq_all = pd.read_csv(paths["equity"]) if paths["equity"].exists() else pd.DataFrame(columns=EQUITY_FIELDS)
+    eq_all = pd.DataFrame(store.rows("equity"), columns=EQUITY_FIELDS) if store else (pd.read_csv(paths["equity"]) if paths["equity"].exists() else pd.DataFrame(columns=EQUITY_FIELDS))
     trades, eq_rows, failures = [], [], 0
     names = [args.sleeve] if args.sleeve else [n for n, s in cfg["sleeves"].items() if s.get("enabled")]
     if args.if_due:
-        names = [n for n in names if is_due(cfg["sleeves"][n], state["sleeves"].get(n, {}), now)]
+        pending_names = {o["namespace"].rsplit(":", 1)[-1] for o in store.orders(pending_only=True)} if store else set()
+        names = [n for n in names if n in pending_names or is_due(cfg["sleeves"][n], state["sleeves"].get(n, {}), now)]
         if not names:
             print("Sin velas diarias nuevas: nada que operar.")
             return 0
     for name in names:
         sc = cfg["sleeves"][name]
         st = state["sleeves"].setdefault(name, {})
-        if st.get("mode") and st["mode"] != mode:
-            st.clear()  # cambiar de simulado a real reinicia el historial del bloque
-        st["mode"] = mode
         notes: list[str] = []
+        before = copy.deepcopy(st)
+        broker = None
         try:
+            if st.get("mode") and st["mode"] != mode:
+                raise RuntimeError("cambio de modo bloqueado: usa otro directorio y base de datos")
+            st["mode"] = mode
             P = offline_prices(name, sc) if args.offline else fetch_prices(name, sc, now, notes)
             run_now = P.index[-1] + pd.Timedelta(days=1, minutes=10) if args.offline else now
-            broker = make_broker(name, sc, mode, st, notes)
+            broker = make_broker(name, sc, mode, st, notes, store=store)
             eq_hist = equity_history(eq_all, name, mode)
             r = run_sleeve(name, sc, P, broker, st, run_now, mode, eq_hist, cfg["max_price_jump"])
         except Exception as exc:  # noqa: BLE001  un bloque que falla no detiene al otro
-            failures += 1
+            # Internal simulation can roll back entirely; external fills are already
+            # durable in their journal and are restored by the next reconciliation.
+            if store and getattr(broker, "manages_ledger", False):
+                before = store.read_document("state", {"sleeves": {}}).get("sleeves", {}).get(name, before)
+                broker._sync()
+                before.update(sleeve_cash=st["sleeve_cash"], owned_positions=st["owned_positions"],
+                              account_namespace=st["account_namespace"])
+            state["sleeves"][name] = before
+            before["execution_pending"] = True
             r = {"status": "error", "notes": [f"error: {exc}"], "trades": [], "equity_row": None, "snapshot": None}
+        if r["status"] in ("error", "blocked"):
+            failures += 1
         r["notes"][:0] = notes
         trades += r["trades"]
         if r["equity_row"]:
@@ -689,18 +755,27 @@ def main(argv: list[str] | None = None) -> int:
     snapshot.update({"generated_utc": now.strftime("%Y-%m-%d %H:%M"), "mode": mode, "research": research_summary()})
     if fx_now:
         snapshot["fx"] = fx_now
-    save_json(paths["state"], state)
-    append_csv(paths["trades"], TRADE_FIELDS, trades)
-    append_csv(paths["equity"], EQUITY_FIELDS, eq_rows)
-    save_json(paths["snapshot"], snapshot)
-    try:  # análisis de operaciones (FIFO) para el tablero; nunca debe tumbar la corrida
-        from .analyze import run as analyze_run
-
-        snapshot["analysis"] = analyze_run(write=paths["snapshot"].parent == ROOT / "state")["summary"]
+    if store:
+        store.commit_run(state, trades, eq_rows, snapshot)
+        try:
+            store.export(paths, TRADE_FIELDS, EQUITY_FIELDS)
+        except Exception as exc:
+            store.record_event("export_failed", {"error": type(exc).__name__})
+            print(f"[aviso] export falló; SQLite conserva la corrida: {type(exc).__name__}")
+    else:
+        save_json(paths["state"], state)
+        append_csv(paths["trades"], TRADE_FIELDS, trades)
+        append_csv(paths["equity"], EQUITY_FIELDS, eq_rows)
         save_json(paths["snapshot"], snapshot)
-    except Exception as exc:  # noqa: BLE001
-        print(f"[aviso] análisis de operaciones: {exc}")
-    return 1 if failures == len(names) else 0
+    if not store:
+        try:
+            from .analyze import run as analyze_run
+            snapshot["analysis"] = analyze_run(write=paths["snapshot"].parent == ROOT / "state")["summary"]
+            save_json(paths["snapshot"], snapshot)
+        except Exception as exc:
+            print(f"[aviso] análisis de operaciones: {exc}")
+    return 1 if failures else 0
+
 
 
 if __name__ == "__main__":

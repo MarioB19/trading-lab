@@ -34,6 +34,7 @@ import pandas as pd
 from .bot import (EQUITY_FIELDS, ROOT, append_csv, book_value, compute_targets, equity_history, fetch_prices,
                   init_sleeve_cash, is_capped, load_config, load_env, load_state, make_broker, research_summary,
                   save_json, sleeve_params)
+from .storage import SQLiteStore, execution_lock
 from .data import make_exchange, usd_mxn_now, yahoo_last
 from .portfolio import drawdown_multiplier, with_provisional_close
 
@@ -86,6 +87,10 @@ def check_sleeve(name: str, sc: dict, st: dict, rt: dict, mode: str, now: pd.Tim
     notes: list[str] = []
     alerts: list[str] = []
     broker = broker or make_broker(name, sc, mode, st, notes)
+    if getattr(broker, "manages_ledger", False):
+        pending = broker.reconcile()
+        if pending:
+            alerts.append("órdenes pendientes; solo se valúan fills confirmados y efectivo propio")
     positions, cash = broker.positions(), broker.cash()
     tactical = sc["strategy"] == "tactical"
     want = sorted(set(positions) | (set(sc["universe"]) if tactical else set(sc.get("mix", {}))))
@@ -176,13 +181,20 @@ def check_sleeve(name: str, sc: dict, st: dict, rt: dict, mode: str, now: pd.Tim
 
 # ------------------------------------------------------------------ ciclo
 def tick(cfg: dict, mode: str, now: pd.Timestamp | None = None) -> dict:
+    lock_path = ROOT / cfg["paths"].get("database", cfg["paths"]["state"])
+    with execution_lock(lock_path):
+        return _tick(cfg, mode, now)
+
+
+def _tick(cfg: dict, mode: str, now: pd.Timestamp | None = None) -> dict:
     rt = {**REALTIME_DEFAULTS, **(cfg.get("realtime") or {})}
     paths = {k: ROOT / v for k, v in cfg["paths"].items()}
     live_path, live_csv = paths["state"].parent / "live.json", paths["state"].parent / "live_equity.csv"
     now = now or pd.Timestamp.now(tz="UTC").tz_localize(None)
-    state = load_state(paths["state"])
-    eq_all = pd.read_csv(paths["equity"]) if paths["equity"].exists() else pd.DataFrame(columns=EQUITY_FIELDS)
-    snap = json.loads(paths["snapshot"].read_text()) if paths["snapshot"].exists() else {}
+    store = SQLiteStore(paths["database"]) if paths.get("database") else None
+    state = store.read_document("state", {"sleeves": {}}) if store else load_state(paths["state"])
+    eq_all = pd.DataFrame(store.rows("equity"), columns=EQUITY_FIELDS) if store else (pd.read_csv(paths["equity"]) if paths["equity"].exists() else pd.DataFrame(columns=EQUITY_FIELDS))
+    snap = store.read_document("snapshot", {}) if store else (json.loads(paths["snapshot"].read_text()) if paths["snapshot"].exists() else {})
     out = {"updated_utc": now.strftime("%Y-%m-%d %H:%M"), "mode": mode, "action": rt["action"],
            "every_minutes": rt["every_minutes"], "sleeves": {}, "research": research_summary()}
     try:  # informativo: si falla, la revisión sigue
@@ -201,7 +213,10 @@ def tick(cfg: dict, mode: str, now: pd.Timestamp | None = None) -> dict:
         try:
             ref = pd.Series({a["asset"]: a["price"] for a in snap.get("sleeves", {}).get(name, {}).get("assets", [])
                              if a.get("price")}, dtype=float)
-            r = check_sleeve(name, sc, st, rt, mode, now, eq_hist, ref_prices=ref)
+            broker_notes = []
+            broker = make_broker(name, sc, mode, st, broker_notes, store=store)
+            r = check_sleeve(name, sc, st, rt, mode, now, eq_hist, broker=broker, ref_prices=ref)
+            r["notes"] = broker_notes + r.get("notes", [])
         except Exception as exc:  # noqa: BLE001  un bloque que falla no detiene al otro
             r = {"status": "error", "notes": [f"error: {str(exc)[:160]}"], "alerts": []}
         out["sleeves"][name] = r
@@ -211,6 +226,8 @@ def tick(cfg: dict, mode: str, now: pd.Timestamp | None = None) -> dict:
                          "action": rt["action"], "usd_mxn": (out.get("fx") or {}).get("rate", "")})
         print(f"[{mode} · {rt['action']}] {name}: {r.get('status')} | capital {r.get('equity', '-')} | "
               f"caída {r.get('drawdown', '-')} | {'; '.join(r.get('alerts', []) + r.get('notes', []))}")
+    if store:
+        store.commit_live(out, rows)
     save_json(live_path, out)
     append_csv(live_csv, LIVE_FIELDS, rows)
     trim_csv(live_csv, now - pd.Timedelta(days=rt.get("keep_days", 90)))
@@ -261,8 +278,8 @@ def main(argv: list[str] | None = None) -> int:
         print(f"Acción '{rt['action']}' no disponible: la prueba pre-registrada no la aprobó. Uso observe.")
         cfg["realtime"] = {**rt, "action": "observe"}
     if not args.loop:
-        tick(cfg, mode)
-        return 0
+        result = tick(cfg, mode)
+        return 1 if any(s.get("status") in ("error", "blocked") for s in result.get("sleeves", {}).values()) else 0
     every = args.every or int(rt["every_minutes"]) * 60
     while True:  # pragma: no cover  (proceso de servidor)
         from .bot import main as bot_main

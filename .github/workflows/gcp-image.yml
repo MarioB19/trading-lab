@@ -1,0 +1,51 @@
+name: gcp-image-delivery
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: gcp-image-delivery
+  cancel-in-progress: false
+jobs:
+  image:
+    if: github.ref == 'refs/heads/main' && vars.GCP_DELIVERY_ENABLED == 'true'
+    environment: gcp-delivery
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install -r requirements-dev.lock.txt && pip install --no-deps -e .
+      - run: python -m pytest -q -W ignore
+      - uses: google-github-actions/auth@v2
+        id: auth
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_DELIVERY_SERVICE_ACCOUNT }}
+          token_format: access_token
+          create_credentials_file: false
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ vars.GCP_REGION }}-docker.pkg.dev
+          username: oauth2accesstoken
+          password: ${{ steps.auth.outputs.access_token }}
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/build-push-action@v6
+        id: build
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
+          tags: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/trading-lab/runtime:${{ github.sha }}
+          build-args: SOURCE_SHA=${{ github.sha }}
+          provenance: mode=max
+          sbom: true
+      - name: Record immutable release for manual review
+        env:
+          DIGEST: ${{ steps.build.outputs.digest }}
+          PROJECT: ${{ vars.GCP_PROJECT_ID }}
+          REGION: ${{ vars.GCP_REGION }}
+        run: |
+          printf 'SHA: %s\nImage: %s-docker.pkg.dev/%s/trading-lab/runtime@%s\nWorker remains inactive; deploy and cutover are separate explicit steps.\n' "$GITHUB_SHA" "$REGION" "$PROJECT" "$DIGEST" >> "$GITHUB_STEP_SUMMARY"

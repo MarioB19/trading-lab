@@ -1,0 +1,19 @@
+# Copiar a un archivo local solo al conectar la cuenta. Nunca incluye credenciales.
+project_id = "REPLACE-project-id"
+region     = "us-central1"
+zone       = "us-central1-a"
+machine_type = "e2-medium"
+operator_email = "brandonmuro.work@gmail.com"
+# Primera fase crea infraestructura con runtime desactivado.
+image_uri = ""
+source_sha = ""
+enable_operational_alerts = false
+notification_channels = []
+# Verificar importe, vigencia y servicios cubiertos por créditos antes de apply.
+enable_budget = false
+billing_account_id = ""
+# Opcional: habilitar solo después de revisar el workflow gcp-image y entorno protegido.
+enable_github_delivery = false
+github_repository_id = ""
+github_owner_id = ""
+paper_secret_versions = {}

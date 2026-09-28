@@ -1,5 +1,20 @@
-data/
-.venv/
-__pycache__/
-.pytest_cache/
-.env
+# Build allowlist. State is imported separately and never baked into an image.
+*
+!Dockerfile
+!requirements-runtime.txt
+!src/
+!src/**
+!config.yaml
+!configs/
+!configs/experiments/
+!configs/experiments/aggressive_v1.yaml
+!reports/
+!reports/**
+reports/experiments/
+!dashboard/
+!dashboard/**
+**/__pycache__/
+**/*.pyc
+**/.env
+**/.env.*
+**/.git/

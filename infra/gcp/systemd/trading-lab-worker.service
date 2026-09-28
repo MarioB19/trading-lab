@@ -1,0 +1,21 @@
+[Unit]
+Description=Trading Lab paper worker
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+RequiresMountsFor=/var/lib/trading-lab
+ConditionPathExists=/etc/trading-lab/release.conf
+ConditionPathExists=/var/lib/trading-lab/worker.enabled
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+[Service]
+Type=simple
+ExecStart=/usr/local/lib/trading-lab/run-container.sh worker
+ExecStop=-/usr/bin/docker stop --time 35 trading-lab-worker
+Restart=on-failure
+RestartSec=30
+TimeoutStopSec=45
+
+[Install]
+WantedBy=multi-user.target

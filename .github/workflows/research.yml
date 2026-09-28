@@ -1,29 +1,64 @@
-# Cada domingo descarga datos al día y vuelve a correr la investigación completa.
-name: investigacion-semanal
+name: investigacion-registrada
 on:
-  schedule:
-    - cron: "0 7 * * 0"    # domingo 07:00 UTC
-  workflow_dispatch: {}
+  workflow_dispatch:
+    inputs:
+      experiment_id:
+        description: Identificador del experimento preregistrado
+        required: true
+        type: string
+      preregistration:
+        description: Ruta del preregistro aprobado dentro del repositorio
+        required: true
+        type: string
+      preregistration_commit:
+        description: SHA del commit previo que contiene el preregistro
+        required: true
+        type: string
+      universe:
+        description: Universo declarado
+        type: choice
+        options: [historical, bitso]
+        default: bitso
+      cov_estimator:
+        description: Estimador declarado
+        type: choice
+        options: [sample, ledoit_wolf]
+        default: sample
 permissions:
-  contents: write
+  contents: read
 concurrency:
-  group: bot
+  group: research-${{ github.event.inputs.experiment_id }}
   cancel-in-progress: false
 jobs:
   research:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 60
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.11"
-      - run: pip install -e .
-      - run: python -W ignore -m lab.research_multi --refresh
-      - run: |
-          git config user.name "trading-lab-bot"
-          git config user.email "trading-lab-bot@users.noreply.github.com"
-          git add reports/multi_results.json reports/multi_informe.md reports/multi_curves.csv
-          git commit -m "investigación: $(date -u +%F)" || { echo "sin cambios"; exit 0; }
-          git pull --rebase
-          git push
+          python-version: "3.13"
+      - run: pip install -r requirements-dev.lock.txt && pip install --no-deps -e .
+      - name: Ejecutar únicamente la prueba registrada
+        env:
+          EXPERIMENT_ID: ${{ inputs.experiment_id }}
+          PREREGISTRATION: ${{ inputs.preregistration }}
+          PREREGISTRATION_COMMIT: ${{ inputs.preregistration_commit }}
+          UNIVERSE: ${{ inputs.universe }}
+          COV_ESTIMATOR: ${{ inputs.cov_estimator }}
+        run: |
+          python -m lab.research_multi --refresh \
+            --experiment-id "$EXPERIMENT_ID" \
+            --preregistration "$PREREGISTRATION" \
+            --preregistration-commit "$PREREGISTRATION_COMMIT" \
+            --universe "$UNIVERSE" --cov-estimator "$COV_ESTIMATOR" \
+            --output-root "$RUNNER_TEMP/research" \
+            --ledger "$RUNNER_TEMP/research/ledger.jsonl"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: research-${{ github.run_id }}
+          path: ${{ runner.temp }}/research
+          retention-days: 90

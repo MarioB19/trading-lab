@@ -9,12 +9,13 @@ Convención de fechas: la fila con fecha D es el precio de cierre del día D (UT
 from __future__ import annotations
 
 import io
+import os
 from pathlib import Path
 
 import pandas as pd
 
 ROOT = Path(__file__).resolve().parents[2]
-DATA_DIR = ROOT / "data"
+DATA_DIR = Path(os.environ.get("TRADING_LAB_DATA_DIR", str(ROOT / "data")))
 COINMETRICS_URL = "https://raw.githubusercontent.com/coinmetrics/data/master/csv/{asset}.csv"
 EXTENSION_SOURCE = {"btc": ("kraken", "BTC/USD"), "eth": ("kraken", "ETH/USD")}
 DAY_MS = 86_400_000

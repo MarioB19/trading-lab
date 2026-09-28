@@ -1,0 +1,12 @@
+[Unit]
+Description=Consistent SQLite backup to GCS
+Requires=docker.service
+After=docker.service network-online.target
+RequiresMountsFor=/var/lib/trading-lab
+ConditionPathExists=/etc/trading-lab/release.conf
+ConditionPathExists=/var/lib/trading-lab/trading.sqlite3
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/trading-lab/backup.sh
+TimeoutStartSec=300

@@ -9,6 +9,8 @@ Todos exponen la misma interfaz: cash(), positions(), execute(asset, side, qty, 
 from __future__ import annotations
 
 import os
+import hashlib
+import math
 import time
 from dataclasses import dataclass
 
@@ -25,6 +27,10 @@ class Fill:
     status: str = "filled"   # filled | submitted (se llenará al abrir el mercado) | partial | failed
     note: str = ""
     ref: float = 0.0         # precio de referencia justo antes de ejecutar (medio del libro o cierre)
+    order_id: str = ""
+    client_order_id: str = ""
+    terminal: bool = True
+    execution_id: str = ""
 
 
 class SimBroker:
@@ -47,10 +53,13 @@ class SimBroker:
                fee_rate: float | None = None) -> tuple[float, float]:
         """Mueve efectivo y posición en el libro contable. Devuelve (cantidad, comisión)."""
         pos = self.l["positions"]
+        rate = self.fee if fee_rate is None else fee_rate
         if side == "sell":
             qty = min(qty, pos.get(asset, 0.0))
+        else:
+            qty = min(qty, max(0.0, float(self.l["cash"])) / (px * (1 + rate)))
         notional = qty * px
-        fee = notional * (self.fee if fee_rate is None else fee_rate)
+        fee = notional * rate
         if side == "buy":
             self.l["cash"] -= notional + fee
             pos[asset] = pos.get(asset, 0.0) + qty
@@ -63,8 +72,10 @@ class SimBroker:
 
     def execute(self, asset: str, side: str, qty: float, ref_price: float) -> Fill:
         px = ref_price * (1 + self.slip if side == "buy" else 1 - self.slip)
+        requested = qty
         qty, fee = self._apply(asset, side, qty, px)
-        return Fill(asset, side, qty, px, fee, ref=ref_price)
+        status = "filled" if qty >= requested * .999999 else "partial" if qty > 0 else "failed"
+        return Fill(asset, side, qty, px, fee, status=status, ref=ref_price)
 
 
 class BookSimBroker(SimBroker):
@@ -125,18 +136,23 @@ class BookSimBroker(SimBroker):
         since = self.ex.milliseconds()
         start = self._clock()
         got = 0.0
+        observed = {}
         while self._clock() - start < wait and got < qty:
             self._sleep(poll)
             try:
                 trades = self.ex.fetch_trades(sym, since=since, limit=100)
                 through = [t for t in trades if (t.get("timestamp") or 0) >= since and
                            (t["price"] < price if side == "buy" else t["price"] > price)]
-                got = min(qty, sum(float(t["amount"]) for t in through))
+                for trade in through:
+                    identity = trade.get("id") or (trade.get("timestamp"), trade["price"], trade["amount"], trade.get("side"))
+                    observed[identity] = float(trade["amount"])
+                got = min(qty, max(got, sum(observed.values())))
                 top = self.ex.fetch_order_book(sym, limit=5)
-                crossed = (top["asks"] and top["asks"][0][0] <= price) if side == "buy" else \
-                          (top["bids"] and top["bids"][0][0] >= price)
-                if crossed:
-                    got = qty
+                # A crossed top does not imply unlimited depth. Do not count the
+                # same resting book repeatedly or add it to overlapping tape trades.
+                levels = top["asks"] if side == "buy" else top["bids"]
+                available = sum(float(q) for p, q in levels if (p <= price if side == "buy" else p >= price))
+                got = min(qty, max(got, available))
             except Exception:  # noqa: BLE001  sin datos: se deja de esperar
                 break
         self._maker_left = max(0.0, self._maker_left - (self._clock() - start))
@@ -226,8 +242,17 @@ class BookSimBroker(SimBroker):
         return (got, price, fee, mid)
 
 
+class BrokerHTTPError(RuntimeError):
+    def __init__(self, status, message):
+        super().__init__(message)
+        self.status = status
+
+
 class AlpacaBroker:
     """API REST de Alpaca. Órdenes a mercado 'day': si el mercado está cerrado se ejecutan al abrir."""
+
+    requires_journal = True
+    supports_cash_budget = True
 
     def __init__(self, paper: bool = True, min_order_value: float = 1.0):
         self.key = os.environ.get("ALPACA_KEY_ID", "")
@@ -237,12 +262,13 @@ class AlpacaBroker:
         self.base = "https://paper-api.alpaca.markets" if paper else "https://api.alpaca.markets"
         self.min_order_value = min_order_value
         self.name = "alpaca paper" if paper else "alpaca real"
+        self.account_key = self.name + ":" + hashlib.sha256(self.key.encode()).hexdigest()[:16]
 
     def _req(self, method: str, path: str, **kw):
         h = {"APCA-API-KEY-ID": self.key, "APCA-API-SECRET-KEY": self.secret}
         r = requests.request(method, self.base + path, headers=h, timeout=30, **kw)
         if r.status_code >= 400:
-            raise RuntimeError(f"Alpaca {method} {path}: {r.status_code} {r.text[:200]}")
+            raise BrokerHTTPError(r.status_code, f"Alpaca {method} {path}: HTTP {r.status_code}")
         return r.json() if r.text else {}
 
     def cash(self) -> float:
@@ -268,31 +294,70 @@ class AlpacaBroker:
         """Órdenes de la corrida anterior que aún esperan la apertura del mercado."""
         return len(self._req("GET", "/v2/orders", params={"status": "open"}))
 
-    def execute(self, asset: str, side: str, qty: float, ref_price: float) -> Fill:
-        body = {"symbol": asset, "qty": f"{qty:.6f}", "side": side, "type": "market", "time_in_force": "day"}
+    @staticmethod
+    def _fill(o, asset, side, ref_price, client_order_id=""):
+        qty = float(o.get("filled_qty") or 0)
+        raw = o.get("status", "unknown")
+        if qty > 0 and not o.get("filled_avg_price"):
+            return Fill(asset, side, 0, ref_price, 0, "unknown", "fill sin precio confirmado", ref_price,
+                        str(o.get("id") or ""), client_order_id, False)
+        terminal = raw in ("filled", "canceled", "expired", "rejected", "replaced")
+        status = ("filled" if raw == "filled" else
+                  "partial" if qty else
+                  "failed" if terminal else "submitted")
+        if raw == "unknown":
+            status = "unknown"
+        return Fill(asset, side, qty, float(o.get("filled_avg_price") or ref_price), 0.0,
+                    status, raw, ref_price, str(o.get("id") or ""),
+                    str(o.get("client_order_id") or client_order_id), terminal)
+
+    def execute(self, asset: str, side: str, qty: float, ref_price: float,
+                client_order_id: str = "", max_notional: float | None = None) -> Fill:
+        body = {"symbol": asset, "qty": f"{math.floor(qty * 1e6) / 1e6:.6f}", "side": side, "type": "market", "time_in_force": "day"}
+        if client_order_id:
+            body["client_order_id"] = client_order_id
+        if side == "buy" and max_notional is not None:
+            # Notional market buys cap the cash spent even if the opening price gaps.
+            body.pop("qty")
+            body["notional"] = f"{math.floor(max_notional * 100) / 100:.2f}"
         try:
             o = self._req("POST", "/v2/orders", json=body)
-        except RuntimeError as exc:
-            return Fill(asset, side, 0.0, ref_price, 0.0, "failed", str(exc))
-        status = "filled" if o.get("status") == "filled" else "submitted"
-        return Fill(asset, side, qty, float(o.get("filled_avg_price") or ref_price), 0.0, status,
-                    f"orden {o.get('id', '')[:8]}", ref_price)
+        except BrokerHTTPError as exc:
+            definite = 400 <= exc.status < 500 and exc.status not in (408, 409, 422, 429)
+            return Fill(asset, side, 0, ref_price, 0, "failed" if definite else "unknown",
+                        str(exc), ref_price, client_order_id=client_order_id, terminal=definite)
+        except Exception as exc:  # network loss may happen after acceptance
+            return Fill(asset, side, 0, ref_price, 0, "unknown", type(exc).__name__, ref_price,
+                        client_order_id=client_order_id, terminal=False)
+        return self._fill(o, asset, side, ref_price, client_order_id)
+
+    def lookup_order(self, order):
+        if order.get("broker_id"):
+            o = self._req("GET", "/v2/orders/" + order["broker_id"])
+        else:
+            # A 404 after a timeout is inconclusive; leave the intent unresolved.
+            o = self._req("GET", "/v2/orders:by_client_order_id", params={"client_order_id": order["id"]})
+        return self._fill(o, order["asset"], order["side"], order["ref"], order["id"])
 
 
 class BitsoBroker:
     """Bitso vía ccxt, pares ASSET/USD. Órdenes límite agresivas con tope de precio."""
+
+    requires_journal = True
+    supports_cash_budget = True
 
     def __init__(self, quote: str = "USD", limit_offset: float = 0.004, timeout_s: int = 20,
                  min_order_value: float = 1.0):
         from .data import make_exchange
 
         self.ex = make_exchange("bitso", os.environ.get("BITSO_API_KEY"), os.environ.get("BITSO_API_SECRET"))
-        if not self.ex.apiKey:
+        if not self.ex.apiKey or not getattr(self.ex, "secret", None):
             raise RuntimeError("faltan BITSO_API_KEY / BITSO_API_SECRET")
         self.ex.load_markets()
         self.quote, self.offset, self.timeout = quote, limit_offset, timeout_s
         self.min_order_value = min_order_value
         self.name = "bitso real"
+        self.account_key = self.name + ":" + hashlib.sha256(str(self.ex.apiKey).encode()).hexdigest()[:16]
 
     def cash(self) -> float:
         return float(self.ex.fetch_balance()["free"].get(self.quote, 0) or 0)
@@ -303,14 +368,40 @@ class BitsoBroker:
                 and f"{k}/{self.quote}" in self.ex.markets}
 
     def pending(self) -> int:
-        return 0  # las órdenes que no se llenan en segundos se cancelan
+        return len(self.ex.fetch_open_orders())
 
     def price(self, asset: str) -> float:
         t = self.ex.fetch_ticker(f"{asset}/{self.quote}")
         return float(t.get("last") or t["close"])
 
-    def execute(self, asset: str, side: str, qty: float, ref_price: float) -> Fill:
+    def _fill(self, o, asset, side, ref):
+        qty = float(o.get("filled") or 0)
+        raw = o.get("status", "unknown")
+        terminal = raw in ("closed", "canceled", "expired", "rejected")
+        fees = o.get("fees") or ([o["fee"]] if o.get("fee") else [])
+        average = o.get("average") or (float(o["cost"]) / qty if qty > 0 and o.get("cost") else None)
+        unsupported_fee = any(float(f.get("cost") or 0) and f.get("currency") != self.quote for f in fees)
+        if qty > 0 and (not average or unsupported_fee):
+            return Fill(asset, side, 0, ref, 0, "unknown", "fill requiere precio y comisión en moneda cotizada", ref,
+                        str(o.get("id") or ""), terminal=False)
+        status = "filled" if raw == "closed" else "partial" if qty else "failed" if terminal else "submitted"
+        if raw == "unknown":
+            status = "unknown"
+        return Fill(asset, side, qty, float(average or ref),
+                    sum(float(f.get("cost") or 0) for f in fees if f.get("currency") == self.quote),
+                    status, raw, ref, str(o.get("id") or ""), terminal=terminal)
+
+    def lookup_order(self, order):
+        if not order.get("broker_id"):
+            raise RuntimeError("Bitso: resultado desconocido sin ID remoto; conciliación manual requerida")
+        o = self.ex.fetch_order(order["broker_id"], f"{order['asset']}/{self.quote}")
+        return self._fill(o, order["asset"], order["side"], order["ref"])
+
+    def execute(self, asset: str, side: str, qty: float, ref_price: float,
+                client_order_id: str = "", max_notional: float | None = None) -> Fill:
         sym = f"{asset}/{self.quote}"
+        o = None
+        submitted = False
         try:
             t = self.ex.fetch_ticker(sym)
             top = float(t["ask"] if side == "buy" else t["bid"])
@@ -318,9 +409,14 @@ class BitsoBroker:
             limit = top * (1 + self.offset) if side == "buy" else top * (1 - self.offset)
             amount = float(self.ex.amount_to_precision(sym, qty))
             limit = float(self.ex.price_to_precision(sym, limit))
+            if side == "buy" and max_notional is not None:
+                # Budget includes a conservative commission buffer; exchange precision
+                # can only reduce the requested amount.
+                amount = float(self.ex.amount_to_precision(sym, min(amount, max_notional / (limit * 1.01))))
+            submitted = True  # even an exception from POST can follow remote acceptance
             o = self.ex.create_order(sym, "limit", side, amount, limit)
-            deadline = time.time() + self.timeout
-            while time.time() < deadline:
+            deadline = time.monotonic() + self.timeout
+            while time.monotonic() < deadline:
                 o = self.ex.fetch_order(o["id"], sym)
                 if o.get("status") in ("closed", "canceled"):
                     break
@@ -328,10 +424,8 @@ class BitsoBroker:
             if o.get("status") == "open":
                 self.ex.cancel_order(o["id"], sym)
                 o = self.ex.fetch_order(o["id"], sym)
-        except Exception as exc:  # noqa: BLE001
-            return Fill(asset, side, 0.0, ref_price, 0.0, "failed", str(exc)[:200])
-        filled = float(o.get("filled") or 0)
-        fee = o.get("fee") or {}
-        return Fill(asset, side, filled, float(o.get("average") or limit),
-                    float(fee.get("cost") or 0) if fee.get("currency") == self.quote else 0.0,
-                    "filled" if filled >= amount * 0.999 else ("partial" if filled else "failed"), "", mid)
+            return self._fill(o, asset, side, mid)
+        except Exception as exc:
+            return Fill(asset, side, 0, ref_price, 0, "unknown" if submitted else "failed",
+                        type(exc).__name__, ref_price, str((o or {}).get("id") or ""),
+                        client_order_id, not submitted)

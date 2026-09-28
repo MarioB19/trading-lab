@@ -43,6 +43,7 @@ class PortfolioParams:
     dd_peak_window: int = 180
     cash_asset: str | None = None   # p. ej. "BIL": el efectivo no usado se estaciona en bonos del Tesoro
     rebalance: str = "daily"        # "monthly": solo se rebalancea el primer día hábil de cada mes
+    cov_estimator: str = "sample"  # alternativa de investigación, opt-in: "ledoit_wolf"
 
     @classmethod
     def from_dict(cls, d: dict | None) -> "PortfolioParams":
@@ -133,7 +134,14 @@ def target_weights(prices: pd.DataFrame, eligible: pd.DataFrame | None,
             window = rets[max(1, t - p.cov_window + 1): t + 1][:, idx]
             window = window[np.isfinite(window).all(axis=1)]
             if len(window) >= 30:
-                cov = np.cov(window, rowvar=False) * p.ann
+                if p.cov_estimator == "ledoit_wolf":
+                    from sklearn.covariance import LedoitWolf
+
+                    cov = LedoitWolf().fit(window).covariance_ * p.ann
+                elif p.cov_estimator == "sample":
+                    cov = np.cov(window, rowvar=False) * p.ann
+                else:
+                    raise ValueError(f"estimador de covarianza desconocido: {p.cov_estimator}")
                 cov = np.atleast_2d(cov)
                 sp = float(np.sqrt(max(w @ cov @ w, 1e-12)))
                 w = w * min(1.0, p.vol_target / sp)
@@ -167,7 +175,8 @@ def drawdown_multiplier(dd: float, p: PortfolioParams) -> float:
 # ------------------------------------------------------------------ simulación
 def simulate_portfolio(prices: pd.DataFrame, weights: pd.DataFrame, p: PortfolioParams,
                        cost: float = 0.003, band: float = 0.02,
-                       kill_dd: float | None = None, check=None, watch=None) -> pd.DataFrame:
+                       kill_dd: float | None = None, check=None, watch=None,
+                       params_by_date: pd.Series | None = None) -> pd.DataFrame:
     """Backtest multi-activo con costos, banda de rebalanceo, deriva y freno por caída.
 
     Sirve para cualquier frecuencia de filas (diaria o por hora). La decisión tomada en la
@@ -178,13 +187,25 @@ def simulate_portfolio(prices: pd.DataFrame, weights: pd.DataFrame, p: Portfolio
              switch con el capital de ese momento y, si se aprietan, solo vende.
     El freno y el kill switch miden la caída con el capital observado en esas revisiones;
     `p.dd_peak_window` va en filas.
+    params_by_date: parámetros conocidos al cierre de cada fila, con exactamente el
+    mismo índice. Cambiar de variante NO reinicia cartera, capital, pico ni kill switch.
+    La decisión y sus parámetros de t-1 se aplican al retorno de t.
     """
     R = clean(prices).pct_change(fill_method=None).replace([np.inf, -np.inf], np.nan).fillna(0.0).values
     cols = list(prices.columns)
-    ci = cols.index(p.cash_asset) if p.cash_asset and p.cash_asset in cols else -1
-    cash_ok = np.isfinite(clean(prices).values[:, ci]) if ci >= 0 else None
+    clean_values = clean(prices).values
     Wt = weights.reindex_like(prices).fillna(0.0).values
     n, m = R.shape
+    if n == 0:
+        raise ValueError("la simulación necesita precios")
+    if params_by_date is not None:
+        if not params_by_date.index.equals(prices.index):
+            raise ValueError("params_by_date debe tener exactamente el índice de precios")
+        if not all(isinstance(x, PortfolioParams) for x in params_by_date):
+            raise ValueError("faltan parámetros válidos por fecha")
+        schedule = params_by_date.tolist()
+    else:
+        schedule = [p] * n
     chk = np.ones(n, bool) if check is None else np.asarray(check, bool)
     wat = np.zeros(n, bool) if watch is None else np.asarray(watch, bool) & ~chk
     w = np.zeros(m)
@@ -193,32 +214,35 @@ def simulate_portfolio(prices: pd.DataFrame, weights: pd.DataFrame, p: Portfolio
     out_ret, gross, turn, mult_arr = np.zeros(n), np.zeros(n), np.zeros(n), np.ones(n)
     held = np.zeros((n, m))
     equity, killed, all_peak = 1.0, False, 1.0
-    monthly = p.rebalance == "monthly"
-    rdays = rebalance_days(prices.index) if monthly else None
+    rdays = rebalance_days(prices.index)
     prev_mult, mult = 1.0, 1.0
     last_target = np.zeros(m)
     no_trade = np.zeros(m, bool)
     for t in range(1, n):
+        active = schedule[t - 1]
+        changed = t > 1 and active != schedule[t - 2]
+        monthly = active.rebalance == "monthly"
+        ci = cols.index(active.cash_asset) if active.cash_asset in cols else -1
         trade, diff = no_trade, np.zeros(m)
         if chk[t - 1] or wat[t - 1]:
             eq_obs[t - 1] = equity
             all_peak = max(all_peak, equity)
-            lo = max(0, t - p.dd_peak_window)
+            lo = max(0, t - active.dd_peak_window)
             peak = np.nanmax(eq_obs[lo:t])
             dd = equity / peak - 1
             if kill_dd is not None and equity / all_peak - 1 <= -kill_dd:
                 killed = True
-            new_mult = 0.0 if killed else drawdown_multiplier(dd, p)
+            new_mult = 0.0 if killed else drawdown_multiplier(dd, active)
             if chk[t - 1]:
                 mult = new_mult
                 last_target = Wt[t - 1]
                 desired = last_target * mult
-                if ci >= 0 and not killed and cash_ok[t - 1]:
+                if ci >= 0 and not killed and np.isfinite(clean_values[t - 1, ci]):
                     # el freno reduce solo lo riesgoso; lo liberado se estaciona en el activo de efectivo
                     desired[ci] = max(0.0, 1.0 - (desired.sum() - desired[ci]))
                 diff = desired - w
                 trade = (np.abs(diff) > band) | ((desired == 0) & (w > 0))
-                if monthly and not (rdays[t - 1] or killed or mult != prev_mult or w.sum() == 0):
+                if monthly and not (rdays[t - 1] or changed or killed or mult != prev_mult or w.sum() == 0):
                     trade = no_trade  # fuera del día de rebalanceo solo actúan el freno y el kill switch
                 prev_mult = mult
             elif new_mult < mult - 1e-12:

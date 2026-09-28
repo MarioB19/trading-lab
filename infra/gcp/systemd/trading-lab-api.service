@@ -1,0 +1,17 @@
+[Unit]
+Description=Trading Lab read-only API on localhost
+Requires=docker.service
+After=docker.service network-online.target
+RequiresMountsFor=/var/lib/trading-lab
+ConditionPathExists=/etc/trading-lab/release.conf
+
+[Service]
+Type=simple
+ExecStart=/usr/local/lib/trading-lab/run-container.sh api
+ExecStop=-/usr/bin/docker stop --time 10 trading-lab-api
+Restart=on-failure
+RestartSec=15
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target

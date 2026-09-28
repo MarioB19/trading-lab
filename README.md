@@ -1,8 +1,20 @@
 # Trading Lab
 
-Bot de inversión diario para criptomonedas y acciones/ETFs. Cada estrategia se prueba con datos reales antes de operar, y el control de riesgo decide cuánto se arriesga. Corre solo en GitHub Actions y se sigue desde un tablero web.
+Bot de inversión diario para criptomonedas y acciones/ETFs. Cada estrategia se prueba con datos reales antes de operar, y el control de riesgo decide cuánto se arriesga. La operación existente sigue en GitHub Actions hasta realizar el corte documentado. La plataforma GCP está implementada localmente y pendiente de conexión y despliegue.
 
-> No es asesoría financiera. Ningún algoritmo garantiza no perder dinero; este limita cuánto puedes perder y lo mide. Opera solo dinero que aceptes perder.
+> Continúa en modo simulado. Los controles de riesgo no garantizan una pérdida máxima ni rentabilidad.
+
+## Integración GCP preparada
+
+- Un ejecutor paper con bloqueo de proceso, contabilidad SQLite WAL y diario durable de órdenes. Reconcilia fills parciales y resultados inciertos antes de volver a enviar.
+- Panel privado de lectura con datos de SQLite, frescura del ciclo, órdenes pendientes y respaldos; GitHub deja de ser la base de datos después del corte.
+- Terraform para Compute Engine, disco persistente, Artifact Registry, GCS, IAM, IAP, logs, alertas y presupuesto. Instalación por digest, sin activación automática.
+- Importación explícita, backup con manifiesto SHA256, verificación y restauración a un destino vacío y desactivado.
+- Walk-forward corregido, preregistro exigible, datasets/manifiestos y Ledoit–Wolf opcional para investigación. **La estrategia activa no cambió.**
+
+Cuenta prevista para la conexión posterior: `brandonmuro.work@gmail.com`. No se ha autenticado ni creado ningún recurso. Presupuesto de diseño US$60/mes; objetivo estimado 35–45 antes de créditos. Es una instancia única, sin alta disponibilidad.
+
+Empezar por [plan de conexión](docs/IMPLEMENTATION_PLAN.md), [runbook](docs/GCP_RUNBOOK.md), [arquitectura/costes](docs/GCP_ARCHITECTURE.md) y [evidencia local](docs/VALIDATION.md). El build Docker queda pendiente por falta de espacio del engine local; la validación Python/Terraform no sustituye esa prueba ni el despliegue.
 
 ## Qué hace y cuándo
 
@@ -18,11 +30,11 @@ Bot de inversión diario para criptomonedas y acciones/ETFs. Cada estrategia se 
 4. Revisa los candados. Luego opera: primero las ventas, después las compras.
 5. Guarda el estado, las operaciones y la curva de capital en `state/` y hace commit al repositorio. El tablero lee de ahí.
 
-Cada domingo, `investigacion-semanal` descarga datos nuevos y vuelve a correr toda la validación.
+La nueva investigación se dispara manualmente con un preregistro aprobado en un commit anterior. Conserva artefactos separados; no modifica automáticamente los informes históricos ni promueve estrategias. Ver [protocolo](docs/RESEARCH_PROTOCOL.md).
 
 ## Qué dice la evidencia
 
-Resultados **fuera de muestra**, con comisiones y deslizamiento incluidos. Las reglas se declararon antes de ver los resultados. Detalle en `reports/multi_informe.md`.
+Las tablas siguientes conservan los **informes históricos** de `reports/`; no se recalcularon con el motor corregido. La auditoría detectó parámetros no causales en la ruta optimizada walk-forward y un universo distinto del operable. No se deben interpretar como validación actual de la plataforma GCP ni como autorización de una estrategia. La candidata fija usa una ruta diferente. La primera nueva prueba requiere preregistro y el universo operable completo.
 
 **Criptomonedas, 2021 a hoy** (costo real de Bitso: 0.45% por operación = 0.36% de comisión contra USD + medio diferencial medido en su libro)
 
@@ -59,13 +71,13 @@ La misma lógica que funciona en cripto **no funcionó en acciones**: su timing 
 - **Todo se opera en dólares (USD):** las criptos en los mercados contra dólar de Bitso y las acciones en Alpaca.
 - **Tipo de cambio:** cada corrida guarda el USD/MXN del libro de Bitso (donde se cambiarían los pesos), en `state/equity.csv` (`usd_mxn`, cierre de cada día) y en `state/live.json` (el del momento). El tablero muestra el valor en pesos y separa el resultado en pesos en dos: lo que ganó el bot y lo que se movió el dólar.
 - **Aportaciones y retiros:** para meter o sacar dinero de un bloque basta con cambiar su `capital` en `config.yaml`. En la siguiente corrida del bloque, el bot lo registra como aportación o retiro (columna `flow` en `equity.csv`), vende o compra lo necesario, y reescala el máximo, el freno y la gráfica para que no cuente como ganancia ni como pérdida. Solo mueve la contabilidad del bot: los depósitos y traspasos reales entre cuentas los haces tú.
-- **Interés compuesto (`compound: true`):** cada día el bot reparte el capital completo del bloque, con lo ganado incluido. En el simulado interno la cuenta es el bloque. En una cuenta externa (Alpaca o dinero real), el bot lleva aparte el efectivo del bloque (`sleeve_cash` en `state/state.json`): suma lo que vende, resta lo que compra y nunca usa más efectivo del que de verdad hay en la cuenta. Con `compound: false`, lo que el bloque gane por encima de `capital` se queda en efectivo.
+- **Interés compuesto (`compound: true`):** cada día el bot reparte el capital completo del bloque, con lo ganado incluido. En el simulado interno la cuenta es el bloque. En una cuenta externa, SQLite conserva una asignación propia por identidad de cuenta, modo y bloque: contabiliza solo fills confirmados y bloquea discrepancias con el broker. No adopta posiciones preexistentes. Las exportaciones JSON son derivadas del ledger. Con `compound: false`, lo que el bloque gane por encima de `capital` se queda en efectivo.
 
 ## Qué tan real es el simulado
 
 - **Criptos:** cada orden simulada se llena contra el libro de órdenes real de Bitso en ese momento: comisión real, diferencial real y profundidad real. Si no hay suficiente oferta, se llena más cara o en parte. Solo el dinero es ficticio.
 - **Órdenes límite (desde el 27-sep-2026, solo simulado):** cada orden se pone primero al mejor precio del libro como "maker" (0.30% de comisión, sin pagar el diferencial) y espera hasta 2 minutos. Solo cuenta como llenado lo que el mercado negocia atravesando ese precio. Lo que no se llene se opera a mercado (0.36% más el diferencial). La nota de cada operación dice qué parte fue maker, y `cost_bps` mide el costo total, incluido lo que se movió el precio mientras esperaba. Si en 4 semanas el costo medido baja de forma consistente, se considera para dinero real.
-- **Acciones:** con llaves de Alpaca paper, las órdenes van a esa cuenta de práctica, que las ejecuta con precios reales del mercado. Sin llaves, se simulan al cierre con 0.05% de deslizamiento.
+- **Acciones:** sin llaves, se simulan al cierre con 0.05% de deslizamiento. Alpaca paper requiere SQLite y una migración separada de identidad y propiedad. Agregar llaves a un estado del simulador interno bloquea el cambio automático. La integración corregida aún necesita una prueba externa controlada.
 - **Cada operación registra su costo real** (`cost_bps` en `state/trades.csv`) y el tablero muestra el promedio contra lo que supone el backtest.
 
 ## ¿Y en tiempo real?
@@ -109,46 +121,47 @@ Con $1,000 USD en cada bloque, simulando 12 meses a partir de pedazos del period
 
 ## Puesta en marcha
 
-El repositorio ya corre solo en modo simulado. Para ir subiendo de nivel:
+El piloto existente permanece simulado. La nueva plataforma GCP queda desactivada hasta conectar la cuenta, revisar recursos y ejecutar el corte del [runbook](docs/GCP_RUNBOOK.md).
 
-**1. Simulado interno (ya activo).** No hace falta nada. Revisa el tablero cada semana.
-
-**2. Acciones en Alpaca paper (gratis, sin dinero real).** Crea una cuenta en alpaca.markets y activa la autenticación en dos pasos. Genera llaves de *Paper Trading* y agrégalas en GitHub → Settings → Secrets and variables → Actions → *New repository secret*: `ALPACA_KEY_ID` y `ALPACA_SECRET_KEY`. Desde la siguiente corrida, las órdenes del bloque de acciones van a tu cuenta paper.
-
-**3. Dinero real (después de 4 a 8 semanas en simulado).**
-- *Cripto (Bitso):* convierte MXN a USD dentro de Bitso (ese cambio es un mercado contra pesos: paga 0.78% de comisión una vez). Crea una llave de API con permisos de **ver saldo y operar**, sin retiros, y agrega los secrets `BITSO_API_KEY` y `BITSO_API_SECRET`.
-- *Acciones:* Alpaca acepta cuentas reales de muchos países, pero no publica si México está incluido; confírmalo con su soporte. Si no, la alternativa es Interactive Brokers (requiere agregar un conector).
-- Ajusta `capital` en `config.yaml` a lo que aceptes perder. Cambia `mode: live` y crea la *variable* (no secret) `CONFIRMO_DINERO_REAL` con valor `si`.
-- Para volver a simulado basta con borrar esa variable.
+No agregar llaves de Alpaca durante el traslado del simulador interno: es una migración diferente y requiere evidencia de propiedad. No hay una ruta de activación real autorizada en esta integración; Brandon conserva la decisión y ejecución manual, después de las validaciones técnicas y cuatro semanas de observación de la versión estabilizada.
 
 ## Uso local
 
+Python 3.13; dependencias fijadas en los archivos `requirements-*.txt`.
+
 ```bash
-python -m venv .venv && source .venv/bin/activate    # Windows: .venv\Scripts\activate
-pip install -e ".[dev]"
-python -m pytest -q -W ignore                         # 71 pruebas
-python -m lab.research_multi --refresh                # investigación completa (~2 min)
-python -m lab.bot                                     # corrida del día, simulada
-python -m lab.bot --replay 365                        # el bot re-juega un año y se compara con el backtest
+python3.13 -m venv .venv
+source .venv/bin/activate
+pip install -r requirements-dev.lock.txt
+pip install --no-deps -e .
+python -m pytest -q -W ignore
+python -m lab.bot --replay 365 --sleeve crypto
 python -m lab.bot --status
-python -m lab.bot --reset-kill-switch crypto
-python -m lab.realtime --once                         # revisión en tiempo real (valúa y avisa)
-python -m lab.research_rt                             # prueba de operar cada hora / 4 horas / vigía (~20 min la primera vez)
-python -m lab.research_short                          # prueba de estrategias de corto plazo (~6 min)
+python -m lab.research_multi --describe
+bash scripts/gcp/preflight.sh
+bash scripts/gcp/validate.sh
 ```
 
-## Tiempo real 24/7 en un servidor (opcional)
-
-GitHub revisa cada hora, que alcanza para una estrategia diaria. Si quieres revisiones cada 5 minutos, necesitas una máquina siempre prendida (un servidor pequeño cuesta unos US$5 al mes):
+Para ensayar la migración sin operar, importar una **copia congelada** a una carpeta nueva fuera de `state/`, inspeccionarla y abrir el panel:
 
 ```bash
-git clone https://github.com/MarioB19/trading-lab && cd trading-lab
-docker build -t trading-lab .
-docker run -d --restart=always -v "$PWD:/app" trading-lab \
-  python -m lab.realtime --loop --every 300 --git-push
+python -m lab.ops import-legacy --source state --data-dir /tmp/trading-lab-preview
+python -m lab.ops inspect --data-dir /tmp/trading-lab-preview
+python -m lab.service --data-dir /tmp/trading-lab-preview --port 8080
 ```
 
-`--git-push` sube `state/` al repositorio después de cada revisión para que el tablero lo vea; el servidor necesita permiso de escritura en el repositorio. Si usas el servidor, quita la línea `- cron: "7 * * * *"` de `.github/workflows/daily.yml` para que no escriban los dos a la vez. Aun así, con `action: observe` el servidor solo vigila: las compras y ventas siguen siendo una vez al día.
+El panel abre en `http://127.0.0.1:8080/`; el worker permanece apagado. No lanzar un bot local mientras GitHub siga siendo escritor. En GCP, systemd usa `lab.runtime`, que observa cada cinco minutos y opera únicamente cuando corresponde a la regla diaria. No usar `--git-push` ni montar el repositorio como volumen del contenedor. La migración detiene **ambos triggers** legacy, espera corridas en curso e importa el estado definitivo antes de activar un único escritor.
+
+## Cartera experimental agresiva
+
+Se preparó una comparación aislada entre la regla actual y una variante con hasta tres criptos y volatilidad objetivo del 60%. Ambas empiezan con US$1,000 ficticios, mantienen SPY/IEF y conservan frenos y kill switches. La configuración activa no cambia.
+
+El [protocolo y guía](docs/AGGRESSIVE_EXPERIMENT.md) fijan costos, caída máxima y criterios antes de ejecutar. La comparación histórica y el seguimiento diario usan los mismos precios para las dos carteras. **Todavía no se ejecutaron con datos de mercado**: el preregistro debe quedar aprobado en su propio commit previo y el árbol debe estar limpio. Las pruebas sintéticas verifican funcionamiento, no rentabilidad.
+
+```bash
+python -m lab.aggressive_research --describe
+python -m lab.paper_comparison --describe
+```
 
 ## Estructura
 
@@ -156,7 +169,13 @@ docker run -d --restart=always -v "$PWD:/app" trading-lab \
 |---|---|
 | `src/lab/portfolio.py` | Estrategia de portafolio: tendencia, momentum, paridad de riesgo, volatilidad objetivo, freno y simulación |
 | `src/lab/research_multi.py` | Validación: walk-forward, placebo, bootstrap, Sharpe deflactado, costos, Monte Carlo |
-| `src/lab/bot.py` | Bot diario por bloques, candados y archivos para el tablero |
+| `src/lab/bot.py` | Bot diario por bloques, candados y contabilidad de fills |
+| `src/lab/storage.py`, `journal.py` | SQLite transaccional, intenciones y conciliación de órdenes |
+| `src/lab/runtime.py`, `ops.py`, `service.py` | Ejecutor paper, importación/backup/restore, API y panel de lectura |
+| `infra/gcp/`, `scripts/gcp/` | Infraestructura declarativa, bootstrap, validación y despliegue posterior |
+| `src/lab/experiments.py` | Preregistro, procedencia, ledger de experimentos y gates |
+| `configs/experiments/aggressive_v1.yaml`, `src/lab/aggressive_plan.py` | Plan fijo, comparación contra la configuración vigente y separación del estado operativo |
+| `src/lab/aggressive_research.py`, `paper_comparison.py` | Comparación retrospectiva y seguimiento paper de las dos carteras |
 | `src/lab/realtime.py` | Revisión en tiempo real: valuación a precio de mercado, caída, señal provisional y avisos |
 | `src/lab/research_rt.py` | Prueba pre-registrada de operar cada hora, cada 4 horas o con vigía (velas por hora) |
 | `src/lab/research_short.py` | Prueba pre-registrada de estrategias de corto plazo: reversión y ruptura (velas por hora) |
@@ -172,4 +191,7 @@ docker run -d --restart=always -v "$PWD:/app" trading-lab \
 - La lista inicial de criptos se hizo en 2026. Incluye monedas que se desplomaron, pero queda algo de sesgo de supervivencia.
 - IOTA y MATIC antes de 2023 usan la capitalización como aproximación del precio.
 - No modela impuestos (lleva registro para el SAT y consulta a un contador), tipo de cambio MXN/USD ni la quiebra de un exchange.
-- GitHub Actions puede retrasar o saltarse corridas programadas. La revisión de cada hora pone al día la corrida diaria, y la estrategia es diaria, así que unas horas de retraso no cambian nada.
+- GitHub Actions puede retrasar o saltarse corridas programadas; esos retrasos pueden cambiar precios y ejecución. La migración a GCP evita depender del scheduler de GitHub, pero una sola VM también requiere monitoreo y recuperación.
+- Las correcciones del motor están probadas con escenarios sintéticos. La nueva versión todavía necesita build de imagen, despliegue, prueba de fallos en GCP y observación paper sostenida.
+- La simulación maker usa profundidad y transacciones observadas; no conoce prioridad real en la cola. Ningún backtest reproduce íntegramente una ejecución real.
+- El Sharpe deflactado global de todos los experimentos históricos aún tiene limitaciones; el registro nuevo mejora trazabilidad futura, no corrige retrospectivamente toda selección anterior.

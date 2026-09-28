@@ -9,12 +9,13 @@ Laboratorio y bot de inversión de Brandon, con dinero potencialmente real. El o
   - **Acciones:** 60/40 SPY/IEF pasivo en Alpaca (simulado interno mientras no haya llaves de Alpaca paper).
 - Revisa cada hora (`lab.realtime`, solo observa) y opera una vez al día tras el cierre de las 00:00 UTC (`lab.bot --if-due`).
 - Todo está en **modo simulado**. Nada mueve dinero real.
+- Plataforma GCP implementada localmente, pendiente de conexión y despliegue. Cuenta prevista `brandonmuro.work@gmail.com`; US$60/mes máximo. Leer `docs/IMPLEMENTATION_PLAN.md`, `GCP_RUNBOOK.md` y `VALIDATION.md`. Tras el corte, SQLite será la fuente primaria; `state/` será histórico/exportación. No ejecutar dos escritores.
 - Tablero: https://claude.ai/artifact/YLtHeryBpEfs882YJafAGG (lee `state/` del repositorio con el conector de GitHub).
 
 ## Antes de trabajar
 
 1. `git pull --rebase`: el bot hace commit de `state/` varias veces al día desde GitHub Actions. Trabajar sobre una copia vieja provoca conflictos.
-2. Entorno (una vez): `python3 -m venv .venv && source .venv/bin/activate && pip install -e ".[dev]"`.
+2. Entorno Python 3.13: crear `.venv`, instalar `requirements-dev.lock.txt` y luego `pip install --no-deps -e .`.
 3. Lee `README.md` (qué hace, qué dice la evidencia, candados) y el informe que toque en `reports/`.
 
 ## Comandos
@@ -22,8 +23,8 @@ Laboratorio y bot de inversión de Brandon, con dinero potencialmente real. El o
 - Pruebas: `python -m pytest -q -W ignore` (todas deben pasar antes de terminar cualquier cambio)
 - Consistencia bot/backtest: `python -m lab.bot --replay 365 --sleeve crypto` (diferencia < 2%)
 - Estado: `python -m lab.bot --status`; capital diario en `state/equity.csv`, operaciones en `state/trades.csv`, análisis FIFO en `state/analysis.json`
-- Tiempo real: `python -m lab.realtime --once` (foto en `state/live.json`)
-- Investigación: `python -m lab.research_multi --refresh`; tiempo real: `python -m lab.research_rt`; corto plazo: `python -m lab.research_short`
+- Tiempo real legacy: `python -m lab.realtime --once` (foto en `state/live.json`); no lanzarlo contra el estado activo mientras otro escritor esté corriendo. En GCP usar exclusivamente systemd/`lab.runtime`.
+- Investigación: `python -m lab.research_multi --describe` no ejecuta experimentos. Para correr, seguir `docs/RESEARCH_PROTOCOL.md`: preregistro aprobado en commit previo, IDs/config exactos y árbol limpio. Las rutas legacy RT/corto plazo también requieren preregistro conforme a la regla 4; no ejecutarlas para explorar sin declarar.
 - Tablero: `python -m lab.dashboard` regenera `dashboard/index.html`
 
 ## Reglas duras
@@ -36,7 +37,7 @@ Laboratorio y bot de inversión de Brandon, con dinero potencialmente real. El o
 6. El bot y la investigación usan las mismas funciones (`lab.portfolio`). No dupliques lógica.
 7. Un activo sin precio nunca se valúa en cero (dispararía un kill switch falso).
 8. No inventes números: cita `reports/*.json` o corre el código.
-9. No edites `state/` a mano salvo una migración documentada en el commit; lo escribe el bot.
+9. No edites `state/` ni SQLite a mano salvo una migración documentada en el commit. Usar `lab.ops` para importación/backup/restore; restaurar a un destino vacío y desactivado. La activación requiere corte y conciliación. Nunca resolver órdenes desconocidas reenviando a ciegas.
 10. Cambiar `capital` en `config.yaml` es una aportación o un retiro del bloque: el bot lo aplica solo en su siguiente corrida.
 
 ## Al revisar el bot
@@ -46,3 +47,7 @@ Reporta capital y caída de cada bloque, operaciones de la semana, días `blocke
 ## Commits
 
 Mensajes en español, en presente, explicando qué cambia y por qué. Corre las pruebas antes de cada commit.
+
+## Evidencia de operación GCP
+
+Distinguir preparación local, pruebas, imagen construida, infraestructura aplicada, runtime verificado, broker paper externo y cuatro semanas observadas. No autenticar, desplegar ni activar hasta la instrucción posterior de Brandon. No tocar secrets; Brandon los gestiona a mano. Alertas de presupuesto no son un tope de gasto. Guardar evidencia SHA → digest → instalación → lectura del estado y restore probado.

@@ -27,7 +27,7 @@ from .data import DATA_DIR, ROOT, hourly_to_daily, load_hourly_panel
 from .portfolio import (PortfolioParams, listed_universe, simulate_portfolio, target_weights,
                         with_provisional_close)
 from .research_multi import BITSO_TRADABLE, CANDIDATES, SLEEVES, params_for
-from .validation import bootstrap_compare
+from .validation import bootstrap_compare, finite_randomization_pvalue
 
 REPORTS = ROOT / "reports"
 VARIANTS = {
@@ -142,7 +142,7 @@ def placebo(H, T, p, kind, cost, band, kill, n=PLACEBO_N, seed=5) -> dict:
         sims.append(sharpe(to_daily(simulate_variant(H, Ts, p, kind, cost, band, kill)).loc[OOS:]["ret"], 365))
     sims = np.array(sims)
     return {"actual_sharpe": float(actual), "placebo_median": float(np.median(sims)),
-            "p_value": float((sims >= actual).mean()), "n": int(n)}
+            "p_value": finite_randomization_pvalue(actual, sims), "n": int(n)}
 
 
 # ------------------------------------------------------------------ prueba completa

@@ -20,7 +20,7 @@ from .data import load_hourly_panel
 from .portfolio import PortfolioParams, breakout_weights, reversal_weights, simulate_portfolio
 from .research_multi import BITSO_TRADABLE, CANDIDATES, SLEEVES, params_for
 from .research_rt import OOS, REPORTS, SIM_START, hourly_targets, simulate_variant, to_daily
-from .validation import bootstrap_compare
+from .validation import bootstrap_compare, finite_randomization_pvalue
 
 VARIANTS = {
     "C1": {"label": "Reversión: las 3 que más cayeron en 24 h, cada 4 h", "kind": "reversal",
@@ -63,7 +63,7 @@ def placebo(H, W, every, cost, n=PLACEBO_N, seed=5) -> dict:
         sims.append(sharpe(run_variant(H, Ws, every, cost)["ret"], 365))
     sims = np.array(sims)
     return {"actual_sharpe": float(actual), "placebo_median": float(np.median(sims)),
-            "p_value": float((sims >= actual).mean()), "n": int(n)}
+            "p_value": finite_randomization_pvalue(actual, sims), "n": int(n)}
 
 
 def summary(d: pd.DataFrame, cost: float) -> dict:

@@ -17,6 +17,8 @@ concurrency:
   cancel-in-progress: false
 jobs:
   run:
+    # Set TRADING_RUNTIME=gcp BEFORE enabling the GCP worker during cutover.
+    if: ${{ vars.TRADING_RUNTIME != 'gcp' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
