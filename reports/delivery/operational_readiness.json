@@ -1,0 +1,88 @@
+{
+  "status": "passed",
+  "source_sha": "2a406f60e3d208eb4f116e3ccf1a84b6d79c7f17",
+  "python_tests": {
+    "command": ".venv/bin/python -m pytest -q -W ignore",
+    "passed": 323,
+    "elapsed_seconds": 30.23
+  },
+  "infra_validation": {
+    "terraform": "1.10.5",
+    "google_provider": "6.50.0",
+    "fmt_init_validate": "passed",
+    "mock_plans": 4,
+    "bootstrap_variants": 4,
+    "disk_mount_scenarios": 9,
+    "release_contract_scenarios": 36
+  },
+  "preflight": {
+    "cloud_accessed": false,
+    "config_sha256": "bad7256f2e61ab689f0d44b89b6ddfc0b2a0cedd1a927db541cae205f0ff1318",
+    "connection_attempted": false,
+    "connection_requires": [
+      "cuenta y project ID elegidos por Brandon",
+      "billing y créditos vigentes verificados por el operador",
+      "plan Terraform revisado",
+      "SHA/digest probados",
+      "corte del escritor legacy antes de activar"
+    ],
+    "errors": [],
+    "image_verified": false,
+    "operational_config_valid": true,
+    "profile": "operational-paper",
+    "source_sha": "2a406f60e3d208eb4f116e3ccf1a84b6d79c7f17",
+    "status": "local_checks_passed",
+    "tools": {
+      "docker": true,
+      "gcloud": false,
+      "gh": true,
+      "terraform": false
+    },
+    "working_tree_clean": true
+  },
+  "portable_backup": {
+    "status": "passed",
+    "source_sha": "2a406f60e3d208eb4f116e3ccf1a84b6d79c7f17",
+    "source": "isolated operational preview copy; original state untouched",
+    "backup_sha256": "9e8cbe7c00b6ec7b5557ac07feb4d81c5e424367c14e1438f345a723b49209b8",
+    "standalone_journal_mode": "delete",
+    "readonly_download_verify": true,
+    "files_downloaded": 2,
+    "table_counts_equal": {
+      "trades": 17,
+      "equity": 6,
+      "live_equity": 42,
+      "orders": 0
+    },
+    "operational_documents_equal": [
+      "deployment",
+      "legacy_import",
+      "live",
+      "snapshot",
+      "state"
+    ],
+    "restore_worker_enabled": false,
+    "restore_ready": false,
+    "cloud_accessed": false
+  },
+  "panel": {
+    "url": "http://127.0.0.1:8847/",
+    "scope": "read-only isolated preview; worker disabled; no broker live balance",
+    "http": {
+      "/healthz": 200,
+      "/readyz": 503,
+      "/api/status": 200,
+      "/api/comparison": 200
+    },
+    "research_comparison": "not_configured; hidden",
+    "browser_readback": "passed"
+  },
+  "cloud_connected": false,
+  "private_accounts_accessed": false,
+  "real_trading_enabled": false,
+  "pre_documentation_commit_test": {
+    "passed": 323,
+    "elapsed_seconds": 29.64,
+    "code_unchanged_since_release": true
+  }
+}

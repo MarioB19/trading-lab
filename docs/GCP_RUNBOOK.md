@@ -10,14 +10,21 @@ Desde la raíz del repositorio:
 
 ```bash
 bash scripts/gcp/preflight.sh
-python -m pytest -q -W ignore
+.venv/bin/python -m pytest -q -W ignore
 bash scripts/gcp/validate.sh
 docker build --target runtime --platform linux/amd64 --build-arg SOURCE_SHA="$(git rev-parse HEAD)" -t trading-lab:review .
 docker run --rm --network none trading-lab:review python -m lab.runtime --help
 docker run --rm --network none trading-lab:review python -m lab.ops --help
+docker image inspect trading-lab:review | .venv/bin/python scripts/gcp/host/release_contract.py image "$(git rev-parse HEAD)"
+docker run --rm --network none --read-only --cap-drop ALL \
+  --security-opt no-new-privileges --tmpfs /tmp:rw,noexec,nosuid,nodev,size=128m \
+  --mount "type=bind,src=$PWD/scripts/gcp/smoke_runtime.py,dst=/smoke_runtime.py,readonly" \
+  trading-lab:review python /smoke_runtime.py --expected-build-id "$(git rev-parse HEAD)"
 ```
 
 `validate.sh` descarga únicamente plugins Terraform y hace `fmt`, `validate`, planes con proveedor **mock** y comprobaciones locales. No hace `plan` autenticado ni `apply`. Puede recibir `TERRAFORM_BIN=/ruta/terraform`; requiere Terraform >=1.7. El lock de provider se versiona. `.terraform/`, tfstate, tfvars reales y planes están ignorados. Los tests runtime usan directorios temporales; nunca pasar `--data-dir state/` del repositorio.
+
+`preflight.sh --expected-sha FULL_GIT_SHA` verifica árbol limpio, SHA y perfil operativo sin iniciar sesión ni consultar GCP. `--image IMAGE_URI_WITH_DIGEST` inspecciona sólo una imagen ya presente en Docker local; no la descarga. `--require-tools` exige también Docker, Terraform y gcloud. En esta máquina Terraform 1.10.5 se validó desde `/tmp/trading-lab-terraform/terraform` y gcloud no está instalado: preparar esas herramientas desde sus distribuciones oficiales al conectar y repetir el preflight estricto. La revisión local sin esa opción no declara completo el entorno cloud.
 
 Antes de una entrega, el árbol debe estar limpio y el SHA debe representar exactamente código probado. Las imágenes construidas durante desarrollo con cambios sin commit solo son evidencia local, no releases autorizadas. Para GCP construir `linux/amd64`; la imagen base está fijada mediante un manifest multiplataforma.
 
@@ -62,7 +69,7 @@ El workflow prueba y publica la imagen; muestra SHA y URI `@sha256:...`. No desp
 bash scripts/gcp/deploy.sh --execute PROJECT_ID us-central1-a trading-lab IMAGE_URI_WITH_DIGEST FULL_GIT_SHA
 ```
 
-El script remoto rechaza un worker activo o habilitado, verifica la etiqueta SHA y paper en la imagen y deja API iniciada y worker apagado. Para actualizaciones, desactivar primero mediante el paso de mantenimiento. La instalación guarda `previous-release.conf`. El script usa el token temporal de la identidad VM para leer Artifact Registry; no inicia sesión con una persona.
+El script remoto rechaza un worker activo o habilitado, serializa instalaciones y verifica SHA, perfil operativo, arquitectura, UID, comando y configuración paper antes de cambiar el release. Reinicia la API y comprueba digest, identidad y `/healthz`; el worker queda apagado. Para actualizaciones, desactivar primero mediante el paso de mantenimiento. La instalación guarda `previous-release.conf`. El script usa el token temporal de la identidad VM para leer Artifact Registry; no inicia sesión con una persona.
 
 Comprobar bootstrap por IAP: `sudo journalctl -u google-startup-scripts.service`, `sudo systemctl status trading-lab-api`. El script de arranque monta únicamente el disco dedicado, rechaza medios desconocidos no vacíos e instala Docker/Google CLI/Ops Agent desde fuentes oficiales. No expone el dashboard a Internet.
 

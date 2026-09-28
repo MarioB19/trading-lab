@@ -1,0 +1,108 @@
+{
+  "all_blob_digests_verified": true,
+  "archive": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-2a406f60e3d2/trading-lab-linux-amd64.oci.tar",
+  "archive_sha256": "d8db45b7db51ab0bee7ff3b1456cf7f4a4a5925b9d7e76911b033cc3e0476c7c",
+  "archive_size_bytes": 119261696,
+  "builder_shutdown": {
+    "artifacts_preserved": true,
+    "cache_preserved": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/buildkit-state.ext4",
+    "container": "trading-lab-buildkit-y3k2ua9j",
+    "exit_code": 143,
+    "oom_killed": false,
+    "own_loop_detached_verified": true,
+    "status": "exited"
+  },
+  "context": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-2a406f60e3d2/context",
+  "context_file_count": 42,
+  "context_manifest_sha256": "846b07da8bc90aad6fb46511f1b5fd08fd6cbf1a6c8b740022687b202386548a",
+  "context_unchanged_after_build": true,
+  "deployed": false,
+  "docker_shared_cleanup": false,
+  "evidence": {
+    "build-metadata.json": {
+      "path": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-2a406f60e3d2/build-metadata.json",
+      "sha256": "12d1b42da39144d87d4d57758801dbb61219fd07bd38cbebe10484d1f91db74a"
+    },
+    "build.log": {
+      "path": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-2a406f60e3d2/build.log",
+      "sha256": "1fddd784783d114ed874a1a93aff45b385097f54715c0894f93a51f8b499ae1b"
+    },
+    "builder-memory-events.txt": {
+      "path": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-2a406f60e3d2/builder-memory-events.txt",
+      "sha256": "43ca38fdaffd08f780ab7bddddea4b0b91bee78f56776bf2e87b013898565358"
+    },
+    "builder-shutdown.json": {
+      "path": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-2a406f60e3d2/builder-shutdown.json",
+      "sha256": "48b75aed39e73d889b5aacf7266c599d335386a99e4dc603db3dea5dfd629c90"
+    },
+    "loop-detached.txt": {
+      "path": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-2a406f60e3d2/loop-detached.txt",
+      "sha256": "6dcbffacc56c35b0a85908fde5139e1057e86c8f6e94d956245c10bbdec1b9af"
+    },
+    "oci-verification.json": {
+      "path": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-2a406f60e3d2/oci-verification.json",
+      "sha256": "a13831725c227acff99fb1b06b50c18f92f216686728950c8a07070ce0a858ef"
+    },
+    "smoke-source-manifest.json": {
+      "path": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-2a406f60e3d2/smoke-source-manifest.json",
+      "sha256": "df28eca7f78e99955970d88e243e0b3c0014b5a3d2bde33fe804c49e165635c6"
+    },
+    "smoke.log": {
+      "path": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-2a406f60e3d2/smoke.log",
+      "sha256": "d2a5c4b519534ddca14b9d71cc4f31863b7cfade7fe7781bea8a296928712d87"
+    },
+    "source-manifest.json": {
+      "path": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-2a406f60e3d2/source-manifest.json",
+      "sha256": "846b07da8bc90aad6fb46511f1b5fd08fd6cbf1a6c8b740022687b202386548a"
+    },
+    "verify_oci.py": {
+      "path": "/Volumes/KINGSTON/trading-lab-build-y3k2ua9j/artifacts/release-2a406f60e3d2/verify_oci.py",
+      "sha256": "16e29e152ac37906a2625b31b6e5fcaa16f9aaf447fb7d3dec37767b11844ca2"
+    }
+  },
+  "gcp_connected": false,
+  "image": {
+    "architecture": "amd64",
+    "config_digest": "sha256:41b1a4626c5de75cc8f4d05e516269d35bd93b244b17c90f8d149e217a1a1c32",
+    "layer_count": 11,
+    "manifest_digest": "sha256:462fb25fae7f749d99b6f4b867daa33c9e367842988337fea98050cb31644c3c",
+    "os": "linux",
+    "profile": "operational-paper",
+    "source_sha": "2a406f60e3d208eb4f116e3ccf1a84b6d79c7f17",
+    "user": "10001:10001"
+  },
+  "profile": "operational-paper",
+  "published": false,
+  "runtime_smoke": {
+    "build_id": "2a406f60e3d208eb4f116e3ccf1a84b6d79c7f17",
+    "checks": [
+      "paper_config",
+      "runtime_imports",
+      "no_operational_data_in_image",
+      "empty_api_health_ready",
+      "read_only_panel",
+      "legacy_import",
+      "sqlite_integrity",
+      "backup_checksum",
+      "downloaded_backup_readonly",
+      "restore_disabled",
+      "research_excluded"
+    ],
+    "config_sha256": "bad7256f2e61ab689f0d44b89b6ddfc0b2a0cedd1a927db541cae205f0ff1318",
+    "external_effects": false,
+    "machine": "x86_64",
+    "peak_rss_kib": 115448,
+    "peak_rss_mib": 112.7421875,
+    "status": "passed",
+    "synthetic_only": true,
+    "uid": 10001
+  },
+  "smoke_execution": "Linux AMD64 BuildKit RUN with network=none from cached runtime stage; validation + synthetic smoke only, test layers not exported in release OCI",
+  "smoke_timing_note": "28.0s includes container setup, release-contract imports and smoke; this is not a latency benchmark or measured production capacity.",
+  "smoke_validation_step_seconds": 28.0,
+  "source_sha": "2a406f60e3d208eb4f116e3ccf1a84b6d79c7f17",
+  "status": "passed",
+  "verified_at_utc": "2026-09-28T04:19:54.024211+00:00",
+  "verified_blob_count": 13,
+  "worker_activated": false
+}
