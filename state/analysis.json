@@ -1,27 +1,28 @@
 {
  "summary": {
-  "n_trades": 17,
+  "n_trades": 19,
   "n_buys": 14,
-  "n_sells": 3,
+  "n_sells": 5,
   "fees": 1.6684,
-  "closed_lots": 3,
+  "closed_lots": 5,
   "wins": 0,
-  "losses": 3,
+  "losses": 5,
   "win_rate": 0.0,
-  "realized_pnl": -2.08,
+  "realized_pnl": -2.66,
   "avg_win": null,
-  "avg_loss": -0.69,
+  "avg_loss": -0.53,
   "profit_factor": 0.0,
   "open_positions": 7,
-  "open_winning": 5,
-  "open_losing": 2,
-  "unrealized_pnl": 11.94,
-  "total_pnl": 9.86,
-  "avg_cost_bps": 39.1,
+  "open_winning": 3,
+  "open_losing": 4,
+  "unrealized_pnl": 7.83,
+  "total_pnl": 5.17,
+  "avg_cost_bps": 27.4,
   "cost_bps_by_sleeve": {
-   "crypto": 39.1
+   "crypto": 39.1,
+   "stocks": 5.0
   },
-  "n_cost_measured": 8,
+  "n_cost_measured": 10,
   "by_sleeve": {
    "crypto": {
     "closed_lots": 3,
@@ -30,10 +31,10 @@
     "unrealized_pnl": 9.05
    },
    "stocks": {
-    "closed_lots": 0,
+    "closed_lots": 2,
     "wins": 0,
-    "realized_pnl": 0.0,
-    "unrealized_pnl": 2.89
+    "realized_pnl": -0.58,
+    "unrealized_pnl": -1.22
    }
   }
  },
@@ -85,23 +86,23 @@
   {
    "sleeve": "stocks",
    "asset": "IEF",
-   "qty": 3.12186411,
-   "cost": 280.13999826564117,
-   "price": 90.0,
-   "value": 280.9677699,
-   "pnl": 0.8277716343588395,
-   "ret": 0.002954849858940456,
+   "qty": 2.22628043,
+   "cost": 199.77493376514423,
+   "price": 89.529999,
+   "value": 199.3188846716196,
+   "pnl": -0.4560490935246264,
+   "ret": -0.0022828143898211417,
    "since": "2026-09-24"
   },
   {
    "sleeve": "stocks",
    "asset": "SPY",
-   "qty": 0.54426702,
-   "cost": 417.7595439799327,
-   "price": 771.35,
-   "value": 419.82036587700003,
-   "pnl": 2.060821897067342,
-   "ret": 0.004933033671557174,
+   "qty": 0.39050996000000004,
+   "cost": 299.74122409478673,
+   "price": 765.609985,
+   "value": 298.97832461795065,
+   "pnl": -0.7628994768360826,
+   "ret": -0.002545193705470572,
    "since": "2026-09-24"
   },
   {
@@ -149,10 +150,32 @@
    "sell_price": 2675.2,
    "pnl": -0.8381129040000133,
    "ret": -0.012776406063547685
+  },
+  {
+   "sleeve": "stocks",
+   "asset": "SPY",
+   "qty": 0.15375706,
+   "opened": "2026-09-24",
+   "closed": "2026-09-28",
+   "buy_price": 767.563583,
+   "sell_price": 765.22718,
+   "pnl": -0.35923845625518425,
+   "ret": -0.003043921118389026
+  },
+  {
+   "sleeve": "stocks",
+   "asset": "IEF",
+   "qty": 0.89558368,
+   "opened": "2026-09-24",
+   "closed": "2026-09-28",
+   "buy_price": 89.734847,
+   "sell_price": 89.485234,
+   "pnl": -0.22354932911582637,
+   "ret": -0.0027816729881980917
   }
  ],
  "prices_as_of": {
   "crypto": "2026-09-27",
-  "stocks": "2026-09-25"
+  "stocks": "2026-09-28"
  }
 }

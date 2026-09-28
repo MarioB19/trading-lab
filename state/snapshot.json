@@ -222,13 +222,14 @@
    "strategy": "passive",
    "broker": "simulado",
    "mode": "paper",
-   "candle": "2026-09-25",
-   "equity": 702.89,
-   "cash": 2.1,
-   "capital": 700,
-   "exposure": 0.997,
-   "peak": 702.89,
-   "drawdown": 0.0,
+   "compound": true,
+   "candle": "2026-09-28",
+   "equity": 498.2,
+   "cash": -0.1,
+   "capital": 500,
+   "exposure": 1.0002,
+   "peak": 501.57,
+   "drawdown": -0.0067,
    "brake": 1.0,
    "kill_switch": false,
    "kill_drawdown": 0.25,
@@ -237,153 +238,153 @@
     {
      "asset": "SPY",
      "target": 0.6,
-     "price": 771.35,
-     "weight": 0.597279,
-     "qty": 0.544267
+     "price": 765.609985,
+     "weight": 0.600119,
+     "qty": 0.39051
     },
     {
      "asset": "IEF",
      "target": 0.4,
-     "price": 90.0,
-     "weight": 0.399733,
-     "qty": 3.121864
+     "price": 89.529999,
+     "weight": 0.400079,
+     "qty": 2.22628
     },
     {
      "asset": "QQQ",
      "target": 0.0,
-     "price": 744.5,
+     "price": 736.530029,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "IWM",
      "target": 0.0,
-     "price": 281.97,
+     "price": 280.019989,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "EFA",
      "target": 0.0,
-     "price": 105.56,
+     "price": 105.040001,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "EEM",
      "target": 0.0,
-     "price": 67.98,
+     "price": 67.199997,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "EWW",
      "target": 0.0,
-     "price": 73.34,
+     "price": 72.370003,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "TLT",
      "target": 0.0,
-     "price": 79.32,
+     "price": 78.620003,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "GLD",
      "target": 0.0,
-     "price": 393.41,
+     "price": 377.910004,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "DBC",
      "target": 0.0,
-     "price": 32.62,
+     "price": 32.490002,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "VNQ",
      "target": 0.0,
-     "price": 90.99,
+     "price": 90.589996,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "XLK",
      "target": 0.0,
-     "price": 196.27,
+     "price": 194.529999,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "XLF",
      "target": 0.0,
-     "price": 54.84,
+     "price": 54.189999,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "XLE",
      "target": 0.0,
-     "price": 62.04,
+     "price": 62.099998,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "XLV",
      "target": 0.0,
-     "price": 170.7,
+     "price": 171.259995,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "XLI",
      "target": 0.0,
-     "price": 170.43,
+     "price": 168.779999,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "XLP",
      "target": 0.0,
-     "price": 82.06,
+     "price": 82.279999,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "XLU",
      "target": 0.0,
-     "price": 39.51,
+     "price": 39.25,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "XLY",
      "target": 0.0,
-     "price": 110.56,
+     "price": 109.0,
      "weight": 0.0,
      "qty": 0.0
     },
     {
      "asset": "XLB",
      "target": 0.0,
-     "price": 49.8,
+     "price": 49.470001,
      "weight": 0.0,
      "qty": 0.0
     }
    ],
    "notes": [
     "Alpaca paper no disponible (faltan ALPACA_KEY_ID / ALPACA_SECRET_KEY); uso el simulado interno",
-    "esta vela ya se oper\u00f3"
+    "retiro de $200.00: el bloque ahora tiene $498.30 y vende para cubrirlo"
    ],
-   "status": "skip",
-   "last_run_utc": "2026-09-26 01:54"
+   "status": "ok",
+   "last_run_utc": "2026-09-28 21:52"
   }
  },
- "generated_utc": "2026-09-28 00:35",
+ "generated_utc": "2026-09-28 21:52",
  "mode": "paper",
  "research": {
   "generated": "2026-09-27 21:35 UTC",
@@ -517,28 +518,29 @@
   }
  },
  "analysis": {
-  "n_trades": 17,
+  "n_trades": 19,
   "n_buys": 14,
-  "n_sells": 3,
+  "n_sells": 5,
   "fees": 1.6684,
-  "closed_lots": 3,
+  "closed_lots": 5,
   "wins": 0,
-  "losses": 3,
+  "losses": 5,
   "win_rate": 0.0,
-  "realized_pnl": -2.08,
+  "realized_pnl": -2.66,
   "avg_win": null,
-  "avg_loss": -0.69,
+  "avg_loss": -0.53,
   "profit_factor": 0.0,
   "open_positions": 7,
-  "open_winning": 5,
-  "open_losing": 2,
-  "unrealized_pnl": 11.94,
-  "total_pnl": 9.86,
-  "avg_cost_bps": 39.1,
+  "open_winning": 3,
+  "open_losing": 4,
+  "unrealized_pnl": 7.83,
+  "total_pnl": 5.17,
+  "avg_cost_bps": 27.4,
   "cost_bps_by_sleeve": {
-   "crypto": 39.1
+   "crypto": 39.1,
+   "stocks": 5.0
   },
-  "n_cost_measured": 8,
+  "n_cost_measured": 10,
   "by_sleeve": {
    "crypto": {
     "closed_lots": 3,
@@ -547,18 +549,18 @@
     "unrealized_pnl": 9.05
    },
    "stocks": {
-    "closed_lots": 0,
+    "closed_lots": 2,
     "wins": 0,
-    "realized_pnl": 0.0,
-    "unrealized_pnl": 2.89
+    "realized_pnl": -0.58,
+    "unrealized_pnl": -1.22
    }
   }
  },
  "fx": {
-  "rate": 17.7395,
-  "bid": 17.739,
-  "ask": 17.74,
+  "rate": 17.9915,
+  "bid": 17.991,
+  "ask": 17.992,
   "source": "Bitso USD/MXN",
-  "time_utc": "2026-09-28 00:35"
+  "time_utc": "2026-09-28 21:52"
  }
 }
