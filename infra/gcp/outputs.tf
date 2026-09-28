@@ -1,7 +1,7 @@
 output "instance_name" { value = google_compute_instance.bot.name }
 output "zone" { value = var.zone }
 output "backup_bucket" { value = google_storage_bucket.backups.name }
-output "experimental_storage_path" { value = "/var/lib/trading-experiments" }
+output "experimental_storage_path" { value = var.enable_experimental_storage ? "/var/lib/trading-experiments" : null }
 output "image_repository" { value = "${var.region}-docker.pkg.dev/${var.project_id}/${var.name}" }
 output "outbound_ip" { value = google_compute_address.egress.address }
 output "iap_dashboard_command" {

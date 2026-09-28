@@ -48,12 +48,14 @@ mount_data_disk() {
   chmod 0750 "$target"
 }
 mount_data_disk /dev/disk/by-id/google-trading-state /var/lib/trading-lab
+%{ if experimental_storage ~}
 mount_data_disk /dev/disk/by-id/google-trading-experiments /var/lib/trading-experiments
 # Storage only: experimental scripts/timers/activation markers are NOT installed.
 for directory in /var/lib/trading-experiments/aggressive-v2 /var/lib/trading-experiments/backups; do
   [ ! -L "$directory" ] || { echo 'Refusing symlink experiment directory' >&2; exit 1; }
   install -d -o 10001 -g 10001 -m 0700 "$directory"
 done
+%{ endif ~}
 cat >/etc/trading-lab/settings.conf <<'SETTINGS'
 PROJECT_ID='${project_id}'
 REGISTRY_HOST='${region}-docker.pkg.dev'

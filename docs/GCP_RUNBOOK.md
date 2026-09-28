@@ -2,6 +2,8 @@
 
 Esta guía deja una secuencia ejecutable para la conexión posterior de `brandonmuro.work@gmail.com`. El trabajo local no autentica esa cuenta, no crea infraestructura, no sube imágenes y no modifica secrets ni dinero real. `mode` permanece como está: paper. Los pasos cloud requieren la conexión y revisión explícitas del operador.
 
+Empezar por la [lista única de conexión](CONNECT_CHECKLIST.md). La candidata agresiva está archivada y no forma parte de este despliegue. El [expediente vigente](CONNECTION_READINESS.md) identifica el código y la imagen que se deben instalar.
+
 ## 1. Validación local, sin cuenta
 
 Desde la raíz del repositorio:
@@ -10,7 +12,7 @@ Desde la raíz del repositorio:
 bash scripts/gcp/preflight.sh
 python -m pytest -q -W ignore
 bash scripts/gcp/validate.sh
-docker build --platform linux/amd64 --build-arg SOURCE_SHA="$(git rev-parse HEAD)" -t trading-lab:review .
+docker build --target runtime --platform linux/amd64 --build-arg SOURCE_SHA="$(git rev-parse HEAD)" -t trading-lab:review .
 docker run --rm --network none trading-lab:review python -m lab.runtime --help
 docker run --rm --network none trading-lab:review python -m lab.ops --help
 ```
@@ -19,42 +21,17 @@ docker run --rm --network none trading-lab:review python -m lab.ops --help
 
 Antes de una entrega, el árbol debe estar limpio y el SHA debe representar exactamente código probado. Las imágenes construidas durante desarrollo con cambios sin commit solo son evidencia local, no releases autorizadas. Para GCP construir `linux/amd64`; la imagen base está fijada mediante un manifest multiplataforma.
 
-Validación final de esta preparación: **317 pruebas**, Terraform `validate`, tres planes mock, sintaxis shell y ambos caminos del bootstrap. La imagen OCI `linux/amd64` del commit `f6c19fdcac943978011b3e096280beb7d0528884` pasó el smoke sintético sin red: UID 10001, configuración paper, panel/API, importación, integridad SQLite, checksum de backup, restauración desactivada y aceptación/rechazo de la atestación válida/alterada. Digest: `sha256:97c202f9cdfee3b9183a81f6675f769aac79e42d78a654844a38543ae910de33`; archivo y logs en [DELIVERY_ACCEPTANCE.md](DELIVERY_ACCEPTANCE.md). El error local `ENOSPC` se resolvió usando BuildKit con un disco ext4 propio en almacenamiento externo; no se reinició ni limpió el Docker compartido. La verificación final sustituye el build preliminar `84aa5a3`, que se conserva como antecedente. No demuestra despliegue ni operación en GCP.
+El target habitual es `runtime`, perfil OCI `operational-paper`: sólo aplicación, configuración operativa y panel; no incluye informes ni planes experimentales. El target separado `research` se conserva para auditoría y no se acepta en el instalador operativo. El workflow de publicación ya no pide el preregistro de la candidata rechazada.
 
-### Prueba portátil del preregistro experimental
-
-La imagen puede incluir `aggressive-v2` sin `.git` y sin dependencias de investigación. Para ejecutar su comparación necesita además una attestation generada desde el checkout final limpio: demuestra que el preregistro es ancestro del código y fija los hashes del código, configuración y plan. No autoriza dinero real ni sustituye los gates de investigación o las cuatro semanas forward.
-
-Generar la prueba fuera del repositorio antes de construir. Para el experimento v2, el commit del preregistro es `1fe6c8c586b6a9899190b4f987807daf9134846c`:
-
-```bash
-RELEASE_DIR="$(mktemp -d)"
-SOURCE_SHA="$(git rev-parse HEAD)"
-python -m lab.research_attestation generate \
-  --plan configs/experiments/aggressive_v2.yaml \
-  --preregistration-commit 1fe6c8c586b6a9899190b4f987807daf9134846c \
-  --output "$RELEASE_DIR/aggressive-v2.json"
-mkdir "$RELEASE_DIR/context"
-git archive "$SOURCE_SHA" Dockerfile .dockerignore requirements-runtime.txt src config.yaml configs/experiments reports dashboard | tar -x -C "$RELEASE_DIR/context"
-mkdir -p "$RELEASE_DIR/context/reports/attestations"
-cp "$RELEASE_DIR/aggressive-v2.json" "$RELEASE_DIR/context/reports/attestations/aggressive-v2.json"
-docker build --platform linux/amd64 --build-arg SOURCE_SHA="$SOURCE_SHA" \
-  --build-arg REQUIRE_RESEARCH_ATTESTATION=true \
-  -t trading-lab:review "$RELEASE_DIR/context"
-docker run --rm --network none --read-only trading-lab:review \
-  python -m lab.research_attestation verify \
-  --plan /app/configs/experiments/aggressive_v2.yaml \
-  --preregistration-commit 1fe6c8c586b6a9899190b4f987807daf9134846c \
-  --attestation /app/reports/attestations/aggressive-v2.json
-```
-
-`.dockerignore` excluye estado operativo, secretos e históricos experimentales del envío al builder. Registrar el digest de la imagen junto con SHA, attestation y resultado de smoke fuera de la imagen. La prueba pertenece a ese SHA exacto; regenerarla tras cualquier cambio de código. El workflow manual de entrega genera la misma prueba antes de construir. Terraform prepara un disco experimental separado de 10 GiB en `/var/lib/trading-experiments`, con `aggressive-v2/` y `backups/` propiedad de UID/GID 10001, modo 0700 y sin credenciales. El bootstrap rechaza medios no reconocidos, montajes con otro UUID y directorios que ocultarían datos. Comprobar `findmnt /var/lib/trading-experiments` antes de seguir [PAPER_OPERATIONS.md](PAPER_OPERATIONS.md). Ningún servicio, timer ni marca de activación experimental se instala automáticamente. Los backups experimentales locales requieren además una copia fuera de ese disco para tolerar su pérdida.
+La evidencia anterior f6 se conserva en [DELIVERY_ACCEPTANCE.md](DELIVERY_ACCEPTANCE.md). No usar esa imagen histórica para sustituir automáticamente la entrega vigente. Cada release registra SHA probado, digest, pruebas de arranque y respaldo/restauración en [CONNECTION_READINESS.md](CONNECTION_READINESS.md). Los cambios documentales posteriores no obligan a reemplazar un ejecutable ya fijado.
 
 ## 2. Conexión posterior y presupuesto
 
 El operador conecta la cuenta prevista y proporciona proyecto existente, billing account y canales Monitoring. No crear un proyecto o cambiar cuenta activa por inferencia. Verificar **Billing → Credits**: saldo disponible, fecha final y servicios cubiertos; el coste de lista sigue existiendo tras acabar los créditos.
 
-La propuesta usa e2-medium, boot 10 GiB, estado 30 GiB, disco experimental separado de 10 GiB, IPv4 estática y backups GCS: base aproximada **32.51 USD/mes**, objetivo **35–45 USD** con consumo moderado. Son precios us-central1, 730 h/mes, antes de impuestos/FX/créditos; detalles en [GCP_ARCHITECTURE.md](GCP_ARCHITECTURE.md). Evitar Cloud SQL, NAT gateway y balanceador en esta fase. Investigar en un entorno separado para no consumir RAM del worker.
+La propuesta usa e2-medium, boot 10 GiB, estado 30 GiB, IPv4 estática y backups GCS: base aproximada **32.11 USD/mes**, objetivo **35–45 USD** con consumo moderado. Son precios us-central1, 730 h/mes, antes de impuestos/FX/créditos; detalles en [GCP_ARCHITECTURE.md](GCP_ARCHITECTURE.md). Evitar Cloud SQL, NAT gateway y balanceador en esta fase. Investigar en un entorno separado para no consumir RAM del worker.
+
+El disco experimental opcional (`enable_experimental_storage=false`) queda fuera de la primera instalación. No instalar ni activar los timers de la candidata rechazada. Si un proyecto anterior ya tiene ese disco, revisar el plan y conservar sus datos; no desactivar protecciones para destruirlo.
 
 La configuración Terraform **no inicia sesión**. Cuando el operador haya conectado sus credenciales para Terraform y gcloud por su flujo habitual, preparar `infra/gcp/terraform.tfvars` a partir del ejemplo. Verificar moneda de billing si se habilita el presupuesto USD. Los budgets definidos son alertas al 50/80/100% de 60 USD, calculadas antes de créditos; no un freno automático.
 
@@ -75,7 +52,7 @@ Conservar y respaldar el tfstate como información sensible. Para trabajo desde 
 
 ## 3. Publicar e instalar imagen
 
-Para continuar el paper iniciado en esta entrega, conservar **el release `f6c19fdcac943978011b3e096280beb7d0528884` y su misma atestación**. El OCI local, digest y evidencia están en [DELIVERY_ACCEPTANCE.md](DELIVERY_ACCEPTANCE.md). Los commits posteriores de documentación no reemplazan ese ejecutable. Publicar el OCI conservado por el procedimiento de registro revisado al conectar la cuenta y verificar el digest leído de Artifact Registry; una exportación local todavía no es una imagen publicada. No despachar CI sobre un HEAD posterior ni regenerar otra atestación esperando que la base existente acepte una identidad distinta. Si se requiere reconstruir, usar el contexto congelado y prueba original, verificar de nuevo y registrar el nuevo digest antes de instalar.
+Publicar e instalar exclusivamente el SHA y digest `operational-paper` del expediente vigente. El OCI local no equivale a publicación: tras subirlo, verificar el digest leído desde Artifact Registry. No mezclar imagen, configuración o estado de versiones distintas ni instalar la imagen experimental histórica f6. Si se reconstruye, repetir las pruebas y registrar el nuevo digest antes de instalar.
 
 La ruta opcional CI usa `.github/workflows/gcp-image.yml`: solo dispatch manual en `main`, variable `GCP_DELIVERY_ENABLED=true` y environment `gcp-delivery`. Configurar protección/reviewers de ese environment y WIF mediante IDs numéricos verificados de owner/repo. Terraform genera provider y cuenta de entrega. Las variables no secretas son `GCP_PROJECT_ID`, `GCP_REGION`, `GCP_WIF_PROVIDER`, `GCP_DELIVERY_SERVICE_ACCOUNT`. No introducir llaves JSON permanentes.
 

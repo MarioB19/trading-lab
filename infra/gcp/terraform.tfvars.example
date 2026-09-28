@@ -3,6 +3,9 @@ project_id = "REPLACE-project-id"
 region     = "us-central1"
 zone       = "us-central1-a"
 machine_type = "e2-medium"
+# El piloto base no incluye investigación ni disco experimental.
+# Mantener true si un disco experimental ya está gestionado: su eliminación está protegida.
+enable_experimental_storage = false
 operator_email = "brandonmuro.work@gmail.com"
 # Primera fase crea infraestructura con runtime desactivado.
 image_uri = ""

@@ -1,7 +1,7 @@
 locals {
   services = toset(concat(["compute.googleapis.com", "artifactregistry.googleapis.com", "storage.googleapis.com", "logging.googleapis.com", "monitoring.googleapis.com", "iap.googleapis.com", "iam.googleapis.com", "iamcredentials.googleapis.com", "sts.googleapis.com", "secretmanager.googleapis.com"], var.enable_budget ? ["billingbudgets.googleapis.com"] : []))
   host_files = merge(
-    { for name in ["run-container.sh", "backup.sh", "healthcheck.sh", "install-release.sh"] :
+    { for name in ["run-container.sh", "backup.sh", "healthcheck.sh", "install-release.sh", "verify-release.sh", "release_contract.py"] :
       "/usr/local/lib/trading-lab/${name}" => { content = file("${path.module}/../../scripts/gcp/host/${name}"), mode = "0755" }
     },
     { for name in ["trading-lab-worker.service", "trading-lab-api.service", "trading-lab-backup.service", "trading-lab-backup.timer", "trading-lab-health.service", "trading-lab-health.timer"] :
@@ -101,12 +101,17 @@ resource "google_compute_disk" "state" {
   depends_on = [google_project_service.required]
 }
 resource "google_compute_disk" "experiments" {
-  name = "${var.name}-experiments"
-  type = "pd-standard"
-  zone = var.zone
-  size = 10
+  count = var.enable_experimental_storage ? 1 : 0
+  name  = "${var.name}-experiments"
+  type  = "pd-standard"
+  zone  = var.zone
+  size  = 10
   lifecycle { prevent_destroy = true }
   depends_on = [google_project_service.required]
+}
+moved {
+  from = google_compute_disk.experiments
+  to   = google_compute_disk.experiments[0]
 }
 resource "google_compute_instance" "bot" {
   name                      = var.name
@@ -126,9 +131,12 @@ resource "google_compute_instance" "bot" {
     source      = google_compute_disk.state.id
     device_name = "trading-state"
   }
-  attached_disk {
-    source      = google_compute_disk.experiments.id
-    device_name = "trading-experiments"
+  dynamic "attached_disk" {
+    for_each = google_compute_disk.experiments
+    content {
+      source      = attached_disk.value.id
+      device_name = "trading-experiments"
+    }
   }
   network_interface {
     subnetwork = google_compute_subnetwork.bot.id
@@ -143,13 +151,14 @@ resource "google_compute_instance" "bot" {
     block-project-ssh-keys   = "TRUE"
     disable-legacy-endpoints = "TRUE"
     startup-script = templatefile("${path.module}/templates/startup.sh.tftpl", {
-      files          = local.host_files
-      project_id     = var.project_id
-      region         = var.region
-      bucket         = google_storage_bucket.backups.name
-      image_uri      = var.image_uri
-      source_sha     = var.source_sha
-      paper_refs_b64 = base64encode(jsonencode(var.paper_secret_versions))
+      files                = local.host_files
+      project_id           = var.project_id
+      region               = var.region
+      bucket               = google_storage_bucket.backups.name
+      image_uri            = var.image_uri
+      source_sha           = var.source_sha
+      paper_refs_b64       = base64encode(jsonencode(var.paper_secret_versions))
+      experimental_storage = var.enable_experimental_storage
     })
   }
   shielded_instance_config {

@@ -72,12 +72,16 @@ async function fetchJson(path) {
 }
 
 async function comparison() {
+  const section = el("comparison-section");
   const target = el("comparison");
   target.replaceChildren();
   el("comparison-checks").textContent = "";
   el("comparison-paper").textContent = "";
   try {
     const data = await fetchJson("/api/comparison");
+    const configured = [data.research, data.paper].some(value => value?.status && value.status !== "not_configured");
+    section.hidden = !configured;
+    if (!configured) return;
     const report = data.research?.report;
     el("comparison-status").textContent = report
       ? "Histórico del 1 ene 2021 al 26 sep 2026. Inicio: US$500 en cripto por cartera. Cifras después de costos; no garantizan ganancias futuras."
@@ -101,17 +105,15 @@ async function comparison() {
         walk_forward: "ventanas anuales", bootstrap: "remuestreo", placebo: "placebo", cost_stress: "costos mayores"};
       const failed = Object.entries(report.checks).filter(([, passed]) => !passed).map(([name]) => labels[name] || name);
       el("comparison-checks").textContent = failed.length
-        ? `La candidata no supera todos los criterios. Fallan: ${failed.join(", ")}. No se promueve.`
+        ? `Candidata rechazada y retirada de operación. Fallan: ${failed.join(", ")}. Se conserva como evidencia histórica.`
         : "Supera los criterios retrospectivos registrados. Aún requiere validación prospectiva y revisión humana.";
     }
     const paper = data.paper;
     el("comparison-paper").textContent = paper?.observed_days != null
-      ? `Seguimiento simulado: ${paper.observed_days} días observados de 28; ${paper.elapsed_days} días transcurridos. Último ciclo: ${date(paper.health?.last_success || paper.generated_at)}. Estado: ${paper.status}. Dinero real desactivado.`
-      : "Seguimiento simulado futuro: todavía sin observaciones disponibles en este panel.";
-    if (paper?.generated_at && Date.now() - Date.parse(paper.generated_at) > 36 * 3600 * 1000) {
-      el("comparison-paper").append(text("strong", " Sin observación reciente; revisa el ejecutor."));
-    }
+      ? `Ensayo archivado: ${paper.observed_days} ${paper.observed_days === 1 ? "observación conservada" : "observaciones conservadas"}. Último ciclo: ${date(paper.health?.last_success || paper.generated_at)}. No se programa su continuación.`
+      : "La investigación queda fuera de la operación diaria.";
   } catch (_) {
+    section.hidden = false;
     el("comparison-status").textContent = "No se pudo verificar la comparación. Revisa los archivos y el servicio; no hay resultados confirmados disponibles.";
   }
 }

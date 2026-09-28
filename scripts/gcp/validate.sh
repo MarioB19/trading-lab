@@ -3,10 +3,13 @@
 set -euo pipefail
 root=$(cd "$(dirname "$0")/../.." && pwd)
 terraform_bin=${TERRAFORM_BIN:-terraform}
+python_bin=${PYTHON_BIN:-"$root/.venv/bin/python"}
+[[ -x "$python_bin" ]] || python_bin=python3
 for script in "$root"/scripts/gcp/*.sh "$root"/scripts/gcp/host/*.sh; do bash -n "$script"; done
 "$terraform_bin" -chdir="$root/infra/gcp" fmt -check -recursive
 "$terraform_bin" -chdir="$root/infra/gcp" init -backend=false -input=false
 "$terraform_bin" -chdir="$root/infra/gcp" validate
 "$terraform_bin" -chdir="$root/infra/gcp" test -no-color
-python3 "$root/scripts/gcp/check_invariants.py"
-python3 "$root/scripts/gcp/check_mount.py"
+"$python_bin" "$root/scripts/gcp/check_invariants.py"
+"$python_bin" "$root/scripts/gcp/check_mount.py"
+"$python_bin" "$root/scripts/gcp/check_release.py"

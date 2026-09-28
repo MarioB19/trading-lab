@@ -1,4 +1,7 @@
-# Entrega funcional: comparación, simulación y conexión de cuentas
+# Entrega anterior: comparación y ensayo simulado
+
+> **Archivo de evidencia.** Después de esta entrega, Brandon pidió conservar sólo lo que funciona. La candidata fue retirada; los comandos de continuación de este expediente no son el procedimiento vigente. La imagen f6, su observación y sus respaldos se conservan intactos. Para conectar usar [CONNECT_CHECKLIST.md](CONNECT_CHECKLIST.md) y la versión operativa de [CONNECTION_READINESS.md](CONNECTION_READINESS.md).
+
 
 Fecha de apertura: 2026-09-28 UTC / 2026-09-27 CDMX. Solicitud: cerrar la primera comparación correctamente, entregar el sistema funcional y documentar cómo conectar la cuenta/portafolio real. La cuenta GCP prevista es `brandonmuro.work@gmail.com`, con presupuesto de US$60 mensuales. La conexión GCP y la activación de dinero real se distinguen de la entrega local.
 

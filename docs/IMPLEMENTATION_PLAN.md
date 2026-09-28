@@ -3,6 +3,8 @@
 Responsable: Brandon. Cuenta que se usará **cuando se autorice conectar**: `brandonmuro.work@gmail.com`.
 Presupuesto máximo indicado: **60 USD/mes**. Estrategia y dinero: **paper exclusivamente**.
 
+La ruta vigente se resume en [CONNECT_CHECKLIST.md](CONNECT_CHECKLIST.md), con evidencia en [CONNECTION_READINESS.md](CONNECTION_READINESS.md). La candidata agresiva está retirada; su continuación no es un requisito de conexión.
+
 ## Qué se prepara ahora
 
 GitHub conserva código y validación; Artifact Registry guarda imágenes y GCP hospeda un ejecutor, el estado transaccional, el panel privado y los respaldos. La infraestructura se describe en Terraform; no se crean recursos ni se autentica la cuenta durante la preparación.
@@ -56,6 +58,6 @@ Se mantiene la estrategia activa. La primera investigación debe replicar univer
 
 ## Resultado local y evidencia actual
 
-La preparación GCP y los ensayos posteriores quedaron guardados en commits locales. La comparación agresiva v2 está completa y rechaza la candidata en sus siete criterios; se conserva la estrategia activa. Código histórico `0541232`; código ejecutable final `f6c19fdcac943978011b3e096280beb7d0528884`, con **317 pruebas** aprobadas. El replay conserva diferencia máxima **0.458%**. Primer ciclo paper público, reintento sin duplicados, respaldo/restauración y lectura del panel verificados; evidencia en [DELIVERY_ACCEPTANCE.md](DELIVERY_ACCEPTANCE.md).
+La preparación GCP y los ensayos posteriores quedaron guardados en commits locales. La comparación agresiva v2 está completa y rechaza la candidata en sus siete criterios; se conserva la estrategia activa. Código histórico `0541232`; el checkpoint anterior `f6c19fdcac943978011b3e096280beb7d0528884`, con **317 pruebas** aprobadas. El replay conserva diferencia máxima **0.458%**. Primer ciclo paper público, reintento sin duplicados, respaldo/restauración y lectura del panel verificados; evidencia en [DELIVERY_ACCEPTANCE.md](DELIVERY_ACCEPTANCE.md).
 
-La imagen Linux AMD64 final quedó construida y pasó el smoke offline, incluida la atestación del preregistro, API, backup y restore. Se usó almacenamiento aislado, sin borrar el Docker compartido. Digest y artefactos están en el expediente de entrega. No se ha autenticado ni desplegado GCP, ni conectado brokers privados. La [guía de cuenta real](REAL_ACCOUNT_RUNBOOK.md) permite preparar una consulta sin órdenes y detalla lo pendiente antes de administrar inversiones.
+La imagen histórica Linux AMD64 f6 quedó construida y pasó el smoke offline, incluida la atestación del preregistro, API, backup y restore. La entrega vigente simplifica el perfil operativo, retira la candidata y endurece conexión/recuperación; su nueva evidencia se registra en `CONNECTION_READINESS.md`. Se usó almacenamiento aislado, sin borrar el Docker compartido. Digest y artefactos están en el expediente de entrega. No se ha autenticado ni desplegado GCP, ni conectado brokers privados. La [guía de cuenta real](REAL_ACCOUNT_RUNBOOK.md) permite preparar una consulta sin órdenes y detalla lo pendiente antes de administrar inversiones.

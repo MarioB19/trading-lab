@@ -1,4 +1,4 @@
-# Cartera experimental agresiva: resultado y operación
+# Cartera experimental agresiva: expediente cerrado
 
 La primera comparación válida está **cerrada; la candidata se rechaza**. Falló los siete criterios preregistrados. En cripto, CAGR neto 17.08% frente a 33.77% del control y caída máxima 45.13% frente a 39.48%. Son resultados retrospectivos modelados, no ganancias reales ni pronósticos. [Informe completo](../reports/aggressive_v2_resultado.md), [JSON y trazabilidad](../reports/aggressive_v2_resultado.json).
 
@@ -48,38 +48,22 @@ La corrida `20260928T023514Z-2b88ffec` terminó con 27 artefactos íntegros: fue
 
 No repetir con criterios distintos bajo el mismo ID. Para describir sin datos ni cálculos, añadir `--describe` y omitir el SHA.
 
-## Paper prospectivo separado
+## Ensayo paper conservado
 
 El runner usa cuatro ledgers internos: control/agresiva × cripto/ETF, dentro de una SQLite dedicada. Cada mercado aporta una única captura compartida; una transacción confirma ambas carteras. Sólo SimBroker, datos públicos y dinero ficticio. No carga `.env` ni conecta brokers privados.
 
-En checkout limpio y versión fijada:
+El ensayo funcional quedó limitado a una observación el 28-sep-2026 02:59:25 UTC y 12 fills internos. Reintento sin duplicados y backup/restore verificados en el release histórico `f6c19fd`. No representa cuatro semanas observadas.
 
-```sh
-.venv/bin/python -m lab.paper_comparison --once \
-  --plan configs/experiments/aggressive_v2.yaml \
-  --preregistration-commit 1fe6c8c586b6a9899190b4f987807daf9134846c \
-  --data-dir /ruta/persistente/experimental/aggressive-v2 --fetch
+**Decisión posterior de Brandon: conservar sólo lo que funciona.** Se retira esta candidata de la operación y del despliegue habitual. No se instala su timer ni se continúa la comparación; `scripts/paper/run.sh` termina antes de invocar Docker. El código científico y la imagen histórica siguen conservados para auditoría, no como instrucciones vigentes de ejecución.
 
-.venv/bin/python -m lab.paper_comparison --status \
-  --data-dir /ruta/persistente/experimental/aggressive-v2
-```
+Las bases, capturas, planes, preregistros, hashes y atestación anteriores permanecen intactos. [Consulta y recuperación del archivo](PAPER_OPERATIONS.md). No se borran fallos ni se presentan como resultados que nunca ocurrieron.
 
-Se pueden sustituir `--fetch` por `--crypto-prices /ruta/crypto.csv --stocks-prices /ruta/etf.csv`: fecha ISO en primera columna y precios USD. El programa exige historia suficiente, cierres completos y datos compatibles. No usar `state/`, `data/`, el volumen operativo principal ni carpetas con su base/flag de activación.
-
-La base queda fijada al plan, preregistro y commit de código exactos. Una actualización de código requiere conservar el expediente y decidir una migración explícita o nuevo seguimiento; no se borra el manifiesto para eludir esta comprobación. Reintentar el mismo cierre no duplica operaciones ni cuenta otro día. Datos revisados para una vela ya procesada se rechazan.
-
-La imagen sin Git verifica una atestación generada desde el checkout limpio y vinculada al commit de la imagen: objetos commit/tree, relación con el preregistro y archivos de código/configuración. Usar `--attestation /app/reports/attestations/aggressive-v2.json` además de plan, SHA y directorio. El [runbook GCP](GCP_RUNBOOK.md) documenta generación, empaquetado y comprobación. Un JSON con un hash arbitrario no salta el gate.
-
-## Interpretación del seguimiento
-
-Como la candidata ya fue rechazada, el seguimiento sirve para comprobar el funcionamiento del software y comparar decisiones simuladas. **28 días no anulan los siete fallos ni rescatan automáticamente la estrategia.** No hay promoción automática, botón de trading ni permiso real.
-
-Sólo cuentan observaciones futuras tras el primer ciclo verificado; importar un mes de precios no equivale a un mes observado. Deben transcurrir al menos 28 días completos, con continuidad e incidentes resueltos. Los días omitidos quedan registrados y no se rellenan retrospectivamente. Cuatro semanas prueban operación, no rentabilidad estadística.
+La futura observación de cuatro semanas corresponde al **piloto operativo conservado**, después de conectar y estabilizar su versión. No hay obligación de continuar una estrategia rechazada ni una promoción automática por esperar 28 días.
 
 ## Alcance técnico y conexión posterior
 
 La simulación al cierre no reproduce liquidez, cola, fills parciales o precios exactos del broker. El histórico no modela mínimos/tope por orden ni `max_price_jump`, aunque el runner paper conserva esas restricciones. Las ventanas históricas ya inspeccionadas no son un holdout virgen. No hay reconstrucción completa de listados Bitso ni DSR global.
 
-El panel `lab.service` acepta `--research-dir` para mostrar la corrida verificada y `--comparison-dir` para leer la SQLite experimental; no modifica ninguna. La preparación de cuenta real está en [REAL_ACCOUNT_RUNBOOK.md](REAL_ACCOUNT_RUNBOOK.md), con diagnóstico GET y propiedad externa explícita. La cuenta no se adopta ni opera por conectarla.
+Sólo para consulta histórica explícita, el panel `lab.service` acepta `--research-dir` para mostrar la corrida verificada y `--comparison-dir` para leer la SQLite experimental; no modifica ninguna. La preparación de cuenta real está en [REAL_ACCOUNT_RUNBOOK.md](REAL_ACCOUNT_RUNBOOK.md), con diagnóstico GET y propiedad externa explícita. La cuenta no se adopta ni opera por conectarla.
 
-La evidencia final de pruebas, imagen, primer ciclo y recuperación se registra en [DELIVERY_ACCEPTANCE.md](DELIVERY_ACCEPTANCE.md). Distinguir implementación local, imagen ejecutada, conexión/despliegue GCP, broker externo y semanas observadas. No se ha conectado GCP ni activado dinero real.
+La evidencia de esa entrega anterior se conserva en [DELIVERY_ACCEPTANCE.md](DELIVERY_ACCEPTANCE.md). La preparación operativa vigente se registra en [CONNECTION_READINESS.md](CONNECTION_READINESS.md). Distinguir implementación local, imagen ejecutada, conexión/despliegue GCP, broker externo y semanas observadas. No se ha conectado GCP ni activado dinero real.

@@ -1,4 +1,7 @@
-# Procedencia del paper empaquetado
+# Procedencia del paper histórico empaquetado
+
+> Referencia de investigación archivada. La conexión operativa vigente no necesita esta prueba ni instala la candidata rechazada. La imagen habitual usa el target `runtime`; la etapa explícita `research` queda para auditoría, fuera del workflow de entrega y del instalador operativo.
+
 
 `lab.paper_comparison --plan` admite los planes v1 y v2. Sin `--attestation`
 exige Git limpio y el preregistro aprobado en un commit anterior al código.
@@ -23,9 +26,7 @@ PYTHONDONTWRITEBYTECODE=1 python -m lab.research_attestation generate \
 
 El destino debe ser nuevo y estar fuera del repositorio. Copiarlo al contexto
 congelado como `reports/attestations/aggressive-v2.json`; nunca comprometerlo en
-el mismo código cuya procedencia demuestra. El workflow `gcp-image.yml` recibe
-el SHA explícitamente, descarga la historia Git completa, genera en
-`RUNNER_TEMP` y copia después al contexto de construcción. No inicia paper.
+el mismo código cuya procedencia demuestra. El workflow operativo `gcp-image.yml` ya no recibe ese SHA ni genera pruebas experimentales. Para una auditoría separada, la etapa Docker `--target research` requiere la prueba y nunca debe instalarse como runtime operativo. No inicia paper.
 
 Dentro de la imagen, antes de cualquier dato de mercado:
 

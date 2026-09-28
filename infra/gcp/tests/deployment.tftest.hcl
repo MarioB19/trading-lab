@@ -10,12 +10,12 @@ run "safe_defaults" {
     error_message = "Default VM/storage must remain within the reviewed cost envelope."
   }
   assert {
-    condition     = google_compute_disk.experiments.size == 10 && google_compute_disk.experiments.type == "pd-standard" && google_compute_disk.experiments.name != google_compute_disk.state.name
-    error_message = "Experimental paper storage must be a small, separate persistent disk."
+    condition     = length(google_compute_disk.experiments) == 0
+    error_message = "Experimental storage must be absent from the default deployment."
   }
   assert {
-    condition     = toset([for disk in google_compute_instance.bot.attached_disk : disk.device_name]) == toset(["trading-state", "trading-experiments"])
-    error_message = "Attach both named persistent disks; never share operational storage with experiments."
+    condition     = toset([for disk in google_compute_instance.bot.attached_disk : disk.device_name]) == toset(["trading-state"])
+    error_message = "Only operational storage is attached by default."
   }
   assert {
     condition     = length(google_secret_manager_secret_iam_member.paper) == 0 && length(google_iam_workload_identity_pool.github) == 0
@@ -28,6 +28,19 @@ run "safe_defaults" {
   assert {
     condition     = google_compute_firewall.iap_ssh.source_ranges == toset(["35.235.240.0/20"])
     error_message = "Inbound SSH must be IAP-only."
+  }
+}
+
+run "experimental_storage_opt_in" {
+  command = plan
+  variables { enable_experimental_storage = true }
+  assert {
+    condition     = length(google_compute_disk.experiments) == 1 && google_compute_disk.experiments[0].size == 10 && google_compute_disk.experiments[0].type == "pd-standard"
+    error_message = "Optional experimental storage must retain its bounded, separate disk."
+  }
+  assert {
+    condition     = toset([for disk in google_compute_instance.bot.attached_disk : disk.device_name]) == toset(["trading-state", "trading-experiments"])
+    error_message = "Opt-in storage must attach separately from operational state."
   }
 }
 

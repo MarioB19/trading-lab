@@ -1,4 +1,7 @@
-# Evidencia local de integración GCP
+# Evidencia histórica de integración GCP
+
+> La entrega vigente que retira la candidata y simplifica la conexión está en [CONNECTION_READINESS.md](CONNECTION_READINESS.md). Este archivo conserva los checkpoints anteriores; no usar su SHA ni sus pendientes como instrucciones actuales.
+
 
 Revisión: 2026-09-27, America/Mexico_City (las últimas pruebas terminaron el 28-sep UTC).
 Rama: `codex/gcp-platform`. Base: `2be1139e2a55e0d61699ade8ae196e455718286f`.

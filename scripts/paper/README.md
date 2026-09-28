@@ -1,33 +1,44 @@
-# Paquete de programación paper para GCP
+# Programación experimental retirada
 
-Preparado para instalación manual futura; ningún archivo instala servicios, cambia IAM o habilita dinero real. No ejecutar estos pasos en la máquina local de trabajo. Consultar también [PAPER_OPERATIONS.md](../../docs/PAPER_OPERATIONS.md).
+**`aggressive-v2` queda archivado por fallar los siete criterios preregistrados.**
+Este paquete ya no es una vía de instalación o continuidad operativa. La ruta
+actual corresponde al runtime baseline en modo paper, según el
+[runbook operativo](../../docs/GCP_RUNBOOK.md).
 
-El paquete usa únicamente la imagen ya instalada por digest, datos públicos y el `SimBroker` de la comparación. No lee `.env`, Secret Manager, credenciales de broker ni configuración del runtime operativo. Rechaza imágenes con variables de credenciales, un build ID distinto, otro UID o escritura de bytecode habilitada. No descarga imágenes automáticamente.
+`run.sh` termina incondicionalmente con código 2 antes de cargar `common.sh`,
+consultar precios o invocar Docker. Una imagen válida, una marca manual antigua,
+un timer instalado o argumentos adicionales no reactivan este script. La prueba
+`tests/test_experiment_retirement.py` verifica esa denegación con release y marca
+coherentes, y con Docker y preflight señuelo que no deben ejecutarse.
 
-Rutas fijas del host:
+No instalar, iniciar ni habilitar los servicios o timers de este paquete. Si
+existiera una instalación antigua, el operador debe detener y deshabilitar los
+tres timers y los servicios experimentales, comprobar que no quede contenedor
+escritor y retirar la marca `/etc/trading-lab-paper/aggressive-v2.enabled`.
+Actualizar el script instalado a esta versión bloqueada. No borrar locks, bases
+o respaldos. La ausencia de nuevas observaciones es esperada para un experimento
+archivado; no mantener su timer de salud como si fuera una cartera activa.
 
-- Montaje persistente dedicado: `/var/lib/trading-experiments`.
-- Comparación: `/var/lib/trading-experiments/aggressive-v2`.
-- Backups locales: `/var/lib/trading-experiments/backups`.
-- Configuración pública de release: `/etc/trading-lab-paper/release.json`.
-- Marca de autorización manual: `/etc/trading-lab-paper/aggressive-v2.enabled`, cuyo único contenido es el SHA de código completo elegido.
-- Scripts instalados: `/usr/local/lib/trading-lab-paper/{common,run,backup,healthcheck}.sh`.
+Se conservan los scripts, units, plan, preregistros, código científico, resultados,
+imagen y atestación anteriores para auditar el trabajo realizado. También se
+conservan la única observación paper, su respaldo y el restore verificado. No
+liquidar virtualmente las posiciones ni reiniciar contadores para cerrarlo: el
+archivo de evidencia conserva lo que realmente se observó.
 
-Después de una instrucción de despliegue, el operador debe:
+Para mantenimiento histórico, usar las rutas explícitas de `lab.paper_ops
+inspect`, `verify-backup`, `backup` y `restore` descritas en
+[PAPER_OPERATIONS.md](../../docs/PAPER_OPERATIONS.md). Restaurar sólo a un destino
+vacío sin programación. Esto no autoriza ejecutar `run.sh` ni reanudar el
+experimento. Los wrappers históricos `backup.sh` y `healthcheck.sh` se conservan
+como código de referencia; no reinstalar su programación.
 
-1. Comprobar el disco experimental separado de 10 GiB que define [Terraform](../../infra/gcp/main.tf) y monta el [bootstrap](../../infra/gcp/templates/startup.sh.tftpl), y sus directorios `aggressive-v2` y `backups`, propiedad de UID/GID `10001:10001`, permiso `0700`. No reutilizar estado operativo. Un experimento nuevo exige un directorio vacío; el paper local existente debe continuar mediante backup→restore en ese destino vacío, conservando su identidad y contadores.
-2. Instalar los cuatro scripts como archivos propiedad de root, sin escritura de grupo/otros y ejecutables. Instalar los seis archivos `.service`/`.timer` en `/etc/systemd/system/`. Esto se hace manualmente; no hay instalador ni integración automática en startup Terraform.
-3. Preparar una imagen atestada desde el SHA final limpio, fijar su digest y cargarla en el Docker del host mediante el procedimiento de entrega existente. Copiar y completar `release.json.example` como `release.json` con sólo sus cuatro campos. El ejemplo incompleto falla cerrado. No añadir secretos ni rutas configurables.
-4. Verificar la atestación dentro de la imagen. Para continuar el paper ya iniciado en `runtime-data/delivery-20260928/aggressive-v2`, seguir la [ruta de continuidad local→GCP](../../docs/PAPER_OPERATIONS.md#continuar-en-gcp-la-observación-local-existente): misma imagen de código `f6c19fdcac943978011b3e096280beb7d0528884`, misma prueba atestada y restore verificado, con timers detenidos y sin marca manual. No arrancar otra cartera vacía para reiniciar sus contadores. Para un experimento nuevo aprobado, iniciar la primera observación **en la imagen atestada**; una base con prueba Git local no migra automáticamente a ese formato.
-5. Crear manualmente la marca de autorización con el SHA exacto y ejecutar `systemctl daemon-reload`. Iniciar una vez `trading-lab-comparison.service`, leer su salida con `journalctl -u trading-lab-comparison.service` y revisar estado/panel. Una consulta de precios fallida no cuenta como día observado.
-6. Iniciar una vez `trading-lab-comparison-backup.service`; comprobar `backups/last-verified.json`, verificar el bundle y ensayar restore en un destino vacío usando `lab.paper_ops`. Comprobar `trading-lab-comparison-health.service`. Sólo después habilitar manualmente los tres timers con `systemctl enable --now trading-lab-comparison.timer trading-lab-comparison-backup.timer trading-lab-comparison-health.timer`.
+El bloqueo retira el flujo operativo preparado; no revoca por medios técnicos una
+imagen histórica en manos de quien decida invocar manualmente su CLI. Esa imagen
+es evidencia archivada, no una release operativa vigente. Una hipótesis nueva
+requiere otro preregistro, evaluación completa y decisión explícita. Acumular 28
+días ahora no revierte el rechazo de la candidata.
 
-Para detener la programación, deshabilitar los tres timers y retirar la marca manual. Si existe una ejecución en curso, detener el servicio y comprobar que el contenedor finalizó; retirar la marca por sí solo impide arranques posteriores. Nunca borrar locks ni sustituir una imagen para eludir un error de identidad.
-
-`run.sh` usa un nombre fijo de contenedor y el runner adquiere además su lock. Un contenedor anterior o un respaldo concurrente no se sustituye ni se mata para abrir paso a otro. Los errores se registran como JSON con `severity: ERROR`, fase y código de salida en journald. No se instalan alertas nuevas mediante este paquete.
-
-Los tres servicios comparten `/var/lib/trading-experiments/.services.lock`: sólo uno puede iniciar contenedores a la vez. Cada contenedor experimental tiene un límite de 768 MiB y una CPU para convivir con el runtime en la VM de 4 GiB. Si el lock está ocupado, el servicio termina con código 75 y registra `status: pending`, sin actualizar salud o respaldo ni afirmar éxito. Se requiere otro intento; no borrar el lock. El límite es una protección configurada, pendiente de medición en la carga real de la VM; un OOM debe quedar como fallo observable.
-
-`backup.sh` copia SQLite con la API consistente, conserva capturas y verifica hashes sin red. Actualiza `last-verified.json` únicamente después de esa verificación. No elimina respaldos, no sube a GCS y declara `gcs_copy_verified: false`. La réplica externa, su retención, alertas de ausencia y restore desde GCS siguen siendo pasos de despliegue separados; la copia local comparte el disco con la comparación.
-
-`healthcheck.sh` falla si el último intento tiene más de 2 horas, el último par exitoso más de 36 horas, existen huecos/incidencias o no hay respaldo local verificado en 26 horas. Sus fallos llegan a journald; configurar la alerta cloud y comprobar que el propio timer siga habilitado son tareas de instalación. No afirma que una copia esté en GCS.
+El control superó a esta candidata en esta comparación retrospectiva. Eso no lo
+certifica como el mejor algoritmo ni como preparado para dinero real. Se mantiene
+paper; conexión, conciliación y aceptación operativa siguen siendo comprobaciones
+independientes.

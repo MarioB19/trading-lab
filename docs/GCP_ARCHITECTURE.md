@@ -10,7 +10,6 @@ flowchart LR
   AR --> VM[Compute Engine e2-medium]
   VM --> W[Worker paper: bloqueo y reconciliación]
   W --> DB[(SQLite WAL en disco persistente)]
-  VM --> EXP[(Disco experimental separado: paper v2)]
   DB --> API[API de solo lectura]
   API --> IAP[IAP SSH tunnel: panel privado]
   DB --> BK[Backup consistente + SHA256]
@@ -23,14 +22,14 @@ flowchart LR
 ## Decisiones de infraestructura
 
 - VM `e2-medium`, 4 GiB, CPU compartida, región `us-central1`, zona `us-central1-a`. Una futura alternativa `e2-small` de 2 GiB requiere medir RAM y rediseñar los límites de contenedores; esta configuración la rechaza. Sin Spot ni autoscaling del ejecutor.
-- Disco `pd-balanced` dedicado de 30 GiB para `/var/lib/trading-lab`; boot independiente de 10 GiB. Otro disco `pd-standard` de 10 GiB monta `/var/lib/trading-experiments`, con `aggressive-v2/` y `backups/` propiedad de UID/GID 10001 y modo 0700. No comparte contabilidad ni credenciales con el operativo. El bootstrap verifica UUID/filesystem y prepara almacenamiento; no instala ni activa los timers experimentales. Terraform protege ambos discos y bucket contra destrucción, y la VM tiene deletion protection. No es alta disponibilidad: perder VM/zona exige recuperación y reconciliación.
+- Disco `pd-balanced` dedicado de 30 GiB para `/var/lib/trading-lab`; boot independiente de 10 GiB. El almacenamiento experimental opcional `enable_experimental_storage=false` no se crea ni monta por defecto. Su opción histórica conserva aislamiento y protección si ya existe; no habilita la candidata rechazada. El bootstrap verifica UUID/filesystem y prepara almacenamiento. Terraform protege discos y bucket contra destrucción, y la VM tiene deletion protection. No es alta disponibilidad: perder VM/zona exige recuperación y reconciliación.
 - Docker ejecuta como UID/GID 10001, raíz de contenedor de solo lectura, límites de memoria, sin capabilities ni socket Docker dentro del contenedor. El bind del estado permite escritura para los sidecars SQLite WAL, incluso en la API; la API abre la base con `mode=ro` y `query_only` y carece de endpoints mutadores. Esto es lectura lógica de aplicación, no aislamiento del volumen a nivel de filesystem.
 - Systemd supervisa procesos. `/var/lib/trading-lab/worker.enabled` es obligatorio tanto para systemd como para el runtime; solo `lab.ops activate --cutover-confirmed` lo crea tras validar el estado. El bootstrap no activa trading.
 - VPC propia; único ingreso permitido, SSH desde IAP (`35.235.240.0/20`). API publicada exclusivamente en `127.0.0.1:8080` del host. OS Login, Secure Boot, vTPM e integridad habilitados. IPv4 estática permite salida a proveedores y una eventual lista permitida.
 - Cuenta de servicio de VM: leer ese repositorio Artifact Registry, crear objetos nuevos en ese bucket y escribir telemetría. No puede borrar respaldos ni modificar infraestructura. Se conserva el alcance OAuth `cloud-platform`, limitado por estos roles IAM.
 - Secret Manager solo tiene referencias opcionales a versiones numéricas existentes de ambas credenciales **Alpaca paper**. Terraform no consulta valores ni crea secretos. No se pasan credenciales Bitso/real. La API no recibe ninguna llave.
 - WIF GitHub opcional, restringido a IDs inmutables de owner/repository, `main` y environment `gcp-delivery`; la identidad de entrega solo publica imágenes. No tiene permiso de iniciar el bot. No hay llaves permanentes de cuenta de servicio.
-- Imagen Python y paquetes runtime fijados por digest/versiones; no se copian `.git`, `.env`, `state/` ni `data/`. El build rechaza una configuración con modo distinto de paper. La etiqueta OCI registra el SHA; la instalación exige digest e igualdad de SHA.
+- Imagen Python y paquetes runtime fijados por digest/versiones; no se copian `.git`, `.env`, `state/` ni `data/`. El build rechaza una configuración con modo distinto de paper. Las etiquetas OCI registran SHA y perfil; la instalación exige digest, igualdad de SHA y `operational-paper`. El target Docker por defecto y el workflow excluyen planes e informes experimentales; no necesitan una atestación de la candidata retirada.
 
 ## Persistencia y recuperación
 
@@ -48,12 +47,11 @@ Lista pública en USD, Iowa/us-central1, Linux bajo demanda, 730 horas/mes, sin 
 |---|---:|
 | e2-medium: 0.03350571 USD/h | 24.46 USD |
 | Discos pd-balanced, 30 GiB estado + 10 GiB boot | 4.00 USD |
-| Disco experimental pd-standard, 10 GiB a 0.000054795 USD/GiB/h | 0.40 USD |
 | IPv4 externa en uso: 0.005 USD/h | 3.65 USD |
-| Base | **32.51 USD** |
+| Base operativa | **32.11 USD** |
 | Objetivo incluyendo uso moderado de GCS, imágenes, logs y tráfico | **35–45 USD** |
 
-El disco experimental se calcula a tarifa de lista sin descontar posibles cuotas gratuitas compartidas con otros proyectos. Sus backups locales no protegen frente a pérdida de ese mismo disco; antes de programar el experimento se debe ensayar restauración y definir copia externa independiente.
+El disco experimental opcional añadiría US$0.40/mes (10 GiB pd-standard a tarifa de lista, sin cuotas gratuitas), pero queda deshabilitado. No instalarlo para continuar la candidata rechazada. Si ya existe, conservarlo como evidencia y revisar cualquier plan de retirada por separado.
 
 Es una estimación, no una factura garantizada. Los 60 USD son presupuesto máximo de diseño; el recurso de Billing crea **alertas**, no corta automáticamente el gasto. El presupuesto usa costes antes de créditos para no ocultar el coste recurrente. Confirmar moneda de billing antes de habilitar el recurso USD. La documentación actual menciona spend caps en preview para algunos servicios; no se depende de esa función. Revisar el saldo, fecha final y servicios/SKUs cubiertos por los créditos; no se asume cobertura ni permanencia. No se ha consultado esa cuenta.
 
@@ -76,3 +74,5 @@ Render worker o Railway servicio con volumen, y un VPS convencional, también ad
 - [Ops Agent](https://docs.cloud.google.com/stackdriver/docs/solutions/agents/ops-agent/configuration)
 - [GitHub schedule](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows) y [concurrency](https://docs.github.com/en/actions/how-tos/write-workflows/choose-when-workflows-run/control-workflow-concurrency)
 - [Render cron](https://render.com/docs/cronjobs), [Railway cron](https://docs.railway.com/cron-jobs), [AWS Scheduler/ECS](https://docs.aws.amazon.com/AmazonECS/latest/developerguide/tasks-scheduled-eventbridge-scheduler.html)
+
+Para separación de artefactos y revisión de infraestructura se consultaron las guías oficiales de [etapas Docker](https://docs.docker.com/build/building/multi-stage/) y [estructura Terraform en GCP](https://docs.cloud.google.com/docs/terraform/best-practices/general-style-structure). Los snapshots de disco son complementarios; [Google recomienda considerar consistencia de aplicación y verificar recuperación](https://docs.cloud.google.com/compute/docs/disks/snapshot-best-practices). El respaldo SQLite consistente y su restore siguen siendo la prueba de recuperación de este piloto.

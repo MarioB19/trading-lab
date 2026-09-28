@@ -22,6 +22,11 @@ variable "machine_type" {
     error_message = "El piloto requiere e2-medium: los límites de los contenedores necesitan 4 GiB."
   }
 }
+variable "enable_experimental_storage" {
+  type        = bool
+  default     = false
+  description = "Opt-in de almacenamiento experimental aislado; no instala servicios. Si ya existe, mantener true: prevent_destroy bloquea borrarlo al deshabilitarlo."
+}
 variable "image_uri" {
   type        = string
   default     = ""

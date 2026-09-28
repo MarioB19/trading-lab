@@ -1,7 +1,7 @@
 name: gcp-validate
 on:
   pull_request:
-    paths: ["infra/gcp/**", "scripts/gcp/**", "src/lab/**", "configs/experiments/**", "config.yaml", "Dockerfile", ".dockerignore", "requirements-runtime.txt", ".github/workflows/gcp*.yml"]
+    paths: ["infra/gcp/**", "scripts/gcp/**", "src/lab/**", "dashboard/operations.*", "config.yaml", "Dockerfile", ".dockerignore", "requirements-runtime.txt", ".github/workflows/gcp*.yml"]
   workflow_dispatch:
 permissions:
   contents: read
@@ -10,10 +10,21 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - run: pip install PyYAML==6.0.3
       - uses: hashicorp/setup-terraform@v3
         with:
           terraform_version: 1.10.5
       - run: bash scripts/gcp/validate.sh
-      - run: docker build --build-arg SOURCE_SHA="$GITHUB_SHA" -t trading-lab:check .
-      - run: docker run --rm --network none trading-lab:check python -c 'import lab.runtime,lab.service,lab.ops; from pathlib import Path; assert not Path("/app/state").exists(); assert not Path("/app/.env").exists()'
-      - run: docker run --rm --network none trading-lab:check python -m lab.paper_comparison --describe
+      - run: docker build --target runtime --build-arg SOURCE_SHA="$GITHUB_SHA" -t trading-lab:check .
+      - run: docker image inspect trading-lab:check | python -c 'import json,sys; assert json.load(sys.stdin)[0]["Config"]["Labels"]["org.tradinglab.profile"] == "operational-paper"'
+      - run: docker run --rm --network none --read-only trading-lab:check python -c 'import lab.runtime,lab.service,lab.ops; from pathlib import Path; assert all(not Path(p).exists() for p in ("/app/state", "/app/.env", "/app/reports", "/app/configs/experiments"))'
+      - run: docker run --rm --network none --read-only trading-lab:check python -m lab.ops --help
+      - name: Offline runtime and portable restore smoke
+        run: |
+          docker run --rm --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges --tmpfs /tmp:rw,noexec,nosuid,nodev,size=128m \
+            --mount "type=bind,src=$GITHUB_WORKSPACE/scripts/gcp/smoke_runtime.py,dst=/smoke_runtime.py,readonly" \
+            trading-lab:check python /smoke_runtime.py --expected-build-id "$GITHUB_SHA"

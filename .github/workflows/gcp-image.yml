@@ -1,11 +1,6 @@
 name: gcp-image-delivery
 on:
   workflow_dispatch:
-    inputs:
-      preregistration_commit:
-        description: 'SHA completo del preregistro aprobado aggressive-v2, anterior al código'
-        required: true
-        type: string
 permissions:
   contents: read
   id-token: write
@@ -26,13 +21,26 @@ jobs:
           python-version: '3.13'
       - run: pip install -r requirements-dev.lock.txt && pip install --no-deps -e .
       - run: python -m pytest -q -W ignore
-      - name: Verify preregistration and freeze image proof
-        env:
-          PREREGISTRATION_COMMIT: ${{ inputs.preregistration_commit }}
+      - name: Validate operational configuration
+        run: python -c 'from pathlib import Path; from lab.bot import load_config; from lab.runtime import validate_config; validate_config(load_config(Path("config.yaml")))'
+      - uses: docker/setup-buildx-action@v3
+      - name: Build operational image for offline verification
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          target: runtime
+          platforms: linux/amd64
+          load: true
+          push: false
+          tags: trading-lab:verified
+          build-args: SOURCE_SHA=${{ github.sha }}
+      - name: Verify runtime and recovery before authentication or publication
         run: |
-          python -m lab.research_attestation generate --plan configs/experiments/aggressive_v2.yaml --preregistration-commit "$PREREGISTRATION_COMMIT" --output "$RUNNER_TEMP/aggressive-v2.json"
-          mkdir -p reports/attestations
-          cp "$RUNNER_TEMP/aggressive-v2.json" reports/attestations/aggressive-v2.json
+          docker image inspect trading-lab:verified | python -c 'import json,sys; assert json.load(sys.stdin)[0]["Config"]["Labels"]["org.tradinglab.profile"] == "operational-paper"'
+          docker run --rm --network none --read-only --cap-drop ALL \
+            --security-opt no-new-privileges --tmpfs /tmp:rw,noexec,nosuid,nodev,size=128m \
+            --mount "type=bind,src=$GITHUB_WORKSPACE/scripts/gcp/smoke_runtime.py,dst=/smoke_runtime.py,readonly" \
+            trading-lab:verified python /smoke_runtime.py --expected-build-id "$GITHUB_SHA"
       - uses: google-github-actions/auth@v2
         id: auth
         with:
@@ -45,17 +53,16 @@ jobs:
           registry: ${{ vars.GCP_REGION }}-docker.pkg.dev
           username: oauth2accesstoken
           password: ${{ steps.auth.outputs.access_token }}
-      - uses: docker/setup-buildx-action@v3
       - uses: docker/build-push-action@v6
         id: build
         with:
           context: .
+          target: runtime
           platforms: linux/amd64
           push: true
           tags: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/trading-lab/runtime:${{ github.sha }}
           build-args: |
             SOURCE_SHA=${{ github.sha }}
-            REQUIRE_RESEARCH_ATTESTATION=true
           provenance: mode=max
           sbom: true
       - name: Record immutable release for manual review

@@ -194,6 +194,10 @@ def backup(data_dir: Path, destination: Path) -> dict:
             with closing(sqlite3.connect(store.path.resolve().as_uri() + "?mode=ro", uri=True)) as src, \
                     closing(sqlite3.connect(destination)) as dst:
                 src.backup(dst)
+                # Exportar un archivo autónomo: una copia WAL requeriría crear
+                # sidecars al abrirla, incluso con mode=ro tras descargarla de GCS.
+                if dst.execute("PRAGMA journal_mode=DELETE").fetchone()[0] != "delete":
+                    raise ValueError("No se pudo producir un respaldo SQLite autónomo")
             schema_version = validate_database(destination, standalone=True)
             manifest = {"format": "trading-lab-sqlite-backup-v1", "created_at_utc": utc_now(),
                         "file": destination.name, "sha256": sha256(destination),

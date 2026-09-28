@@ -9,12 +9,12 @@ Laboratorio y bot de inversión de Brandon, con dinero potencialmente real. El o
   - **Acciones:** 60/40 SPY/IEF pasivo en Alpaca (simulado interno mientras no haya llaves de Alpaca paper).
 - Revisa cada hora (`lab.realtime`, solo observa) y opera una vez al día tras el cierre de las 00:00 UTC (`lab.bot --if-due`).
 - Todo está en **modo simulado**. Nada mueve dinero real.
-- Plataforma GCP implementada localmente, pendiente de conexión y despliegue. Cuenta prevista `brandonmuro.work@gmail.com`; US$60/mes máximo. Leer `docs/IMPLEMENTATION_PLAN.md`, `GCP_RUNBOOK.md` y `VALIDATION.md`. Tras el corte, SQLite será la fuente primaria; `state/` será histórico/exportación. No ejecutar dos escritores.
+- Plataforma GCP implementada localmente, pendiente de conexión y despliegue. Cuenta prevista `brandonmuro.work@gmail.com`; US$60/mes máximo. Empezar por `docs/CONNECT_CHECKLIST.md` y `docs/CONNECTION_READINESS.md`; detalles en `GCP_RUNBOOK.md`. Tras el corte, SQLite será la fuente primaria; `state/` será histórico/exportación. No ejecutar dos escritores.
 - Tablero: https://claude.ai/artifact/YLtHeryBpEfs882YJafAGG (lee `state/` del repositorio con el conector de GitHub).
 
 ## Antes de trabajar
 
-1. `git pull --rebase`: el bot hace commit de `state/` varias veces al día desde GitHub Actions. Trabajar sobre una copia vieja provoca conflictos.
+1. Revisar cambios locales y usar `git pull --ff-only origin main`: el bot hace commit de `state/` varias veces al día. Si hay divergencia, inspeccionar e integrar sin reescribir commits utilizados por preregistros, corridas o imágenes. No hacer rebase de evidencia publicada o registrada; conservar cambios ajenos y SHAs científicos.
 2. Entorno Python 3.13: crear `.venv`, instalar `requirements-dev.lock.txt` y luego `pip install --no-deps -e .`.
 3. Lee `README.md` (qué hace, qué dice la evidencia, candados) y el informe que toque en `reports/`.
 
@@ -39,6 +39,14 @@ Laboratorio y bot de inversión de Brandon, con dinero potencialmente real. El o
 8. No inventes números: cita `reports/*.json` o corre el código.
 9. No edites `state/` ni SQLite a mano salvo una migración documentada en el commit. Usar `lab.ops` para importación/backup/restore; restaurar a un destino vacío y desactivado. La activación requiere corte y conciliación. Nunca resolver órdenes desconocidas reenviando a ciegas.
 10. Cambiar `capital` en `config.yaml` es una aportación o un retiro del bloque: el bot lo aplica solo en su siguiente corrida.
+
+## Alcance operativo vigente
+
+- Conservar cripto diaria top 5 / volatilidad 40% y ETFs SPY/IEF 60/40. El control supera a la candidata rechazada, pero no demuestra rentabilidad futura ni preparación real.
+- `aggressive-v2` está retirado de operación. Conservar pruebas, corridas, SQLite, capturas, backups, preregistros e imagen f6 como historial. No continuar sus 28 días ni instalar timers; `scripts/paper/run.sh` bloquea el arranque.
+- Docker/CI operativos usan target `runtime` y perfil `operational-paper`, sin planes/informes experimentales. La etapa `research` es separada, explícita y no se instala como runtime.
+- Disco experimental opcional y deshabilitado por defecto; si existe una instalación anterior, no destruirlo para retirar el experimento.
+- Conexión inicial: simulación sin credenciales privadas. Consulta GET real posterior separada; alta Alpaca paper externa/adopción de inversiones todavía requieren migración y validación propias.
 
 ## Al revisar el bot
 

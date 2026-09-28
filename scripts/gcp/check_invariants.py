@@ -1,6 +1,7 @@
 """Local checks for deployment hard boundaries; no cloud API calls."""
 from pathlib import Path
 import json
+from itertools import product
 import os
 import re
 import subprocess
@@ -12,6 +13,7 @@ scripts = ROOT / "scripts/gcp"
 docker = (ROOT / "Dockerfile").read_text()
 assert "@sha256:" in docker, "Pin the base image"
 assert "USER 10001:10001" in docker
+assert 'org.tradinglab.profile="operational-paper"' in docker
 assert "TRADING_LAB_BUILD_ID=${SOURCE_SHA}" in docker
 assert not re.search(r"COPY\s+\.\s", docker), "Never copy credentials/state with the build context"
 for path in scripts.rglob("*.sh"):
@@ -31,13 +33,15 @@ assert 'requirements-dev.lock.txt' in (ROOT / ".github/workflows/gcp-image.yml")
 # Render both bootstrap branches with a standalone Terraform console: no provider,
 # credentials, state, cloud calls or execution of the generated script.
 files = {}
-for path in (scripts / "host").glob("*.sh"):
+for path in (scripts / "host").iterdir():
+    if path.suffix not in {".sh", ".py"}:
+        continue
     files[f"/usr/local/lib/trading-lab/{path.name}"] = {"content": path.read_text(), "mode": "0755"}
 for path in (infra / "systemd").glob("*"):
     files[f"/etc/systemd/system/{path.name}"] = {"content": path.read_text(), "mode": "0644"}
-for image in ("", "us-central1-docker.pkg.dev/test-project/trading-lab/runtime@sha256:" + "a" * 64):
+for image, experimental in product(("", "us-central1-docker.pkg.dev/test-project/trading-lab/runtime@sha256:" + "a" * 64), (False, True)):
     args = dict(files=files, project_id="test-project", region="us-central1", bucket="test-project-backups",
-                image_uri=image, source_sha="b" * 40, paper_refs_b64="e30=")
+                image_uri=image, source_sha="b" * 40, paper_refs_b64="e30=", experimental_storage=experimental)
     with tempfile.TemporaryDirectory(prefix="trading-bootstrap-check-") as temp:
         args_path = Path(temp) / "template-arguments.json"
         args_path.write_text(json.dumps(args))
@@ -53,9 +57,9 @@ for image in ("", "us-central1-docker.pkg.dev/test-project/trading-lab/runtime@s
         subprocess.run(["bash", "-n"], input=rendered, text=True, check=True)
         assert "lab.ops activate" not in rendered.replace("# Never enables the worker. Explicit lab.ops activate is required after cutover.", "")
         assert "mount_data_disk /dev/disk/by-id/google-trading-state /var/lib/trading-lab" in rendered
-        assert "mount_data_disk /dev/disk/by-id/google-trading-experiments /var/lib/trading-experiments" in rendered
-        assert "/var/lib/trading-experiments/aggressive-v2 /var/lib/trading-experiments/backups" in rendered
-        assert 'install -d -o 10001 -g 10001 -m 0700 "$directory"' in rendered
+        assert ("mount_data_disk /dev/disk/by-id/google-trading-experiments /var/lib/trading-experiments" in rendered) == experimental
+        assert ("/var/lib/trading-experiments/aggressive-v2 /var/lib/trading-experiments/backups" in rendered) == experimental
+        assert ('install -d -o 10001 -g 10001 -m 0700 "$directory"' in rendered) == experimental
         assert 'findmnt -n -o UUID --mountpoint "$target"' in rendered
         assert "trading-lab-paper" not in rendered, "Do not install or activate experimental services implicitly"
 print("Deployment boundaries verified locally")
