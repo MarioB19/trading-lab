@@ -1,33 +1,33 @@
 {
  "summary": {
-  "n_trades": 11,
-  "n_buys": 9,
-  "n_sells": 2,
-  "fees": 0.7727,
-  "closed_lots": 2,
+  "n_trades": 17,
+  "n_buys": 14,
+  "n_sells": 3,
+  "fees": 1.6684,
+  "closed_lots": 3,
   "wins": 0,
-  "losses": 2,
+  "losses": 3,
   "win_rate": 0.0,
-  "realized_pnl": -1.24,
+  "realized_pnl": -2.08,
   "avg_win": null,
-  "avg_loss": -0.62,
+  "avg_loss": -0.69,
   "profit_factor": 0.0,
-  "open_positions": 8,
-  "open_winning": 6,
+  "open_positions": 7,
+  "open_winning": 5,
   "open_losing": 2,
-  "unrealized_pnl": 10.85,
-  "total_pnl": 9.61,
-  "avg_cost_bps": 37.9,
+  "unrealized_pnl": 11.94,
+  "total_pnl": 9.86,
+  "avg_cost_bps": 39.1,
   "cost_bps_by_sleeve": {
-   "crypto": 37.9
+   "crypto": 39.1
   },
-  "n_cost_measured": 2,
+  "n_cost_measured": 8,
   "by_sleeve": {
    "crypto": {
-    "closed_lots": 2,
+    "closed_lots": 3,
     "wins": 0,
-    "realized_pnl": -1.24,
-    "unrealized_pnl": 7.96
+    "realized_pnl": -2.08,
+    "unrealized_pnl": 9.05
    },
    "stocks": {
     "closed_lots": 0,
@@ -41,57 +41,46 @@
   {
    "sleeve": "crypto",
    "asset": "NEAR",
-   "qty": 6.27660259,
-   "cost": 28.882919128026845,
-   "price": 5.0474,
-   "value": 31.680523912766,
-   "pnl": 2.7976047847391534,
-   "ret": 0.0968601813528076,
+   "qty": 9.19191127,
+   "cost": 44.44174762653085,
+   "price": 5.3854,
+   "value": 49.502118953458,
+   "pnl": 5.060371326927154,
+   "ret": 0.11386526401824515,
    "since": "2026-09-24"
   },
   {
    "sleeve": "crypto",
    "asset": "UNI",
-   "qty": 3.27025933,
-   "cost": 29.995680564129703,
-   "price": 9.705,
-   "value": 31.73786679765,
-   "pnl": 1.7421862335202967,
-   "ret": 0.05808123705663437,
+   "qty": 5.36807421,
+   "cost": 50.248210802289705,
+   "price": 9.6782,
+   "value": 51.953295819222,
+   "pnl": 1.7050850169322942,
+   "ret": 0.033933248362638224,
    "since": "2026-09-24"
   },
   {
    "sleeve": "crypto",
    "asset": "LINK",
-   "qty": 3.65744289,
-   "cost": 48.48949745012014,
-   "price": 14.15308,
-   "value": 51.764081817601195,
-   "pnl": 3.2745843674810544,
-   "ret": 0.06753182729620022,
+   "qty": 5.87053063,
+   "cost": 79.62381877189213,
+   "price": 14.01948,
+   "value": 82.3017867566724,
+   "pnl": 2.677967984780267,
+   "ret": 0.03363274992439336,
    "since": "2026-09-24"
   },
   {
    "sleeve": "crypto",
    "asset": "LTC",
-   "qty": 0.6808246,
-   "cost": 49.118756904956,
-   "price": 72.59,
-   "value": 49.421057714,
-   "pnl": 0.3023008090439987,
-   "ret": 0.0061544881852149125,
+   "qty": 1.18837928,
+   "cost": 84.945607768076,
+   "price": 71.28,
+   "value": 84.7076750784,
+   "pnl": -0.23793268967600056,
+   "ret": -0.002801000498173112,
    "since": "2026-09-24"
-  },
-  {
-   "sleeve": "crypto",
-   "asset": "ETH",
-   "qty": 0.02428053,
-   "cost": 65.59848676000001,
-   "price": 2695.35,
-   "value": 65.4445265355,
-   "pnl": -0.15396022450001112,
-   "ret": -0.0023470087818228125,
-   "since": "2026-09-26"
   },
   {
    "sleeve": "stocks",
@@ -118,12 +107,12 @@
   {
    "sleeve": "crypto",
    "asset": "SOL",
-   "qty": 9.999999994736442e-09,
-   "cost": 1.2250655805101068e-06,
-   "price": 121.37,
-   "value": 1.213699999361162e-06,
-   "pnl": -1.13655811489448e-08,
-   "ret": -0.009277528754184972,
+   "qty": 0.7579392,
+   "cost": 92.60526365367399,
+   "price": 121.98,
+   "value": 92.45342361600001,
+   "pnl": -0.1518400376739777,
+   "ret": -0.0016396480252119927,
    "since": "2026-09-25"
   }
  ],
@@ -149,10 +138,21 @@
    "sell_price": 120.846049,
    "pnl": -0.9545933687546722,
    "ret": -0.01710616379230212
+  },
+  {
+   "sleeve": "crypto",
+   "asset": "ETH",
+   "qty": 0.02428053,
+   "opened": "2026-09-26",
+   "closed": "2026-09-27",
+   "buy_price": 2692.0,
+   "sell_price": 2675.2,
+   "pnl": -0.8381129040000133,
+   "ret": -0.012776406063547685
   }
  ],
  "prices_as_of": {
-  "crypto": "2026-09-26",
+  "crypto": "2026-09-27",
   "stocks": "2026-09-25"
  }
 }

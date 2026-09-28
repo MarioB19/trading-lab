@@ -5,99 +5,100 @@
    "strategy": "tactical",
    "broker": "simulado \u00b7 libro real de Bitso",
    "mode": "paper",
-   "candle": "2026-09-26",
-   "equity": 306.72,
-   "cash": 76.68,
-   "capital": 300,
-   "exposure": 0.75,
-   "peak": 307.31,
-   "drawdown": -0.0019,
+   "compound": true,
+   "candle": "2026-09-27",
+   "equity": 506.98,
+   "cash": 146.06,
+   "capital": 500,
+   "exposure": 0.7119,
+   "peak": 507.39,
+   "drawdown": -0.0008,
    "brake": 1.0,
    "kill_switch": false,
    "kill_drawdown": 0.45,
    "benchmark": "BTC",
    "assets": [
     {
-     "asset": "ETH",
-     "target": 0.212956,
+     "asset": "SOL",
+     "target": 0.182282,
      "trend": 1.0,
-     "momentum": 0.373958,
-     "vol": 0.541036,
-     "score": 0.691189,
+     "momentum": 0.421511,
+     "vol": 0.639486,
+     "score": 0.659141,
      "eligible": true,
-     "price": 2695.35,
-     "weight": 0.213366,
-     "qty": 0.024281
+     "price": 121.98,
+     "weight": 0.182362,
+     "qty": 0.757939
     },
     {
      "asset": "LTC",
-     "target": 0.164003,
+     "target": 0.167011,
      "trend": 1.0,
-     "momentum": 0.508808,
-     "vol": 0.702528,
-     "score": 0.724253,
+     "momentum": 0.472958,
+     "vol": 0.697961,
+     "score": 0.677628,
      "eligible": true,
-     "price": 72.59,
-     "weight": 0.161126,
-     "qty": 0.680825
+     "price": 71.28,
+     "weight": 0.167084,
+     "qty": 1.188379
     },
     {
      "asset": "LINK",
-     "target": 0.158263,
+     "target": 0.162267,
      "trend": 1.0,
-     "momentum": 0.593559,
-     "vol": 0.72801,
-     "score": 0.815317,
+     "momentum": 0.57549,
+     "vol": 0.718365,
+     "score": 0.801112,
      "eligible": true,
-     "price": 14.15308,
-     "weight": 0.168764,
-     "qty": 3.657443
+     "price": 14.01948,
+     "weight": 0.162338,
+     "qty": 5.870531
     },
     {
      "asset": "UNI",
-     "target": 0.099716,
+     "target": 0.102432,
      "trend": 1.0,
-     "momentum": 1.729153,
-     "vol": 1.155452,
-     "score": 1.496517,
+     "momentum": 1.755771,
+     "vol": 1.137997,
+     "score": 1.542861,
      "eligible": true,
-     "price": 9.705,
-     "weight": 0.103474,
-     "qty": 3.270259
+     "price": 9.6782,
+     "weight": 0.102477,
+     "qty": 5.368074
     },
     {
      "asset": "NEAR",
-     "target": 0.095465,
+     "target": 0.097599,
      "trend": 1.0,
-     "momentum": 2.239751,
-     "vol": 1.206896,
-     "score": 1.855794,
+     "momentum": 2.464377,
+     "vol": 1.194347,
+     "score": 2.063369,
      "eligible": true,
-     "price": 5.0474,
-     "weight": 0.103287,
-     "qty": 6.276603
-    },
-    {
-     "asset": "SOL",
-     "target": 0.0,
-     "trend": 1.0,
-     "momentum": 0.428669,
-     "vol": 0.650587,
-     "score": 0.658896,
-     "eligible": true,
-     "price": 121.37,
-     "weight": 0.0,
-     "qty": 0.0
+     "price": 5.3854,
+     "weight": 0.097642,
+     "qty": 9.191911
     },
     {
      "asset": "BTC",
      "target": 0.0,
      "trend": 1.0,
-     "momentum": 0.245439,
-     "vol": 0.432586,
-     "score": 0.567377,
+     "momentum": 0.242123,
+     "vol": 0.425352,
+     "score": 0.569229,
      "eligible": true,
-     "price": 84426.7,
+     "price": 84444.2,
+     "weight": 0.0,
+     "qty": 0.0
+    },
+    {
+     "asset": "ETH",
+     "target": 0.0,
+     "trend": 1.0,
+     "momentum": 0.349044,
+     "vol": 0.532411,
+     "score": 0.655591,
+     "eligible": true,
+     "price": 2688.02,
      "weight": 0.0,
      "qty": 0.0
     },
@@ -105,11 +106,11 @@
      "asset": "XRP",
      "target": 0.0,
      "trend": 1.0,
-     "momentum": 0.221117,
-     "vol": 0.771178,
-     "score": 0.286726,
+     "momentum": 0.220464,
+     "vol": 0.759111,
+     "score": 0.290424,
      "eligible": true,
-     "price": 1.52708,
+     "price": 1.51642,
      "weight": 0.0,
      "qty": 0.0
     },
@@ -117,11 +118,11 @@
      "asset": "ADA",
      "target": 0.0,
      "trend": 1.0,
-     "momentum": 0.333417,
-     "vol": 0.79855,
-     "score": 0.417528,
+     "momentum": 0.354269,
+     "vol": 0.784888,
+     "score": 0.451362,
      "eligible": true,
-     "price": 0.253973,
+     "price": 0.255058,
      "weight": 0.0,
      "qty": 0.0
     },
@@ -129,11 +130,11 @@
      "asset": "DOGE",
      "target": 0.0,
      "trend": 1.0,
-     "momentum": 0.158127,
-     "vol": 0.784165,
-     "score": 0.201651,
+     "momentum": 0.169068,
+     "vol": 0.770807,
+     "score": 0.219339,
      "eligible": true,
-     "price": 0.096729,
+     "price": 0.096834,
      "weight": 0.0,
      "qty": 0.0
     },
@@ -141,11 +142,11 @@
      "asset": "AVAX",
      "target": 0.0,
      "trend": 1.0,
-     "momentum": 0.452782,
-     "vol": 0.967043,
-     "score": 0.468213,
+     "momentum": 0.450046,
+     "vol": 0.950711,
+     "score": 0.473378,
      "eligible": true,
-     "price": 10.853,
+     "price": 10.901,
      "weight": 0.0,
      "qty": 0.0
     },
@@ -153,11 +154,11 @@
      "asset": "BCH",
      "target": 0.0,
      "trend": 1.0,
-     "momentum": 0.24523,
-     "vol": 1.153819,
-     "score": 0.212538,
+     "momentum": 0.237587,
+     "vol": 1.136306,
+     "score": 0.209088,
      "eligible": true,
-     "price": 336.02,
+     "price": 332.48,
      "weight": 0.0,
      "qty": 0.0
     },
@@ -165,11 +166,11 @@
      "asset": "XLM",
      "target": 0.0,
      "trend": 1.0,
-     "momentum": 0.234276,
-     "vol": 0.792585,
-     "score": 0.295585,
+     "momentum": 0.242442,
+     "vol": 0.779479,
+     "score": 0.311031,
      "eligible": true,
-     "price": 0.216446,
+     "price": 0.215822,
      "weight": 0.0,
      "qty": 0.0
     },
@@ -177,11 +178,11 @@
      "asset": "TRX",
      "target": 0.0,
      "trend": 0.5,
-     "momentum": 0.024757,
-     "vol": 0.174964,
-     "score": 0.141497,
+     "momentum": 0.026934,
+     "vol": 0.172156,
+     "score": 0.156453,
      "eligible": true,
-     "price": 0.334253,
+     "price": 0.333425,
      "weight": 0.0,
      "qty": 0.0
     },
@@ -189,11 +190,11 @@
      "asset": "HBAR",
      "target": 0.0,
      "trend": 1.0,
-     "momentum": 0.192209,
-     "vol": 0.67457,
-     "score": 0.284935,
+     "momentum": 0.230278,
+     "vol": 0.66602,
+     "score": 0.345752,
      "eligible": true,
-     "price": 0.09348,
+     "price": 0.09579,
      "weight": 0.0,
      "qty": 0.0
     },
@@ -201,18 +202,20 @@
      "asset": "ATOM",
      "target": 0.0,
      "trend": 1.0,
-     "momentum": 0.168909,
-     "vol": 0.762826,
-     "score": 0.221425,
+     "momentum": 0.203295,
+     "vol": 0.749964,
+     "score": 0.271073,
      "eligible": true,
-     "price": 1.8668,
+     "price": 1.8871,
      "weight": 0.0,
      "qty": 0.0
     }
    ],
-   "notes": [],
+   "notes": [
+    "aportaci\u00f3n de $200.00: el bloque ahora tiene $507.20"
+   ],
    "status": "ok",
-   "last_run_utc": "2026-09-27 00:29"
+   "last_run_utc": "2026-09-28 00:35"
   },
   "stocks": {
    "label": "Acciones y ETFs",
@@ -380,61 +383,61 @@
    "last_run_utc": "2026-09-26 01:54"
   }
  },
- "generated_utc": "2026-09-27 00:29",
+ "generated_utc": "2026-09-28 00:35",
  "mode": "paper",
  "research": {
-  "generated": "2026-09-26 04:27 UTC",
+  "generated": "2026-09-27 21:35 UTC",
   "combined": {
-   "cagr": 0.1824578310978977,
-   "max_dd": -0.27153953925370544,
-   "p_loss_12m": 0.2444,
-   "crypto_share": 0.3
+   "cagr": 0.2368722813060513,
+   "max_dd": -0.32440996263634736,
+   "p_loss_12m": 0.2642,
+   "crypto_share": 0.5
   },
   "crypto": {
    "label": "Criptomonedas",
    "oos_start": "2021-01-01",
    "recommended": "CANDIDATA: top5 \u00b7 vol 40% \u00b7 con filtro BTC \u00b7 freno",
    "strategy": {
-    "cagr": 0.3227004460957936,
-    "sharpe": 1.0970446795545996,
-    "max_dd": -0.41631401689754055
+    "cagr": 0.33226848804770315,
+    "sharpe": 1.1216571533778943,
+    "max_dd": -0.4163140168975408
    },
    "benchmark_name": "Comprar y aguantar BTC",
    "benchmark": {
-    "cagr": 0.20468044171400135,
-    "sharpe": 0.6117478088856954,
+    "cagr": 0.20441754298103998,
+    "sharpe": 0.611394688797456,
     "max_dd": -0.7666881595920354
    },
    "tactical": {
-    "cagr": 0.3227004460957936,
-    "sharpe": 1.0970446795545996,
-    "max_dd": -0.41631401689754055
+    "cagr": 0.33226848804770315,
+    "sharpe": 1.1216571533778943,
+    "max_dd": -0.4163140168975408
    },
    "placebo_p": 0.0,
-   "p_loss_12m": 0.2812
+   "p_loss_12m": 0.2806
   },
   "stocks": {
    "label": "Acciones y ETFs",
    "oos_start": "2010-01-01",
    "recommended": "60/40 (SPY/IEF)",
    "strategy": {
-    "cagr": 0.0989591721055032,
-    "sharpe": 0.9957761616582715,
-    "max_dd": -0.2157834867560986
+    "cagr": 0.0990091285131105,
+    "sharpe": 0.9961487146709905,
+    "max_dd": -0.21578335698185303
    },
    "benchmark_name": "Comprar y aguantar SPY",
    "benchmark": {
-    "cagr": 0.1425221941910968,
-    "sharpe": 0.8667747246377154,
-    "max_dd": -0.33717268745960116
+    "cagr": 0.14285699208064284,
+    "sharpe": 0.8685595353243595,
+    "max_dd": -0.3371726378600286
    },
    "tactical": {
-    "cagr": 0.045218721219039804,
-    "sharpe": 0.5260217640796205,
-    "max_dd": -0.16907009335593293
+    "cagr": 0.04551853485664914,
+    "sharpe": 0.5291926116422183,
+    "max_dd": -0.16907029567221987
    },
-   "placebo_p": 0.34,
-   "p_loss_12m": 0.1338
+   "placebo_p": 0.35,
+   "p_loss_12m": 0.1344
   },
   "realtime": {
    "generated": "2026-09-26 04:19 UTC",
@@ -514,34 +517,34 @@
   }
  },
  "analysis": {
-  "n_trades": 11,
-  "n_buys": 9,
-  "n_sells": 2,
-  "fees": 0.7727,
-  "closed_lots": 2,
+  "n_trades": 17,
+  "n_buys": 14,
+  "n_sells": 3,
+  "fees": 1.6684,
+  "closed_lots": 3,
   "wins": 0,
-  "losses": 2,
+  "losses": 3,
   "win_rate": 0.0,
-  "realized_pnl": -1.24,
+  "realized_pnl": -2.08,
   "avg_win": null,
-  "avg_loss": -0.62,
+  "avg_loss": -0.69,
   "profit_factor": 0.0,
-  "open_positions": 8,
-  "open_winning": 6,
+  "open_positions": 7,
+  "open_winning": 5,
   "open_losing": 2,
-  "unrealized_pnl": 10.85,
-  "total_pnl": 9.61,
-  "avg_cost_bps": 37.9,
+  "unrealized_pnl": 11.94,
+  "total_pnl": 9.86,
+  "avg_cost_bps": 39.1,
   "cost_bps_by_sleeve": {
-   "crypto": 37.9
+   "crypto": 39.1
   },
-  "n_cost_measured": 2,
+  "n_cost_measured": 8,
   "by_sleeve": {
    "crypto": {
-    "closed_lots": 2,
+    "closed_lots": 3,
     "wins": 0,
-    "realized_pnl": -1.24,
-    "unrealized_pnl": 7.96
+    "realized_pnl": -2.08,
+    "unrealized_pnl": 9.05
    },
    "stocks": {
     "closed_lots": 0,
@@ -550,5 +553,12 @@
     "unrealized_pnl": 2.89
    }
   }
+ },
+ "fx": {
+  "rate": 17.7395,
+  "bid": 17.739,
+  "ask": 17.74,
+  "source": "Bitso USD/MXN",
+  "time_utc": "2026-09-28 00:35"
  }
 }
