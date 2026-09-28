@@ -52,4 +52,10 @@ for image in ("", "us-central1-docker.pkg.dev/test-project/trading-lab/runtime@s
             rendered = json.loads(rendered)
         subprocess.run(["bash", "-n"], input=rendered, text=True, check=True)
         assert "lab.ops activate" not in rendered.replace("# Never enables the worker. Explicit lab.ops activate is required after cutover.", "")
+        assert "mount_data_disk /dev/disk/by-id/google-trading-state /var/lib/trading-lab" in rendered
+        assert "mount_data_disk /dev/disk/by-id/google-trading-experiments /var/lib/trading-experiments" in rendered
+        assert "/var/lib/trading-experiments/aggressive-v2 /var/lib/trading-experiments/backups" in rendered
+        assert 'install -d -o 10001 -g 10001 -m 0700 "$directory"' in rendered
+        assert 'findmnt -n -o UUID --mountpoint "$target"' in rendered
+        assert "trading-lab-paper" not in rendered, "Do not install or activate experimental services implicitly"
 print("Deployment boundaries verified locally")

@@ -1,0 +1,11 @@
+[Unit]
+Description=Verify a local paper backup each day
+
+[Timer]
+OnCalendar=*-*-* 00:45:00 UTC
+Persistent=true
+RandomizedDelaySec=0
+Unit=trading-lab-comparison-backup.service
+
+[Install]
+WantedBy=timers.target

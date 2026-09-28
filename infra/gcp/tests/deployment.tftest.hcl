@@ -10,6 +10,14 @@ run "safe_defaults" {
     error_message = "Default VM/storage must remain within the reviewed cost envelope."
   }
   assert {
+    condition     = google_compute_disk.experiments.size == 10 && google_compute_disk.experiments.type == "pd-standard" && google_compute_disk.experiments.name != google_compute_disk.state.name
+    error_message = "Experimental paper storage must be a small, separate persistent disk."
+  }
+  assert {
+    condition     = toset([for disk in google_compute_instance.bot.attached_disk : disk.device_name]) == toset(["trading-state", "trading-experiments"])
+    error_message = "Attach both named persistent disks; never share operational storage with experiments."
+  }
+  assert {
     condition     = length(google_secret_manager_secret_iam_member.paper) == 0 && length(google_iam_workload_identity_pool.github) == 0
     error_message = "Secrets and GitHub federation must be opt-in."
   }

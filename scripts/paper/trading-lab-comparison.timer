@@ -1,0 +1,11 @@
+[Unit]
+Description=Observe isolated paper hourly; repeated candles are idempotent
+
+[Timer]
+OnCalendar=*-*-* *:15:00 UTC
+Persistent=true
+RandomizedDelaySec=0
+Unit=trading-lab-comparison.service
+
+[Install]
+WantedBy=timers.target

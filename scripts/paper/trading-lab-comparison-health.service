@@ -1,0 +1,14 @@
+[Unit]
+Description=Check experimental observations and local backup freshness
+Requires=docker.service
+After=docker.service
+RequiresMountsFor=/var/lib/trading-experiments
+ConditionPathExists=/etc/trading-lab-paper/release.json
+ConditionPathExists=/etc/trading-lab-paper/aggressive-v2.enabled
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/trading-lab-paper/healthcheck.sh
+TimeoutStartSec=120
+UMask=0077
+NoNewPrivileges=true

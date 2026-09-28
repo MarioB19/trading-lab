@@ -1,10 +1,10 @@
-# Cartera experimental agresiva: preparación y comparación
+# Cartera experimental agresiva: resultado y operación
 
-Estado: **primera corrida registrada e incompleta por calidad del histórico**. AVAX presenta 69 cierres ausentes en el calentamiento; el control detuvo la prueba antes de calcular rendimiento. No hay evidencia a favor o en contra de la candidata. Ver [resultado y diagnóstico](../reports/aggressive_v1_ejecucion.md).
+La primera comparación válida está **cerrada; la candidata se rechaza**. Falló los siete criterios preregistrados. En cripto, CAGR neto 17.08% frente a 33.77% del control y caída máxima 45.13% frente a 39.48%. Son resultados retrospectivos modelados, no ganancias reales ni pronósticos. [Informe completo](../reports/aggressive_v2_resultado.md), [JSON y trazabilidad](../reports/aggressive_v2_resultado.json).
 
-Brandon confirmó el protocolo y los commits locales el 27-sep CDMX / 28-sep UTC. Preregistro: `49c7dc42ec552c45e6dbd8e6bd8d03683e46d27a`; código ejecutado y base GCP: `c2758dd274e47c36f8c4c0012c7b07ba4a88e504`. El paper prospectivo aún no se inicia. El bot actual conserva su configuración. Push y conexión/despliegue GCP siguen pendientes de autorización posterior.
+`aggressive-v2` corrige solamente disponibilidad AVAX con evidencia oficial y conserva todos los demás parámetros de v1. Preregistro propio `1fe6c8c586b6a9899190b4f987807daf9134846c`; código del ensayo `0541232af0ae9db2d56227c0442f0e4e4aa06401`. El intento v1 fallido se conserva en [su diagnóstico](../reports/aggressive_v1_ejecucion.md). No se promueve ni cambia la estrategia activa.
 
-## Qué se comparará
+## Diseño evaluado
 
 | | Control | Experimental |
 |---|---|---|
@@ -20,7 +20,7 @@ Brandon confirmó el protocolo y los commits locales el 27-sep CDMX / 28-sep UTC
 
 El objetivo de volatilidad no es una tasa de ganancia. Comparar cuentas con el mismo inicio evita atribuir a la estrategia diferencias de capital, precio de entrada o posiciones previas. No se copian ni se transfieren inversiones del bot actual; son cuatro ledgers internos, dentro de una base exclusiva del ensayo.
 
-Configuración completa en `configs/experiments/aggressive_v1.yaml`; protocolo con hash, IDs, semillas y umbrales en `reports/aggressive_v1_preregistro.md`. La candidata ya existía entre las variantes históricas: esta reevaluación no es un holdout virgen ni una selección de la mejor curva.
+Configuración completa en `configs/experiments/aggressive_v2.yaml`; protocolo con hash, IDs, semillas y umbrales en `reports/aggressive_v2_preregistro.md`. La candidata ya existía entre las variantes históricas: esta reevaluación no es un holdout virgen ni una selección de la mejor curva.
 
 ## Qué cuenta como mejora
 
@@ -35,81 +35,51 @@ La comparación primaria es el bloque cripto. El total con ETFs idénticos se in
 
 Todos los criterios deben quedar visibles aunque fallen. Si una regla falla, su estado es no aprobada; cualquier cambio de hipótesis se registra con otro ID antes de repetir. No se promueve la cartera automáticamente.
 
-## Primera comparación histórica
+## Comparación histórica reproducible
 
-Preparación sin descargar datos ni calcular rentabilidad:
+El gate comprueba el commit anterior, texto aprobado, hash de configuración, IDs, ancestro y árbol limpio antes de abrir los datos. V2 usa los paneles originales fijados, no una descarga nueva; su copia derivada pone en cuarentena dos observaciones AVAX de julio de 2020 y recalcula elegibilidad desde el mercado de referencia verificado el 2020-09-22. No interpola ni sustituye precios USD por USDT. [Evidencia y límites](../reports/data_quality/avax_spot_availability.md).
 
-```bash
-python -m lab.aggressive_research --describe
+La corrida `20260928T023514Z-2b88ffec` terminó con 27 artefactos íntegros: fuentes originales, paneles derivados, auditoría, curvas, costos y resultado. El ledger conserva ambos ensayos. Comando ejecutado:
+
+```sh
+.venv/bin/python -m lab.aggressive_research --plan configs/experiments/aggressive_v2.yaml \
+  --preregistration-commit 1fe6c8c586b6a9899190b4f987807daf9134846c
 ```
 
-El preregistro aprobado quedó guardado en **su propio commit**, seguido por el commit del código ejecutado, incluyendo la base técnica GCP. El gate verificó contenido exacto, hash, variantes, ancestro y árbol limpio antes de cargar datos. La corrida fallida se conserva; no repetirla cambiando datos o criterios sin el registro correspondiente.
-
-Comando usado en la primera corrida (referencia, no indicación de repetir):
-
-```bash
-python -m lab.aggressive_research --preregistration-commit 49c7dc42ec552c45e6dbd8e6bd8d03683e46d27a
-```
-
-Una corrida completa generaría manifiesto, datasets congelados, curvas, costos, comparación JSON/Markdown y ledger en `reports/experiments/`. **Esta corrida conserva únicamente manifiesto, inputs congelados, fallo y ledger**: no calculó curvas ni métricas. El periodo histórico está fijado a 2021-01-01..2026-09-26, usando historia de señales desde 2019. El diseño mantiene máximos y kills continuos y no sobrescribe informes anteriores.
+No repetir con criterios distintos bajo el mismo ID. Para describir sin datos ni cálculos, añadir `--describe` y omitir el SHA.
 
 ## Paper prospectivo separado
 
-Se usa `lab.paper_comparison` con un directorio exclusivo, por ejemplo `/tmp/trading-aggressive-paper` para un ensayo local o un volumen persistente dedicado para observación prolongada. Nunca `state/`, el volumen del runtime principal ni una carpeta que contenga su base/flag de activación.
+El runner usa cuatro ledgers internos: control/agresiva × cripto/ETF, dentro de una SQLite dedicada. Cada mercado aporta una única captura compartida; una transacción confirma ambas carteras. Sólo SimBroker, datos públicos y dinero ficticio. No carga `.env` ni conecta brokers privados.
 
-```bash
-python -m lab.paper_comparison --describe
-python -m lab.paper_comparison --status --data-dir /tmp/trading-aggressive-paper
+En checkout limpio y versión fijada:
+
+```sh
+.venv/bin/python -m lab.paper_comparison --once \
+  --plan configs/experiments/aggressive_v2.yaml \
+  --preregistration-commit 1fe6c8c586b6a9899190b4f987807daf9134846c \
+  --data-dir /ruta/persistente/experimental/aggressive-v2 --fetch
+
+.venv/bin/python -m lab.paper_comparison --status \
+  --data-dir /ruta/persistente/experimental/aggressive-v2
 ```
 
-El runner verifica el mismo preregistro antes de calcular. Admite dos paneles CSV de cierres compartidos, con fecha ISO en la primera columna, o captura pública cuando se usa `--fetch`. La misma captura de cada mercado se aplica a ambas carteras. Las transacciones guardan el par completo: un fallo no publica una cartera con la otra atrasada.
+Se pueden sustituir `--fetch` por `--crypto-prices /ruta/crypto.csv --stocks-prices /ruta/etf.csv`: fecha ISO en primera columna y precios USD. El programa exige historia suficiente, cierres completos y datos compatibles. No usar `state/`, `data/`, el volumen operativo principal ni carpetas con su base/flag de activación.
 
-```bash
-python -m lab.paper_comparison --once \
-  --preregistration-commit SHA_COMPLETO_DEL_PREREGISTRO \
-  --data-dir /tmp/trading-aggressive-paper --fetch
-```
+La base queda fijada al plan, preregistro y commit de código exactos. Una actualización de código requiere conservar el expediente y decidir una migración explícita o nuevo seguimiento; no se borra el manifiesto para eludir esta comprobación. Reintentar el mismo cierre no duplica operaciones ni cuenta otro día. Datos revisados para una vela ya procesada se rechazan.
 
-Alternativa con entradas explícitas:
+La imagen sin Git verifica una atestación generada desde el checkout limpio y vinculada al commit de la imagen: objetos commit/tree, relación con el preregistro y archivos de código/configuración. Usar `--attestation /app/reports/attestations/aggressive-v2.json` además de plan, SHA y directorio. El [runbook GCP](GCP_RUNBOOK.md) documenta generación, empaquetado y comprobación. Un JSON con un hash arbitrario no salta el gate.
 
-```bash
-python -m lab.paper_comparison --once \
-  --preregistration-commit SHA_COMPLETO_DEL_PREREGISTRO \
-  --data-dir /tmp/trading-aggressive-paper \
-  --crypto-prices /ruta/crypto_closes.csv --stocks-prices /ruta/etf_closes.csv
-```
+## Interpretación del seguimiento
 
-No importa `.env`, no crea brokers privados, no envía órdenes y no recibe llaves. El capital es ficticio. Cada compra/venta se simula al cierre con comisión y deslizamiento modelados: **no prueba profundidad, prioridad maker o fills reales**. Los CSV deben contener cierres completos, historia suficiente y los activos requeridos; una vela futura o una revisión incompatible se rechaza.
+Como la candidata ya fue rechazada, el seguimiento sirve para comprobar el funcionamiento del software y comparar decisiones simuladas. **28 días no anulan los siete fallos ni rescatan automáticamente la estrategia.** No hay promoción automática, botón de trading ni permiso real.
 
-El runner no instala un cron ni conecta GCP por ejecutarse una vez. La programación continua se habilitará cuando exista un entorno persistente elegido; mantenerla separada del ejecutor principal y de sus credenciales. El modo CSV registra procedencia declarada por el operador; eso no certifica por sí mismo autenticidad del proveedor.
+Sólo cuentan observaciones futuras tras el primer ciclo verificado; importar un mes de precios no equivale a un mes observado. Deben transcurrir al menos 28 días completos, con continuidad e incidentes resueltos. Los días omitidos quedan registrados y no se rellenan retrospectivamente. Cuatro semanas prueban operación, no rentabilidad estadística.
 
-### Conexión GCP posterior
+## Alcance técnico y conexión posterior
 
-El seguimiento ejecutable de esta entrega requiere un checkout Git limpio con el preregistro como ancestro. La imagen GCP incluye el plan y permite `--describe`/`--status`, pero **`--once` permanece bloqueado dentro de esa imagen**, porque no contiene Git ni su historial. No hay un bypass del preregistro.
+La simulación al cierre no reproduce liquidez, cola, fills parciales o precios exactos del broker. El histórico no modela mínimos/tope por orden ni `max_price_jump`, aunque el runner paper conserva esas restricciones. Las ventanas históricas ya inspeccionadas no son un holdout virgen. No hay reconstrucción completa de listados Bitso ni DSR global.
 
-Antes de programarlo en GCP se necesita una prueba de preregistro generada por CI y vinculada al commit y digest de la imagen, validada por el runner; o un entorno de investigación reproducible que conserve la verificación Git. Este trabajo de despliegue sigue pendiente. Usar un volumen separado, por ejemplo `/var/lib/trading-lab-paper/aggressive-v1`, con respaldo y programación propios, sin montar el estado ni las credenciales del bot principal. El build Docker general sigue pendiente por el error de espacio documentado en `VALIDATION.md`; la prueba de imagen declarada en CI todavía no es evidencia de un build logrado.
+El panel `lab.service` acepta `--research-dir` para mostrar la corrida verificada y `--comparison-dir` para leer la SQLite experimental; no modifica ninguna. La preparación de cuenta real está en [REAL_ACCOUNT_RUNBOOK.md](REAL_ACCOUNT_RUNBOOK.md), con diagnóstico GET y propiedad externa explícita. La cuenta no se adopta ni opera por conectarla.
 
-## Cuándo puede revisarse para promoción
-
-Los backtests ya vistos no se cuentan como observación nueva. El paper debe acumular al menos **28 días completos desde su primer ciclo real**, con días observados, continuidad, datos completos y errores resueltos. Una pasada única o importar un CSV de un mes no cumple el periodo. Cuatro semanas prueban funcionamiento, no significancia estadística ni rentabilidad futura.
-
-Un salto de decisiones diarias queda como incidencia durable del ensayo y evita marcarlo completo. Reintentar o cargar después las velas ausentes no convierte ese periodo en seguimiento prospectivo continuo.
-
-La conclusión máxima será una candidatura para revisión humana. El modo actual no cambia y el acceso a dinero real continúa siendo decisión/acción manual exclusiva de Brandon.
-
-## Limitaciones y trazabilidad
-
-El histórico usa el subconjunto Bitso conocido en 2026, sin una reconstrucción completa de fechas de listado/deslistado. Los datos de investigación y el modelo de ejecución no reproducen todas las restricciones del bot. No se certifica un DSR global de todas las exploraciones pasadas. La evidencia debe distinguir rentabilidad retrospectiva, ejecución modelada, paper observado y broker externo.
-
-El histórico no reproduce mínimos/tope por orden ni `max_price_jump`; esas reglas sí se conservan en el runner paper. Rechaza huecos internos de valoración desde el primer precio observado, para no simular una venta a un precio inexistente. Si la cobertura de los activos declarados es insuficiente, la comparación falla: no se eliminan monedas para mejorar el resultado.
-
-Pruebas técnicas con datos sintéticos verifican causalidad, aislamiento, identidad, idempotencia y criterios de decisión. No sustituyen la comparación de mercado ni autorizan resultados inventados.
-
-## Verificación local — 27 de septiembre de 2026
-
-- Suite completa: **203 pruebas pasaron** en 50.05 s, incluidas 67 nuevas del plan, comparación y runner paper.
-- Replay de consistencia de la regla vigente, 365 días: diferencia máxima bot/backtest **0.458%**, menor al límite de 2%. No es un resultado de la candidata.
-- Ambos comandos `--describe` entregan el mismo SHA256 del protocolo: `4d7d97add8f79e86d5dd942691cf99ad4d0bac030508c3cff427fb66ac86886e`.
-- Importación del runner paper y lectura del plan verificadas sin SciPy/sklearn. No equivale a una imagen Docker construida.
-- `git diff --check` sin errores; `config.yaml` y `state/` sin diferencias frente al estado sincronizado `12a54c296d41e960ccc35f311979fa7ddb3dc060`.
-- Estas pruebas preceden a la primera corrida de mercado. Se repitieron antes de los dos commits: **203 pasaron** en 70.85 s y 76.12 s. El [registro de la ejecución](../reports/aggressive_v1_ejecucion.json) conserva SHAs, cobertura y resultado incompleto. Todavía sin observaciones prospectivas ni despliegue.
+La evidencia final de pruebas, imagen, primer ciclo y recuperación se registra en [DELIVERY_ACCEPTANCE.md](DELIVERY_ACCEPTANCE.md). Distinguir implementación local, imagen ejecutada, conexión/despliegue GCP, broker externo y semanas observadas. No se ha conectado GCP ni activado dinero real.

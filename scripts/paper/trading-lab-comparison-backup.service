@@ -1,0 +1,15 @@
+[Unit]
+Description=Create and verify local experimental paper backup
+Requires=docker.service
+After=docker.service
+RequiresMountsFor=/var/lib/trading-experiments
+ConditionPathExists=/etc/trading-lab-paper/release.json
+ConditionPathExists=/etc/trading-lab-paper/aggressive-v2.enabled
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/trading-lab-paper/backup.sh
+TimeoutStartSec=600
+TimeoutStopSec=60
+UMask=0077
+NoNewPrivileges=true

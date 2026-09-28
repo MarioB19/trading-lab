@@ -100,6 +100,14 @@ resource "google_compute_disk" "state" {
   lifecycle { prevent_destroy = true }
   depends_on = [google_project_service.required]
 }
+resource "google_compute_disk" "experiments" {
+  name = "${var.name}-experiments"
+  type = "pd-standard"
+  zone = var.zone
+  size = 10
+  lifecycle { prevent_destroy = true }
+  depends_on = [google_project_service.required]
+}
 resource "google_compute_instance" "bot" {
   name                      = var.name
   machine_type              = var.machine_type
@@ -117,6 +125,10 @@ resource "google_compute_instance" "bot" {
   attached_disk {
     source      = google_compute_disk.state.id
     device_name = "trading-state"
+  }
+  attached_disk {
+    source      = google_compute_disk.experiments.id
+    device_name = "trading-experiments"
   }
   network_interface {
     subnetwork = google_compute_subnetwork.bot.id

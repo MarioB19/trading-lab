@@ -8,6 +8,7 @@
 !configs/
 !configs/experiments/
 !configs/experiments/aggressive_v1.yaml
+!configs/experiments/aggressive_v2.yaml
 !reports/
 !reports/**
 reports/experiments/
@@ -15,6 +16,7 @@ reports/experiments/
 !dashboard/**
 **/__pycache__/
 **/*.pyc
+src/*.egg-info/
 **/.env
 **/.env.*
 **/.git/

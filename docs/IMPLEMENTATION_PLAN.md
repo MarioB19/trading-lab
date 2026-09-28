@@ -54,6 +54,8 @@ Se mantiene la estrategia activa. La primera investigación debe replicar univer
 
 “Implementado localmente”, “validado con pruebas”, “desplegado en GCP”, “conectado a broker paper” y “observado cuatro semanas” requieren evidencia diferente. No marcar los últimos como completos antes de tiempo. Se mantienen los candados de dinero real y la acción manual exclusiva de Brandon.
 
-## Resultado local de esta implementación
+## Resultado local y evidencia actual
 
-136 pruebas Python aprobadas, replay 365 días con diferencia máxima 0.458%, Terraform validado y tres planes mock correctos. Importación/backup/restore conserva el estado histórico. Build Docker pendiente por ENOSPC; GCP y los brokers externos todavía no se verificaron. Detalle reproducible en [VALIDATION.md](VALIDATION.md). Sin commit/push ni conexión a la cuenta.
+La preparación GCP y los ensayos posteriores quedaron guardados en commits locales. La comparación agresiva v2 está completa y rechaza la candidata; se conserva la estrategia activa. La suite pasó 274 pruebas y el replay conserva diferencia máxima 0.458% en el checkpoint `0541232`; las comprobaciones posteriores de imagen, atestación, paper y recuperación se consolidan en [DELIVERY_ACCEPTANCE.md](DELIVERY_ACCEPTANCE.md).
+
+La construcción Linux AMD64 se está verificando con almacenamiento aislado, sin borrar el Docker compartido. No se ha autenticado ni desplegado GCP, ni conectado brokers privados. La [guía de cuenta real](REAL_ACCOUNT_RUNBOOK.md) permite preparar una consulta sin órdenes y detalla lo pendiente antes de administrar inversiones.

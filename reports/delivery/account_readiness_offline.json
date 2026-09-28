@@ -1,0 +1,194 @@
+{
+  "credentials_supplied": false,
+  "private_endpoints_contacted": false,
+  "reports": [
+    {
+      "schema_version": 1,
+      "broker": "alpaca",
+      "environment": "paper",
+      "generated_at": "2026-09-28T02:46:50.417526+00:00",
+      "status": "not_connected",
+      "authentication": {
+        "verified": false,
+        "method": "missing_credentials",
+        "credentials_present": false
+      },
+      "account": {
+        "identity": {
+          "verified": false
+        },
+        "status": "unknown"
+      },
+      "holdings": {
+        "response_count": null,
+        "nonzero_count": 0,
+        "items": [],
+        "ownership": "external_observed_only",
+        "adopted_by_bot": false
+      },
+      "capabilities": {
+        "scope": "this_diagnostic_only",
+        "account_read": false,
+        "holdings_read": false,
+        "credential_read_only_verified": false,
+        "order_permissions": "not_tested",
+        "orders_queried": false,
+        "can_send_orders": false,
+        "can_transfer": false,
+        "can_adopt_holdings": false
+      },
+      "required_credentials": [
+        "TRADING_AUDIT_ALPACA_KEY_ID",
+        "TRADING_AUDIT_ALPACA_SECRET_KEY"
+      ],
+      "missing_credentials": [
+        "TRADING_AUDIT_ALPACA_KEY_ID",
+        "TRADING_AUDIT_ALPACA_SECRET_KEY"
+      ],
+      "requests": [],
+      "errors": [],
+      "blockers": [
+        "El runtime y despliegue preparado admiten exclusivamente paper.",
+        "Este diagnóstico no registra efectivo ni posiciones como propiedad del bot.",
+        "No existe migración aprobada de inversiones existentes al ledger del bot.",
+        "La adopción y los cambios de asignación externa requieren conciliación y migración explícitas.",
+        "No se consultaron órdenes ni movimientos; conciliación, liquidación de efectivo y permisos de escritura no verificados.",
+        "La operación real requiere pruebas externas, observación paper y autorización manual independiente."
+      ],
+      "read_only_connection_ready": false,
+      "ready_for_trading": false,
+      "live_authorized": false,
+      "endpoint": "https://paper-api.alpaca.markets",
+      "allowed_get_paths": [
+        "/v2/account",
+        "/v2/positions"
+      ],
+      "alternative_read_credentials": "TRADING_AUDIT_ALPACA_OAUTH_TOKEN"
+    },
+    {
+      "schema_version": 1,
+      "broker": "alpaca",
+      "environment": "real",
+      "generated_at": "2026-09-28T02:46:50.417827+00:00",
+      "status": "not_connected",
+      "authentication": {
+        "verified": false,
+        "method": "missing_credentials",
+        "credentials_present": false
+      },
+      "account": {
+        "identity": {
+          "verified": false
+        },
+        "status": "unknown"
+      },
+      "holdings": {
+        "response_count": null,
+        "nonzero_count": 0,
+        "items": [],
+        "ownership": "external_observed_only",
+        "adopted_by_bot": false
+      },
+      "capabilities": {
+        "scope": "this_diagnostic_only",
+        "account_read": false,
+        "holdings_read": false,
+        "credential_read_only_verified": false,
+        "order_permissions": "not_tested",
+        "orders_queried": false,
+        "can_send_orders": false,
+        "can_transfer": false,
+        "can_adopt_holdings": false
+      },
+      "required_credentials": [
+        "TRADING_AUDIT_ALPACA_KEY_ID",
+        "TRADING_AUDIT_ALPACA_SECRET_KEY"
+      ],
+      "missing_credentials": [
+        "TRADING_AUDIT_ALPACA_KEY_ID",
+        "TRADING_AUDIT_ALPACA_SECRET_KEY"
+      ],
+      "requests": [],
+      "errors": [],
+      "blockers": [
+        "El runtime y despliegue preparado admiten exclusivamente paper.",
+        "Este diagnóstico no registra efectivo ni posiciones como propiedad del bot.",
+        "No existe migración aprobada de inversiones existentes al ledger del bot.",
+        "La adopción y los cambios de asignación externa requieren conciliación y migración explícitas.",
+        "No se consultaron órdenes ni movimientos; conciliación, liquidación de efectivo y permisos de escritura no verificados.",
+        "La operación real requiere pruebas externas, observación paper y autorización manual independiente."
+      ],
+      "read_only_connection_ready": false,
+      "ready_for_trading": false,
+      "live_authorized": false,
+      "endpoint": "https://api.alpaca.markets",
+      "allowed_get_paths": [
+        "/v2/account",
+        "/v2/positions"
+      ],
+      "alternative_read_credentials": "TRADING_AUDIT_ALPACA_OAUTH_TOKEN"
+    },
+    {
+      "schema_version": 1,
+      "broker": "bitso",
+      "environment": "real",
+      "generated_at": "2026-09-28T02:46:50.417834+00:00",
+      "status": "not_connected",
+      "authentication": {
+        "verified": false,
+        "method": "missing_credentials",
+        "credentials_present": false
+      },
+      "account": {
+        "identity": {
+          "verified": false
+        },
+        "status": "unknown"
+      },
+      "holdings": {
+        "response_count": null,
+        "nonzero_count": 0,
+        "items": [],
+        "ownership": "external_observed_only",
+        "adopted_by_bot": false
+      },
+      "capabilities": {
+        "scope": "this_diagnostic_only",
+        "account_read": false,
+        "holdings_read": false,
+        "credential_read_only_verified": false,
+        "order_permissions": "not_tested",
+        "orders_queried": false,
+        "can_send_orders": false,
+        "can_transfer": false,
+        "can_adopt_holdings": false
+      },
+      "required_credentials": [
+        "TRADING_AUDIT_BITSO_API_KEY",
+        "TRADING_AUDIT_BITSO_API_SECRET"
+      ],
+      "missing_credentials": [
+        "TRADING_AUDIT_BITSO_API_KEY",
+        "TRADING_AUDIT_BITSO_API_SECRET"
+      ],
+      "requests": [],
+      "errors": [],
+      "blockers": [
+        "El runtime y despliegue preparado admiten exclusivamente paper.",
+        "Este diagnóstico no registra efectivo ni posiciones como propiedad del bot.",
+        "No existe migración aprobada de inversiones existentes al ledger del bot.",
+        "La adopción y los cambios de asignación externa requieren conciliación y migración explícitas.",
+        "No se consultaron órdenes ni movimientos; conciliación, liquidación de efectivo y permisos de escritura no verificados.",
+        "La operación real requiere pruebas externas, observación paper y autorización manual independiente."
+      ],
+      "read_only_connection_ready": false,
+      "ready_for_trading": false,
+      "live_authorized": false,
+      "endpoint": "https://bitso.com",
+      "allowed_get_paths": [
+        "/api/v3/account_status/",
+        "/api/v3/balance/"
+      ]
+    }
+  ]
+}

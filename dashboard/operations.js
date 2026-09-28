@@ -80,7 +80,7 @@ async function comparison() {
     const data = await fetchJson("/api/comparison");
     const report = data.research?.report;
     el("comparison-status").textContent = report
-      ? "Comparación histórica terminada, después de costos. El histórico ya fue inspeccionado; no garantiza ganancias futuras."
+      ? "Histórico del 1 ene 2021 al 26 sep 2026. Inicio: US$500 en cripto por cartera. Cifras después de costos; no garantizan ganancias futuras."
       : "Comparación histórica: " + (data.research?.status === "not_configured" ? "pendiente de enlazar el informe." : data.research?.status);
     if (report) {
       const base = report.metrics["0.0045"];
@@ -88,24 +88,29 @@ async function comparison() {
         const values = base?.[role]?.crypto;
         if (!values) continue;
         const card = text("article", null, "sleeve");
-        card.replaceChildren(text("h3", role === "control" ? "Control · top 5 / 40%" : "Agresiva · top 3 / 60%"));
+        card.replaceChildren(text("h3", role === "control" ? "Control · 5 criptos / volatilidad 40%" : "Agresiva · 3 criptos / volatilidad 60%"));
         const dl = document.createElement("dl");
-        for (const [label, value] of [["CAGR neto cripto", `${(values.cagr * 100).toFixed(2)}%`],
+        for (const [label, value] of [["Rentabilidad anualizada neta", `${(values.cagr * 100).toFixed(2)}%`],
           ["Caída máxima", `${(values.max_dd * 100).toFixed(2)}%`], ["Sharpe", values.sharpe.toFixed(3)],
           ["Capital final cripto", money(values.final_equity_usd)], ["Costos modelados", money(values.cost_usd)]]) {
           dl.append(text("dt", label), text("dd", value));
         }
         card.append(dl); target.append(card);
       }
-      const failed = Object.entries(report.checks).filter(([, passed]) => !passed).map(([name]) => name);
+      const labels = {cagr: "rentabilidad", sharpe: "retorno frente a variación", drawdown: "caída máxima",
+        walk_forward: "ventanas anuales", bootstrap: "remuestreo", placebo: "placebo", cost_stress: "costos mayores"};
+      const failed = Object.entries(report.checks).filter(([, passed]) => !passed).map(([name]) => labels[name] || name);
       el("comparison-checks").textContent = failed.length
         ? `La candidata no supera todos los criterios. Fallan: ${failed.join(", ")}. No se promueve.`
         : "Supera los criterios retrospectivos registrados. Aún requiere validación prospectiva y revisión humana.";
     }
     const paper = data.paper;
     el("comparison-paper").textContent = paper?.observed_days != null
-      ? `Seguimiento simulado: ${paper.observed_days} días observados de 28; ${paper.elapsed_days} días transcurridos. Estado: ${paper.status}. Dinero real desactivado.`
+      ? `Seguimiento simulado: ${paper.observed_days} días observados de 28; ${paper.elapsed_days} días transcurridos. Último ciclo: ${date(paper.health?.last_success || paper.generated_at)}. Estado: ${paper.status}. Dinero real desactivado.`
       : "Seguimiento simulado futuro: todavía sin observaciones disponibles en este panel.";
+    if (paper?.generated_at && Date.now() - Date.parse(paper.generated_at) > 36 * 3600 * 1000) {
+      el("comparison-paper").append(text("strong", " Sin observación reciente; revisa el ejecutor."));
+    }
   } catch (_) {
     el("comparison-status").textContent = "No se pudo verificar la comparación. Revisa los archivos y el servicio; no hay resultados confirmados disponibles.";
   }

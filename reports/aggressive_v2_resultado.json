@@ -1,0 +1,571 @@
+{
+  "status": "completed_candidate_rejected",
+  "result": {
+    "experiment_id": "aggressive-v2",
+    "config_sha256": "4fe0885b787d4ba341e4a8e606d4bd25aa0f2078427d1db99bba4194174381e1",
+    "mode": "paper",
+    "live_authorized": false,
+    "primary_sleeve": "crypto",
+    "evaluation": {
+      "history_start": "2019-01-01",
+      "start": "2021-01-01",
+      "end": "2026-09-26",
+      "min_complete_years": 3,
+      "min_history": 250,
+      "universe": "bitso",
+      "historical_holdout_unseen": false,
+      "forward_min_days": 28,
+      "primary_sleeve": "crypto",
+      "refresh": false
+    },
+    "execution_model": "daily_close_simulated_fee_and_slippage_no_orderbook",
+    "metrics": {
+      "0.0045": {
+        "control": {
+          "crypto": {
+            "cagr": 0.33767364863545457,
+            "sharpe": 1.1287007076102709,
+            "max_dd": -0.39479445359527676,
+            "net_return": 4.311477788978018,
+            "final_equity_usd": 2655.738894489009,
+            "cost_usd": 1322.4770660957963,
+            "turnover_usd": 293883.79246573255,
+            "turnover_multiple": 182.8833017778252,
+            "observations": 2095
+          },
+          "stocks": {
+            "cagr": 0.08196929619343796,
+            "sharpe": 0.786045768211724,
+            "max_dd": -0.21541790560993612,
+            "net_return": 0.568115870553028,
+            "final_equity_usd": 784.0579352765141,
+            "cost_usd": 0.37787261903839714,
+            "turnover_usd": 755.7452380767943,
+            "turnover_multiple": 1.4043901723747725,
+            "observations": 1439
+          },
+          "total_secondary": {
+            "cagr": 0.2401581552545975,
+            "sharpe": 1.0971670355196441,
+            "max_dd": -0.3120017076623436,
+            "net_return": 2.439796829765523,
+            "final_equity_usd": 3439.796829765523,
+            "cost_usd": 1322.8549387148346,
+            "turnover_usd": 294639.5377038093,
+            "turnover_multiple": 131.32653535483385,
+            "observations": 2095
+          }
+        },
+        "aggressive": {
+          "crypto": {
+            "cagr": 0.17076755412117572,
+            "sharpe": 0.7532789105925718,
+            "max_dd": -0.4512646451362088,
+            "net_return": 1.4717408415289248,
+            "final_equity_usd": 1235.8704207644623,
+            "cost_usd": 554.9163076746752,
+            "turnover_usd": 123314.73503881673,
+            "turnover_multiple": 80.18406083679646,
+            "observations": 2095
+          },
+          "stocks": {
+            "cagr": 0.08196929619343796,
+            "sharpe": 0.786045768211724,
+            "max_dd": -0.21541790560993612,
+            "net_return": 0.568115870553028,
+            "final_equity_usd": 784.0579352765141,
+            "cost_usd": 0.37787261903839714,
+            "turnover_usd": 755.7452380767943,
+            "turnover_multiple": 1.4043901723747725,
+            "observations": 1439
+          },
+          "total_secondary": {
+            "cagr": 0.13030840818993372,
+            "sharpe": 0.7594695531694832,
+            "max_dd": -0.3858396892444752,
+            "net_return": 1.0199283560409764,
+            "final_equity_usd": 2019.9283560409763,
+            "cost_usd": 555.2941802937135,
+            "turnover_usd": 124070.4802768935,
+            "turnover_multiple": 59.687046186367915,
+            "observations": 2095
+          }
+        }
+      },
+      "0.0060": {
+        "control": {
+          "crypto": {
+            "cagr": 0.2801047405340533,
+            "sharpe": 0.9875958220295216,
+            "max_dd": -0.4446449312629768,
+            "net_return": 3.1262907033543454,
+            "final_equity_usd": 2063.1453516771726,
+            "cost_usd": 1490.957105293742,
+            "turnover_usd": 248492.85088229037,
+            "turnover_multiple": 178.1765239168369,
+            "observations": 2095
+          },
+          "stocks": {
+            "cagr": 0.08196929619343796,
+            "sharpe": 0.786045768211724,
+            "max_dd": -0.21541790560993612,
+            "net_return": 0.568115870553028,
+            "final_equity_usd": 784.0579352765141,
+            "cost_usd": 0.37787261903839714,
+            "turnover_usd": 755.7452380767943,
+            "turnover_multiple": 1.4043901723747725,
+            "observations": 1439
+          },
+          "total_secondary": {
+            "cagr": 0.1999710285373375,
+            "sharpe": 0.9736003117679015,
+            "max_dd": -0.34707373560254084,
+            "net_return": 1.8472032869536865,
+            "final_equity_usd": 2847.2032869536865,
+            "cost_usd": 1491.3349779127802,
+            "turnover_usd": 249248.59612036715,
+            "turnover_multiple": 123.34751548512014,
+            "observations": 2095
+          }
+        },
+        "aggressive": {
+          "crypto": {
+            "cagr": 0.16100572714419803,
+            "sharpe": 0.7278051297437989,
+            "max_dd": -0.4572476714897523,
+            "net_return": 1.3557623442697273,
+            "final_equity_usd": 1177.8811721348636,
+            "cost_usd": 673.0142498252467,
+            "turnover_usd": 112169.04163754113,
+            "turnover_multiple": 77.37989150976901,
+            "observations": 2095
+          },
+          "stocks": {
+            "cagr": 0.08196929619343796,
+            "sharpe": 0.786045768211724,
+            "max_dd": -0.21541790560993612,
+            "net_return": 0.568115870553028,
+            "final_equity_usd": 784.0579352765141,
+            "cost_usd": 0.37787261903839714,
+            "turnover_usd": 755.7452380767943,
+            "turnover_multiple": 1.4043901723747725,
+            "observations": 1439
+          },
+          "total_secondary": {
+            "cagr": 0.12458670089420876,
+            "sharpe": 0.7462329008114581,
+            "max_dd": -0.3886192395073774,
+            "net_return": 0.9619391074113779,
+            "final_equity_usd": 1961.9391074113778,
+            "cost_usd": 673.3921224442852,
+            "turnover_usd": 112924.78687561792,
+            "turnover_multiple": 56.76452990143989,
+            "observations": 2095
+          }
+        }
+      },
+      "0.0100": {
+        "control": {
+          "crypto": {
+            "cagr": 0.07824439053207133,
+            "sharpe": 0.5116471677730599,
+            "max_dd": -0.4523866023046691,
+            "net_return": 0.5409473741965556,
+            "final_equity_usd": 770.4736870982778,
+            "cost_usd": 548.9621552082983,
+            "turnover_usd": 54896.21552082983,
+            "turnover_multiple": 54.284044760760644,
+            "observations": 2095
+          },
+          "stocks": {
+            "cagr": 0.08196929619343796,
+            "sharpe": 0.786045768211724,
+            "max_dd": -0.21541790560993612,
+            "net_return": 0.568115870553028,
+            "final_equity_usd": 784.0579352765141,
+            "cost_usd": 0.37787261903839714,
+            "turnover_usd": 755.7452380767943,
+            "turnover_multiple": 1.4043901723747725,
+            "observations": 1439
+          },
+          "total_secondary": {
+            "cagr": 0.0798944464665714,
+            "sharpe": 0.6730057192065174,
+            "max_dd": -0.3557078824146339,
+            "net_return": 0.5545316223747918,
+            "final_equity_usd": 1554.5316223747918,
+            "cost_usd": 549.3400278273366,
+            "turnover_usd": 55651.96075890662,
+            "turnover_multiple": 36.21903856730801,
+            "observations": 2095
+          }
+        },
+        "aggressive": {
+          "crypto": {
+            "cagr": 0.1411479646106415,
+            "sharpe": 0.6840339874564347,
+            "max_dd": -0.451648757656421,
+            "net_return": 1.1336694554602045,
+            "final_equity_usd": 1066.8347277301023,
+            "cost_usd": 722.4253111366143,
+            "turnover_usd": 72242.53111366143,
+            "turnover_multiple": 55.447107923212364,
+            "observations": 2095
+          },
+          "stocks": {
+            "cagr": 0.08196929619343796,
+            "sharpe": 0.786045768211724,
+            "max_dd": -0.21541790560993612,
+            "net_return": 0.568115870553028,
+            "final_equity_usd": 784.0579352765141,
+            "cost_usd": 0.37787261903839714,
+            "turnover_usd": 755.7452380767943,
+            "turnover_multiple": 1.4043901723747725,
+            "observations": 1439
+          },
+          "total_secondary": {
+            "cagr": 0.11322850951623376,
+            "sharpe": 0.7340725410410359,
+            "max_dd": -0.3831168541257921,
+            "net_return": 0.8508926630066163,
+            "final_equity_usd": 1850.8926630066162,
+            "cost_usd": 722.8031837556525,
+            "turnover_usd": 72998.27635173823,
+            "turnover_multiple": 39.58730164712675,
+            "observations": 2095
+          }
+        }
+      }
+    },
+    "costs": {
+      "crypto": {
+        "base": 0.0045,
+        "stress": [
+          0.006,
+          0.01
+        ]
+      },
+      "stocks": {
+        "base": 0.0005
+      }
+    },
+    "criteria": {
+      "cagr_delta_min": 0.03,
+      "sharpe_delta_min": 0.0,
+      "drawdown_delta_max": 0.05,
+      "max_drawdown_abs": 0.5,
+      "yearly_win_fraction_min": 0.5,
+      "bootstrap_n": 2000,
+      "bootstrap_block": 30,
+      "bootstrap_seed": 11,
+      "bootstrap_return_min": 0.8,
+      "bootstrap_sharpe_min": 0.8,
+      "placebo_n": 200,
+      "placebo_seed": 5,
+      "placebo_p_max": 0.05,
+      "stress_gate_cost": 0.006,
+      "stress_requires_cagr_and_sharpe_noninferiority": true,
+      "stress_informative_cost": 0.01
+    },
+    "checks": {
+      "cagr": false,
+      "sharpe": false,
+      "drawdown": false,
+      "walk_forward": false,
+      "bootstrap": false,
+      "placebo": false,
+      "cost_stress": false
+    },
+    "retrospective_checks_passed": false,
+    "ready_for_promotion": false,
+    "annual_fixed_windows": {
+      "method": "fixed_parameters_continuous_path_annual_windows",
+      "optimized": false,
+      "unseen_holdout": false,
+      "capital_reset_each_year": false,
+      "windows": [
+        {
+          "year": 2021,
+          "complete": true,
+          "observations": 365,
+          "control_return": 1.620939437374778,
+          "aggressive_return": 2.8796370882188604,
+          "aggressive_wins": true
+        },
+        {
+          "year": 2022,
+          "complete": true,
+          "observations": 365,
+          "control_return": -0.15136602144671185,
+          "aggressive_return": -0.20995035970456122,
+          "aggressive_wins": false
+        },
+        {
+          "year": 2023,
+          "complete": true,
+          "observations": 365,
+          "control_return": 0.3111071647951227,
+          "aggressive_return": -0.19358712767502595,
+          "aggressive_wins": false
+        },
+        {
+          "year": 2024,
+          "complete": true,
+          "observations": 366,
+          "control_return": 0.631164012744492,
+          "aggressive_return": 0.0,
+          "aggressive_wins": false
+        },
+        {
+          "year": 2025,
+          "complete": true,
+          "observations": 365,
+          "control_return": -0.1761056417887008,
+          "aggressive_return": 0.0,
+          "aggressive_wins": true
+        },
+        {
+          "year": 2026,
+          "complete": false,
+          "observations": 269,
+          "control_return": 0.35528495262823534,
+          "aggressive_return": 0.0,
+          "aggressive_wins": false
+        }
+      ],
+      "complete_years": 5,
+      "win_fraction": 0.4,
+      "passed": false
+    },
+    "bootstrap": {
+      "method": "paired_moving_blocks",
+      "n": 2000,
+      "block": 30,
+      "seed": 11,
+      "valid": true,
+      "undefined_sharpe_draws": 0,
+      "p_return_better": 0.2225,
+      "p_sharpe_better": 0.262,
+      "interpretation": "frecuencia bootstrap retrospectiva, no probabilidad de ganancia futura"
+    },
+    "placebo": {
+      "actual_sharpe": 0.7532789105925718,
+      "p_value": 0.12935323383084577,
+      "n": 200,
+      "seed": 5,
+      "minimum_shift_days": 90,
+      "scope": "aggressive_timing_only_not_incremental_superiority",
+      "kill_enabled": true,
+      "finite_correction": "(1 + placebo_sharpe >= actual count) / (n + 1)",
+      "passed": false
+    },
+    "causality": {
+      "status": "synthetic_prefix_tests_required_separately",
+      "verified_automatically_by_this_run": false,
+      "test_file": "tests/test_aggressive_research.py"
+    },
+    "dsr": {
+      "computed": false,
+      "reason": "incomplete global historical trial registry",
+      "declared_variants_this_run": 2,
+      "global_historical_trial_count": null
+    },
+    "stocks_identical": true,
+    "capital_rebalanced_between_sleeves": false,
+    "informative_only_cost": 0.01,
+    "limitations": [
+      "Histórico ya inspeccionado: no es un holdout no visto ni evidencia prospectiva.",
+      "Subconjunto Bitso actual retrospectivo; no hay fechas históricas verificadas de listings/delistings.",
+      "Precios históricos del proveedor de research, no cotizaciones/fills históricos exactos de Bitso.",
+      "El pipeline CoinMetrics/Yahoo puede aproximar historia temprana con capitalización escalada; el cache no conserva procedencia ni banderas de proxy por observación.",
+      "Cierre diario con costo proporcional: no reproduce libros, colas maker, fills parciales, mínimos, límites por orden ni el filtro operativo max_price_jump. No certifica equivalencia exacta con el bot.",
+      "Un kill se verifica en la siguiente decisión diaria: una caída puede superar el umbral entre cierres.",
+      "SPY/IEF usa sesiones presentes en el panel; no verifica un calendario bursátil externo.",
+      "Placebo prueba timing de la candidata en esta ventana, no superioridad incremental al control.",
+      "Bootstrap pareado describe incertidumbre retrospectiva; no garantiza resultados futuros.",
+      "No calcula DSR global: dos variantes de esta corrida no representan todos los intentos históricos.",
+      "Requiere 28 días futuros completos en paper y revisión humana; live_authorized permanece false."
+    ],
+    "run_id": "20260928T023514Z-2b88ffec",
+    "code_commit": "0541232af0ae9db2d56227c0442f0e4e4aa06401",
+    "data_quality_audit": {
+      "policy": {
+        "asset": "AVAX",
+        "available_from": "2020-09-22",
+        "evidence_sha256": "b6483adcc33ea32a162e9cd4dad52224714832a8d3abf9aff5dc55ca93848850"
+      },
+      "method": "set_preavailability_observations_missing",
+      "reference_venue": "Binance spot",
+      "bitso_listing_verified": false,
+      "evidence_verified_by_helper": false,
+      "rows_before_cutoff": 630,
+      "missing_before": 628,
+      "missing_after": 630,
+      "quarantined_count": 2,
+      "quarantine": [
+        {
+          "date": "2020-07-13",
+          "asset": "AVAX",
+          "original_value": 4.896294116973877,
+          "reason": "before_verified_reference_spot_availability"
+        },
+        {
+          "date": "2020-07-14",
+          "asset": "AVAX",
+          "original_value": 4.986753940582275,
+          "reason": "before_verified_reference_spot_availability"
+        }
+      ],
+      "raw_mutated": false,
+      "interpolation": false,
+      "price_currency_conversion": false
+    }
+  },
+  "run_directory": "reports/experiments/aggressive-v2/20260928T023514Z-2b88ffec",
+  "manifest_sha256": "0c0e4dba87a2a9b0a94a9ad19057a7508f3ab6e07c624e0ed93602681344d221",
+  "preregistration_commit": "1fe6c8c586b6a9899190b4f987807daf9134846c",
+  "code_commit": "0541232af0ae9db2d56227c0442f0e4e4aa06401",
+  "verified_artifacts": [
+    {
+      "file": "comparison.json",
+      "sha256": "253321fc0bc247cffcb3233f79e5e38d68ec5d31f5098ee88cd9a8c9dd3558e4",
+      "verified": true
+    },
+    {
+      "file": "comparison.md",
+      "sha256": "cb7affbdb2b2507fb3f0e3fdd68f61346c6233f001308f46cc7605030f990f9d",
+      "verified": true
+    },
+    {
+      "file": "curves/aggressive_crypto_0.0045.csv",
+      "sha256": "6dd504b5b96935272717f95519ae8052024b9a52d86d5ce03f2bb38d4e43568e",
+      "verified": true
+    },
+    {
+      "file": "curves/aggressive_crypto_0.0060.csv",
+      "sha256": "b4d1a2f60c75a4a9068ed53080c503fffc820d9aada3080814d3795f62b12efe",
+      "verified": true
+    },
+    {
+      "file": "curves/aggressive_crypto_0.0100.csv",
+      "sha256": "51c4a806f4ee5f97e14a6325e40c799bc65069c54de9af0a3265375bc231368b",
+      "verified": true
+    },
+    {
+      "file": "curves/aggressive_stocks.csv",
+      "sha256": "683fce1386fa8db14cbdc2008a5e83a8e1748fe1ccd5edfd6c60d364b8dc6897",
+      "verified": true
+    },
+    {
+      "file": "curves/aggressive_total_0.0045.csv",
+      "sha256": "9dd6f05081181c21819f719aa5e9a5d558a4a436d4d777255fc65c73eafffa72",
+      "verified": true
+    },
+    {
+      "file": "curves/aggressive_total_0.0060.csv",
+      "sha256": "f0346ec19a9417c7caf19d62f1ff03932d0f8bd4fceff00302e83308e1bf09a8",
+      "verified": true
+    },
+    {
+      "file": "curves/aggressive_total_0.0100.csv",
+      "sha256": "e169c65442fcbb538dedb8bd8f501390030d071748df2bfafa6b36b2c535cdbe",
+      "verified": true
+    },
+    {
+      "file": "curves/bootstrap_samples.csv",
+      "sha256": "5031d595173f7f602270cde1f8cbd998ea8ddd2feeecde3f8ae5fb54c0d7b0aa",
+      "verified": true
+    },
+    {
+      "file": "curves/control_crypto_0.0045.csv",
+      "sha256": "d55ae8ab7fe1cbd585c1d7c250cbacfe202f8ed58bec761b103df32cbb5ae9a3",
+      "verified": true
+    },
+    {
+      "file": "curves/control_crypto_0.0060.csv",
+      "sha256": "c25c141e73ba995af9ce51a141c49afad645b0fd905acbf7e87d1d8a9fe49a19",
+      "verified": true
+    },
+    {
+      "file": "curves/control_crypto_0.0100.csv",
+      "sha256": "036b9443648e5dc10aced2a0c595fc537c3d8224892f2f6a4abcd847ed42d8b2",
+      "verified": true
+    },
+    {
+      "file": "curves/control_stocks.csv",
+      "sha256": "683fce1386fa8db14cbdc2008a5e83a8e1748fe1ccd5edfd6c60d364b8dc6897",
+      "verified": true
+    },
+    {
+      "file": "curves/control_total_0.0045.csv",
+      "sha256": "64d55b1daf3130d52932187be23313608c43835a4c8de801c7d1b3f4e8614937",
+      "verified": true
+    },
+    {
+      "file": "curves/control_total_0.0060.csv",
+      "sha256": "771ec132ee9b4442054bcfcd94da19555850bce23531af7b877f9c22293b3f6c",
+      "verified": true
+    },
+    {
+      "file": "curves/control_total_0.0100.csv",
+      "sha256": "f0761ef6d10fb86d50b9135b7bca4153d8ed9cd2bfebad06fe5a90af8350b5d0",
+      "verified": true
+    },
+    {
+      "file": "curves/placebo_samples.csv",
+      "sha256": "9ada3f4a0968db7c78336cf3c3c8e272373db983ec65a8c77644646a29fbae9a",
+      "verified": true
+    },
+    {
+      "file": "data_quality_audit.json",
+      "sha256": "b3346afc0810eb38e7a6c8370e6eeaf82338f06552602deb468f921cf7e89103",
+      "verified": true
+    },
+    {
+      "file": "inputs/crypto_eligible.csv",
+      "sha256": "224d943b15c590a8666500a9958e9c8aafc6b01b82f08c3259bc191f57fb124a",
+      "verified": true
+    },
+    {
+      "file": "inputs/crypto_prices.csv",
+      "sha256": "eb888ecdf0ce33df9bfd5a7339178f4fc7dcd7079c4838c5ecf77bff8cd8870d",
+      "verified": true
+    },
+    {
+      "file": "inputs/stocks_eligible.csv",
+      "sha256": "ebb559e3a503b81a71269b44e76dbf91998c60c66563eb4a04b39f98ac49ab49",
+      "verified": true
+    },
+    {
+      "file": "inputs/stocks_prices.csv",
+      "sha256": "ea1f6da229dd8230e6601688089f0cb4369c765bd35c37ad61dd6b6e43cab552",
+      "verified": true
+    },
+    {
+      "file": "source_inputs/availability_evidence.json",
+      "sha256": "b6483adcc33ea32a162e9cd4dad52224714832a8d3abf9aff5dc55ca93848850",
+      "verified": true
+    },
+    {
+      "file": "source_inputs/parent_manifest.json",
+      "sha256": "b582bfc7f5b511cba204e3a69154b00732484b972eaff62c3f485fe04a866358",
+      "verified": true
+    },
+    {
+      "file": "source_inputs/raw_crypto_prices.csv",
+      "sha256": "40cd0a627e70b0708ffc58d13bf78e73fb1cc80c70f250c9d2f761cec5788c32",
+      "verified": true
+    },
+    {
+      "file": "source_inputs/raw_stocks_prices.csv",
+      "sha256": "302355a1c36d8a6e176418ebe03dde7663cfc15655d7fc52c808d2ac300275a5",
+      "verified": true
+    }
+  ],
+  "ledger_hash_chain_verified": true,
+  "exposure_last_nonzero": "2023-08-17",
+  "kill_brake_first_zero": "2023-08-19",
+  "promoted": false,
+  "operational_config_changed": false,
+  "live_authorized": false
+}

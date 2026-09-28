@@ -10,23 +10,50 @@ if ! command -v gcloud >/dev/null; then
   apt-get install -y google-cloud-cli
 fi
 systemctl enable --now docker
-install -d -m 0755 /etc/trading-lab /usr/local/lib/trading-lab /var/lib/trading-lab /var/log/trading-lab
-disk=/dev/disk/by-id/google-trading-state
-for attempt in $(seq 1 60); do [ -b "$disk" ] && break; sleep 2; done
-[ -b "$disk" ] || { echo 'Persistent state disk missing; refusing startup' >&2; exit 1; }
-# Format ONLY an unformatted dedicated disk; never an existing filesystem.
-if ! blkid "$disk" >/dev/null 2>&1; then
-  # Refuse unknown nonblank media instead of assuming a failed probe means empty.
-  [ -z "$(wipefs --no-act --noheadings "$disk")" ] && cmp --bytes=1048576 "$disk" /dev/zero || {
-    echo 'Unknown nonblank state disk; refusing to format' >&2; exit 1;
+install -d -m 0755 /etc/trading-lab /usr/local/lib/trading-lab /var/log/trading-lab
+mount_data_disk() {
+  local disk=$1 target=$2 uuid filesystem fstab_entry
+  [ ! -L "$target" ] || { echo 'Refusing symlink mountpoint' >&2; return 1; }
+  install -d -m 0755 "$target"
+  for attempt in $(seq 1 60); do [ -b "$disk" ] && break; sleep 2; done
+  [ -b "$disk" ] || { echo "Dedicated disk missing: $disk" >&2; return 1; }
+  # Format ONLY an unformatted dedicated disk; never an existing filesystem.
+  if ! blkid "$disk" >/dev/null 2>&1; then
+    # Refuse unknown nonblank media instead of treating a failed probe as empty.
+    [ -z "$(wipefs --no-act --noheadings "$disk")" ] && cmp --bytes=1048576 "$disk" /dev/zero || {
+      echo 'Unknown nonblank dedicated disk; refusing to format' >&2; return 1;
+    }
+    mkfs.ext4 -F "$disk"
+  fi
+  filesystem=$(blkid -s TYPE -o value "$disk")
+  [ "$filesystem" = ext4 ] || { echo 'Dedicated disk must already be ext4' >&2; return 1; }
+  uuid=$(blkid -s UUID -o value "$disk")
+  [ -n "$uuid" ] || { echo 'Dedicated disk has no UUID' >&2; return 1; }
+  fstab_entry="UUID=$uuid $target ext4 defaults,nodev,nosuid 0 2"
+  if awk -v target="$target" '$1 !~ /^#/ && $2 == target { found=1 } END { exit !found }' /etc/fstab; then
+    grep -Fxq "$fstab_entry" /etc/fstab || { echo 'Conflicting fstab entry; refusing mount' >&2; return 1; }
+  else
+    printf '%s\n' "$fstab_entry" >>/etc/fstab
+  fi
+  if ! mountpoint -q "$target"; then
+    [ -z "$(find "$target" -mindepth 1 -maxdepth 1 -print -quit)" ] || {
+      echo 'Refusing to hide files under dedicated mountpoint' >&2; return 1;
+    }
+    mount "$target"
+  fi
+  [ "$(findmnt -n -o UUID --mountpoint "$target")" = "$uuid" ] || {
+    echo 'Wrong filesystem mounted on dedicated path' >&2; return 1;
   }
-  mkfs.ext4 -F "$disk"
-fi
-uuid=$(blkid -s UUID -o value "$disk")
-grep -q "UUID=$uuid " /etc/fstab || echo "UUID=$uuid /var/lib/trading-lab ext4 defaults,nodev,nosuid 0 2" >>/etc/fstab
-mountpoint -q /var/lib/trading-lab || mount /var/lib/trading-lab
-chown 10001:10001 /var/lib/trading-lab
-chmod 0750 /var/lib/trading-lab
+  chown 10001:10001 "$target"
+  chmod 0750 "$target"
+}
+mount_data_disk /dev/disk/by-id/google-trading-state /var/lib/trading-lab
+mount_data_disk /dev/disk/by-id/google-trading-experiments /var/lib/trading-experiments
+# Storage only: experimental scripts/timers/activation markers are NOT installed.
+for directory in /var/lib/trading-experiments/aggressive-v2 /var/lib/trading-experiments/backups; do
+  [ ! -L "$directory" ] || { echo 'Refusing symlink experiment directory' >&2; exit 1; }
+  install -d -o 10001 -g 10001 -m 0700 "$directory"
+done
 cat >/etc/trading-lab/settings.conf <<'SETTINGS'
 PROJECT_ID='${project_id}'
 REGISTRY_HOST='${region}-docker.pkg.dev'

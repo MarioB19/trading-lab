@@ -19,13 +19,42 @@ docker run --rm --network none trading-lab:review python -m lab.ops --help
 
 Antes de una entrega, el árbol debe estar limpio y el SHA debe representar exactamente código probado. Las imágenes construidas durante desarrollo con cambios sin commit solo son evidencia local, no releases autorizadas. Para GCP construir `linux/amd64`; la imagen base está fijada mediante un manifest multiplataforma.
 
-Validación de esta preparación: Terraform `validate`, tres planes mock, sintaxis shell y renderizado de ambos caminos del bootstrap pasaron localmente. El intento de build Docker local se detuvo al instalar dependencias con `ENOSPC` (`No space left on device`) en el almacenamiento de Docker. No se borraron imágenes ni cachés ajenas. **La imagen final y el build AMD64 siguen pendientes** de completar en un builder con espacio disponible; las pruebas locales de Python no sustituyen esa comprobación.
+Validación de esta preparación: Terraform `validate`, tres planes mock, sintaxis shell y renderizado de ambos caminos del bootstrap pasaron localmente. Se completó una imagen OCI `linux/amd64` del snapshot `84aa5a3124cce172444cbc6bbcd296408b3ef171` y su smoke sintético sin red: UID 10001, configuración paper, panel/API, importación, integridad SQLite, checksum de backup y restauración desactivada. El error local `ENOSPC` se resolvió usando BuildKit con un disco ext4 propio en almacenamiento externo; no se reinició ni limpió el Docker compartido. **Esa prueba es preliminar**: cada entrega debe repetir build, verificación de digest/SHA y smoke sobre su commit final, incluida la attestation v2 cuando corresponda. No demuestra despliegue ni operación en GCP.
+
+### Prueba portátil del preregistro experimental
+
+La imagen puede incluir `aggressive-v2` sin `.git` y sin dependencias de investigación. Para ejecutar su comparación necesita además una attestation generada desde el checkout final limpio: demuestra que el preregistro es ancestro del código y fija los hashes del código, configuración y plan. No autoriza dinero real ni sustituye los gates de investigación o las cuatro semanas forward.
+
+Generar la prueba fuera del repositorio antes de construir. Para el experimento v2, el commit del preregistro es `1fe6c8c586b6a9899190b4f987807daf9134846c`:
+
+```bash
+RELEASE_DIR="$(mktemp -d)"
+SOURCE_SHA="$(git rev-parse HEAD)"
+python -m lab.research_attestation generate \
+  --plan configs/experiments/aggressive_v2.yaml \
+  --preregistration-commit 1fe6c8c586b6a9899190b4f987807daf9134846c \
+  --output "$RELEASE_DIR/aggressive-v2.json"
+mkdir "$RELEASE_DIR/context"
+git archive "$SOURCE_SHA" Dockerfile .dockerignore requirements-runtime.txt src config.yaml configs/experiments reports dashboard | tar -x -C "$RELEASE_DIR/context"
+mkdir -p "$RELEASE_DIR/context/reports/attestations"
+cp "$RELEASE_DIR/aggressive-v2.json" "$RELEASE_DIR/context/reports/attestations/aggressive-v2.json"
+docker build --platform linux/amd64 --build-arg SOURCE_SHA="$SOURCE_SHA" \
+  --build-arg REQUIRE_RESEARCH_ATTESTATION=true \
+  -t trading-lab:review "$RELEASE_DIR/context"
+docker run --rm --network none --read-only trading-lab:review \
+  python -m lab.research_attestation verify \
+  --plan /app/configs/experiments/aggressive_v2.yaml \
+  --preregistration-commit 1fe6c8c586b6a9899190b4f987807daf9134846c \
+  --attestation /app/reports/attestations/aggressive-v2.json
+```
+
+`.dockerignore` excluye estado operativo, secretos e históricos experimentales del envío al builder. Registrar el digest de la imagen junto con SHA, attestation y resultado de smoke fuera de la imagen. La prueba pertenece a ese SHA exacto; regenerarla tras cualquier cambio de código. El workflow manual de entrega genera la misma prueba antes de construir. Terraform prepara un disco experimental separado de 10 GiB en `/var/lib/trading-experiments`, con `aggressive-v2/` y `backups/` propiedad de UID/GID 10001, modo 0700 y sin credenciales. El bootstrap rechaza medios no reconocidos, montajes con otro UUID y directorios que ocultarían datos. Comprobar `findmnt /var/lib/trading-experiments` antes de seguir [PAPER_OPERATIONS.md](PAPER_OPERATIONS.md). Ningún servicio, timer ni marca de activación experimental se instala automáticamente. Los backups experimentales locales requieren además una copia fuera de ese disco para tolerar su pérdida.
 
 ## 2. Conexión posterior y presupuesto
 
 El operador conecta la cuenta prevista y proporciona proyecto existente, billing account y canales Monitoring. No crear un proyecto o cambiar cuenta activa por inferencia. Verificar **Billing → Credits**: saldo disponible, fecha final y servicios cubiertos; el coste de lista sigue existiendo tras acabar los créditos.
 
-La propuesta usa e2-medium, boot 10 GiB, estado 30 GiB, IPv4 estática y backups GCS: base aproximada **32.11 USD/mes**, objetivo **35–45 USD** con consumo moderado. Son precios us-central1, 730 h/mes, antes de impuestos/FX/créditos; detalles en [GCP_ARCHITECTURE.md](GCP_ARCHITECTURE.md). Evitar Cloud SQL, NAT gateway y balanceador en esta fase. Investigar en un entorno separado para no consumir RAM del worker.
+La propuesta usa e2-medium, boot 10 GiB, estado 30 GiB, disco experimental separado de 10 GiB, IPv4 estática y backups GCS: base aproximada **32.51 USD/mes**, objetivo **35–45 USD** con consumo moderado. Son precios us-central1, 730 h/mes, antes de impuestos/FX/créditos; detalles en [GCP_ARCHITECTURE.md](GCP_ARCHITECTURE.md). Evitar Cloud SQL, NAT gateway y balanceador en esta fase. Investigar en un entorno separado para no consumir RAM del worker.
 
 La configuración Terraform **no inicia sesión**. Cuando el operador haya conectado sus credenciales para Terraform y gcloud por su flujo habitual, preparar `infra/gcp/terraform.tfvars` a partir del ejemplo. Verificar moneda de billing si se habilita el presupuesto USD. Los budgets definidos son alertas al 50/80/100% de 60 USD, calculadas antes de créditos; no un freno automático.
 

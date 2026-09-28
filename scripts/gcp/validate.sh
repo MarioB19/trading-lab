@@ -9,3 +9,4 @@ for script in "$root"/scripts/gcp/*.sh "$root"/scripts/gcp/host/*.sh; do bash -n
 "$terraform_bin" -chdir="$root/infra/gcp" validate
 "$terraform_bin" -chdir="$root/infra/gcp" test -no-color
 python3 "$root/scripts/gcp/check_invariants.py"
+python3 "$root/scripts/gcp/check_mount.py"

@@ -409,3 +409,108 @@ def test_non_usd_provenance_rejected_before_reading_inputs(experiment, monkeypat
     with pytest.raises(ResearchGateError, match="USD"):
         experiment["run"](provenance={"crypto": {"quote": "MXN"}})
     assert not experiment["directory"].exists()
+
+
+def test_explicit_v2_plan_persists_exact_identity_and_proof(experiment, monkeypatch):
+    plan = copy.deepcopy(experiment['plan'])
+    plan['experiment_id'] = 'aggressive-v2'
+    variants = paper.comparison_plan()[1]
+    chosen = experiment['root'] / 'v2.yaml'
+    chosen.write_text(yaml.safe_dump(plan))
+    prereg = experiment['prereg']
+    meta = yaml.safe_load(prereg.read_text().split('---', 2)[1])
+    meta.update(experiment_id='aggressive-v2', config_sha256=canonical_hash(plan))
+    prereg.write_text('---\n' + yaml.safe_dump(meta) + '---\nV2 synthetic integrity only.\n')
+    git(experiment['root'], 'add', '.')
+    git(experiment['root'], 'commit', '-m', 'v2 preregistration')
+    commit = git(experiment['root'], 'rev-parse', 'HEAD')
+    (experiment['root'] / 'code.py').write_text('# v2 implementation\n')
+    git(experiment['root'], 'add', '.')
+    git(experiment['root'], 'commit', '-m', 'v2 implementation')
+    calls = []
+    def load(path):
+        calls.append(path)
+        assert path == chosen
+        return copy.deepcopy(plan), copy.deepcopy(variants)
+    monkeypatch.setattr(paper, 'comparison_plan', load)
+    report = paper.run_once(commit, experiment['directory'], experiment['paths']['crypto'],
+                            experiment['paths']['stocks'], plan_path=chosen)
+    assert report['experiment_id'] == 'aggressive-v2'
+    assert report['config_sha256'] == canonical_hash(plan)
+    assert report['preregistration']['commit'] == commit
+    assert report['code_commit'] == git(experiment['root'], 'rev-parse', 'HEAD')
+    assert paper.status(experiment['directory'], chosen)['preregistration'] == report['preregistration']
+    assert paper.status(experiment['directory'])['experiment_id'] == 'aggressive-v2'
+    assert calls == [chosen, chosen]
+
+
+def test_status_rejects_plan_hash_or_proof_tampering(experiment):
+    experiment['run']()
+    store = SQLiteStore(experiment['directory'] / paper.DB_NAME)
+    marker = store.read_document('comparison_manifest')
+    marker['plan']['experiment_id'] = 'aggressive-v2'
+    store.write_document('comparison_manifest', marker)
+    with pytest.raises(ResearchGateError, match='hash|identidad|inconsistente'):
+        paper.status(experiment['directory'])
+
+
+def test_attestation_cannot_bypass_dirty_git_checkout(experiment, monkeypatch):
+    monkeypatch.setattr(paper, '_inputs', lambda *a, **k: pytest.fail('input read before gate'))
+    with pytest.raises(ResearchGateError, match='sin .git'):
+        experiment['run'](attestation=experiment['root'] / 'missing-proof.json')
+    assert not experiment['directory'].exists()
+
+
+def test_image_attestation_runs_synthetic_pair_without_git_or_external_broker(experiment, monkeypatch, tmp_path):
+    import shutil
+    from lab.research_attestation import generate_attestation
+    root = experiment['root']
+    plan, variants = paper.comparison_plan()
+    (root / 'src/lab').mkdir(parents=True)
+    (root / 'src/lab/code.py').write_text('# packaged synthetic source\n')
+    (root / 'config.yaml').write_text('mode: paper\n')
+    plan_path = root / 'plan.yaml'
+    plan_path.write_text(yaml.safe_dump(plan))
+    git(root, 'add', '.')
+    git(root, 'commit', '-m', 'packaged source fixture')
+    head = git(root, 'rev-parse', 'HEAD')
+    proof = generate_attestation(root, plan_path, experiment['prereg'], experiment['commit'], plan, variants)
+    image = tmp_path / 'image'
+    shutil.copytree(root, image, ignore=shutil.ignore_patterns('.git'))
+    proof_path = image / 'attestation.json'
+    proof_path.write_text(json.dumps(proof))
+    monkeypatch.setattr(paper, 'ROOT', image)
+    monkeypatch.setattr(paper, 'PLAN_PATH', image / 'plan.yaml')
+    monkeypatch.setattr(paper, 'preregistration_path', lambda p: image / 'prereg.md')
+    monkeypatch.setenv('TRADING_LAB_BUILD_ID', head)
+    monkeypatch.setattr(paper, 'verify_preregistration', lambda *a, **k: pytest.fail('image called Git gate'))
+    report = experiment['run'](attestation=proof_path)
+    assert report['preregistration']['proof_kind'] == 'git-content-ancestry-v1'
+    assert report['preregistration']['attestation_sha256'] == canonical_hash(proof)
+    assert report['observed_days'] == 1 and report['live_authorized'] is False
+    assert experiment['run'](attestation=proof_path) == report
+
+
+@pytest.mark.parametrize('block', paper.BLOCKS)
+def test_internal_price_gap_blocks_pair_without_imputation(experiment, block):
+    path = experiment['paths'][block]
+    data = pd.read_csv(path, index_col=0)
+    asset = data.columns[0]
+    date = data.index[100]
+    data.iloc[100, 0] = np.nan
+    data.to_csv(path)
+    with pytest.raises(ResearchGateError, match=f'{block}/{asset}: cierre ausente {date}'):
+        experiment['run']()
+    store = SQLiteStore(experiment['directory'] / paper.DB_NAME)
+    assert store.rows('trades') == []
+    assert store.rows('equity') == []
+
+
+@pytest.mark.parametrize('block', paper.BLOCKS)
+def test_leading_unavailable_prices_remain_allowed_without_filling(experiment, block):
+    sc = experiment['plan']['portfolios']['control'][block]
+    data = pd.read_csv(experiment['paths'][block], index_col=0)
+    data.iloc[:3, 0] = np.nan
+    result = paper.validate_prices(data.to_csv().encode(), block, sc, experiment['clock']['now'])
+    assert result.iloc[:3, 0].isna().all()
+    assert result.iloc[3:, 0].notna().all()

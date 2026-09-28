@@ -1,0 +1,18 @@
+[Unit]
+Description=Isolated preregistered paper comparison (public prices only)
+Requires=docker.service
+After=docker.service network-online.target
+Wants=network-online.target
+RequiresMountsFor=/var/lib/trading-experiments
+ConditionPathExists=/etc/trading-lab-paper/release.json
+ConditionPathExists=/etc/trading-lab-paper/aggressive-v2.enabled
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/lib/trading-lab-paper/run.sh
+TimeoutStartSec=1200
+TimeoutStopSec=60
+UMask=0077
+NoNewPrivileges=true
+
+# Intentionally no [Install]: manually enable its timer only after acceptance.

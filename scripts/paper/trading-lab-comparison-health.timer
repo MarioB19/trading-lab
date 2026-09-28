@@ -1,0 +1,11 @@
+[Unit]
+Description=Check isolated paper every fifteen minutes
+
+[Timer]
+OnCalendar=*-*-* *:00/15:00 UTC
+Persistent=true
+RandomizedDelaySec=0
+Unit=trading-lab-comparison-health.service
+
+[Install]
+WantedBy=timers.target

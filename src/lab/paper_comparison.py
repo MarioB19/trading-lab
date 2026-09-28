@@ -24,7 +24,7 @@ from uuid import uuid4
 import numpy as np
 import pandas as pd
 
-from .aggressive_plan import (EXPERIMENT_ID, EXPERIMENT_IDS, PREREGISTRATION, assert_current_control,
+from .aggressive_plan import (EXPERIMENT_ID, EXPERIMENT_IDS, PLAN_PATH, PREREGISTRATION, assert_current_control,
                               comparison_plan, isolated_directory, preregistration_path)
 from .bot import equity_history, fetch_prices, latest_closed_candle, run_sleeve
 from .brokers import SimBroker
@@ -76,7 +76,7 @@ def _store(path: Path, plan: dict, variants: list[dict], proof: dict, now: pd.Ti
         if (marker.get("type") != IDENTITY or marker.get("experiment_id") != plan["experiment_id"]
                 or marker.get("config_sha256") != canonical_hash(plan)
                 or marker.get("code_commit") != proof["code_commit"]
-                or marker.get("preregistration", {}).get("sha256") != proof["sha256"]):
+                or marker.get("preregistration") != proof):
             raise ResearchGateError("la base no pertenece a este experimento y versión exactos")
         return SQLiteStore(database)
     store = SQLiteStore(database)
@@ -126,6 +126,12 @@ def validate_prices(raw: bytes, block: str, sc: dict, now: pd.Timestamp) -> pd.D
         raise ResearchGateError(f"{block}: precios no positivos o infinitos")
     if frame[required].iloc[-1].isna().any() or (frame[required].notna().sum() < 250).any():
         raise ResearchGateError(f"{block}: cada activo requiere 250 precios y cierre actual válido")
+    for asset in required:
+        first = frame[asset].first_valid_index()
+        missing = frame.loc[first:, asset].isna()
+        if missing.any():
+            date = missing.index[missing][0].date().isoformat()
+            raise ResearchGateError(f"{block}/{asset}: cierre ausente {date} tras el primer precio; no se imputan precios")
     expected = latest_closed_candle(sc, now.tz_convert("UTC").tz_localize(None))
     if frame.index[-1] > expected:
         raise ResearchGateError(f"{block}: hay velas futuras o todavía abiertas")
@@ -376,11 +382,19 @@ def status(data_dir: Path, plan_path: Path | None = None) -> dict:
 
 def run_once(preregistration_commit: str, data_dir: Path, crypto_prices: Path | None = None,
              stocks_prices: Path | None = None, provenance: dict | None = None, *, fetch: bool = False,
-             plan_path: Path | None = None) -> dict:
+             plan_path: Path | None = None, attestation: Path | None = None) -> dict:
     """Run one current pair. No historical date override is accepted."""
     plan, variants = comparison_plan(plan_path) if plan_path is not None else comparison_plan()
-    proof = verify_preregistration(ROOT, preregistration_path(plan), preregistration_commit, plan["experiment_id"],
-                                   plan, [variant["id"] for variant in variants])
+    if attestation is None:
+        proof = verify_preregistration(ROOT, preregistration_path(plan), preregistration_commit, plan["experiment_id"],
+                                       plan, [variant["id"] for variant in variants])
+    else:
+        if (ROOT / ".git").exists():
+            raise ResearchGateError("attestation es exclusiva de imágenes sin .git; el checkout exige su gate Git")
+        from .research_attestation import verify_attestation
+        proof = verify_attestation(ROOT, attestation, plan_path if plan_path is not None else PLAN_PATH,
+                                   preregistration_path(plan), preregistration_commit, plan,
+                                   [variant["id"] for variant in variants])
     assert_current_control(plan)
     if provenance is not None and (not isinstance(provenance, dict)
             or set(provenance) - set(BLOCKS)
@@ -487,6 +501,7 @@ def main(argv=None):
     action.add_argument("--describe", action="store_true")
     parser.add_argument("--preregistration-commit")
     parser.add_argument("--plan", type=Path, help="plan preregistrado v1/v2; por defecto aggressive_v1.yaml")
+    parser.add_argument("--attestation", type=Path, help="prueba Git de imagen sin .git; exige BUILD_ID exacto")
     parser.add_argument("--data-dir", type=Path)
     parser.add_argument("--crypto-prices", type=Path)
     parser.add_argument("--stocks-prices", type=Path)
@@ -509,7 +524,8 @@ def main(argv=None):
         # Only descriptive provenance is read here; market CSVs and network remain behind the gate.
         provenance = json.loads(args.provenance.read_text()) if args.provenance else None
         report = run_once(args.preregistration_commit, args.data_dir, args.crypto_prices,
-                          args.stocks_prices, provenance, fetch=args.fetch, plan_path=args.plan)
+                          args.stocks_prices, provenance, fetch=args.fetch, plan_path=args.plan,
+                          attestation=args.attestation)
         print(_markdown(report))
         print(f"Evidencia: {args.data_dir / 'comparison.json'}")
         return 0

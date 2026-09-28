@@ -1,0 +1,6 @@
+{
+  "mode": "paper",
+  "image": "REGION-docker.pkg.dev/PROJECT/trading-lab/runtime@sha256:REPLACE_WITH_VERIFIED_IMAGE_DIGEST",
+  "code_commit": "REPLACE_WITH_FULL_VERIFIED_CODE_SHA",
+  "preregistration_commit": "1fe6c8c586b6a9899190b4f987807daf9134846c"
+}

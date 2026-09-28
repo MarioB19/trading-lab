@@ -1,6 +1,11 @@
 name: gcp-image-delivery
 on:
   workflow_dispatch:
+    inputs:
+      preregistration_commit:
+        description: 'SHA completo del preregistro aprobado aggressive-v2, anterior al código'
+        required: true
+        type: string
 permissions:
   contents: read
   id-token: write
@@ -14,11 +19,20 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - uses: actions/setup-python@v5
         with:
           python-version: '3.13'
       - run: pip install -r requirements-dev.lock.txt && pip install --no-deps -e .
       - run: python -m pytest -q -W ignore
+      - name: Verify preregistration and freeze image proof
+        env:
+          PREREGISTRATION_COMMIT: ${{ inputs.preregistration_commit }}
+        run: |
+          python -m lab.research_attestation generate --plan configs/experiments/aggressive_v2.yaml --preregistration-commit "$PREREGISTRATION_COMMIT" --output "$RUNNER_TEMP/aggressive-v2.json"
+          mkdir -p reports/attestations
+          cp "$RUNNER_TEMP/aggressive-v2.json" reports/attestations/aggressive-v2.json
       - uses: google-github-actions/auth@v2
         id: auth
         with:
@@ -39,7 +53,9 @@ jobs:
           platforms: linux/amd64
           push: true
           tags: ${{ vars.GCP_REGION }}-docker.pkg.dev/${{ vars.GCP_PROJECT_ID }}/trading-lab/runtime:${{ github.sha }}
-          build-args: SOURCE_SHA=${{ github.sha }}
+          build-args: |
+            SOURCE_SHA=${{ github.sha }}
+            REQUIRE_RESEARCH_ATTESTATION=true
           provenance: mode=max
           sbom: true
       - name: Record immutable release for manual review
