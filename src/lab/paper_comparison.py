@@ -24,8 +24,8 @@ from uuid import uuid4
 import numpy as np
 import pandas as pd
 
-from .aggressive_plan import (EXPERIMENT_ID, PREREGISTRATION, assert_current_control,
-                              comparison_plan, isolated_directory)
+from .aggressive_plan import (EXPERIMENT_ID, EXPERIMENT_IDS, PREREGISTRATION, assert_current_control,
+                              comparison_plan, isolated_directory, preregistration_path)
 from .bot import equity_history, fetch_prices, latest_closed_candle, run_sleeve
 from .brokers import SimBroker
 from .data import ROOT
@@ -73,14 +73,14 @@ def _store(path: Path, plan: dict, variants: list[dict], proof: dict, now: pd.Ti
     database = path / DB_NAME
     if database.exists():
         marker = _read_only(database, "comparison_manifest", {})
-        if (marker.get("type") != IDENTITY or marker.get("experiment_id") != EXPERIMENT_ID
+        if (marker.get("type") != IDENTITY or marker.get("experiment_id") != plan["experiment_id"]
                 or marker.get("config_sha256") != canonical_hash(plan)
                 or marker.get("code_commit") != proof["code_commit"]
                 or marker.get("preregistration", {}).get("sha256") != proof["sha256"]):
             raise ResearchGateError("la base no pertenece a este experimento y versión exactos")
         return SQLiteStore(database)
     store = SQLiteStore(database)
-    manifest = {"type": IDENTITY, "experiment_id": EXPERIMENT_ID,
+    manifest = {"type": IDENTITY, "experiment_id": plan["experiment_id"],
                 "run_id": uuid4().hex, "created_at": now.isoformat(),
                 "config_sha256": canonical_hash(plan), "code_commit": proof["code_commit"],
                 "preregistration": proof, "plan": plan, "variants": variants,
@@ -270,8 +270,9 @@ def _report(manifest, state, snapshots, trades, history, now, captures):
         if missing > 0:
             gaps.append({"after_candle": left, "before_candle": right, "missing_daily_decisions": missing})
     paper_complete = observed_days >= 28 and elapsed >= 28 and not gaps
-    return {"experiment_id": EXPERIMENT_ID, "run_id": manifest["run_id"], "mode": "paper",
+    return {"experiment_id": manifest["experiment_id"], "run_id": manifest["run_id"], "mode": "paper",
             "config_sha256": manifest["config_sha256"], "code_commit": manifest["code_commit"],
+            "preregistration": manifest["preregistration"],
             "generated_at": now.isoformat(), "started_at": started, "ended_at": now.isoformat(),
             "status": ("incomplete_observation_gaps" if gaps else "paper_observed_28_days"
                        if paper_complete else "collecting_forward_observations"),
@@ -341,17 +342,30 @@ def _export(path, report):
         temporary.replace(target)
 
 
-def status(data_dir: Path) -> dict:
+def status(data_dir: Path, plan_path: Path | None = None) -> dict:
     """Read existing evidence only. Does not initialize or run any strategy."""
     path = isolated_directory(data_dir)
+    selected = comparison_plan(plan_path)[0] if plan_path is not None else None
     database = path / DB_NAME
     if not database.is_file():
-        return {"experiment_id": EXPERIMENT_ID, "status": "not_started", "live_authorized": False}
+        return {"experiment_id": selected["experiment_id"] if selected else EXPERIMENT_ID,
+                "status": "not_started", "live_authorized": False}
     manifest = _read_only(database, "comparison_manifest", {})
-    if manifest.get("type") != IDENTITY or manifest.get("experiment_id") != EXPERIMENT_ID:
+    if manifest.get("type") != IDENTITY or manifest.get("experiment_id") not in EXPERIMENT_IDS:
         raise ResearchGateError("no es una comparación paper registrada")
-    result = _read_only(database, "comparison", {"experiment_id": EXPERIMENT_ID,
+    if (manifest.get("config_sha256") != canonical_hash(manifest.get("plan"))
+            or manifest.get("code_commit") != manifest.get("preregistration", {}).get("code_commit")
+            or (selected is not None and (manifest["experiment_id"] != selected["experiment_id"]
+                                          or manifest["config_sha256"] != canonical_hash(selected)))):
+        raise ResearchGateError("identidad, plan o prueba de preregistro de la base no coinciden")
+    result = _read_only(database, "comparison", {"experiment_id": manifest["experiment_id"],
                                                 "status": "awaiting_first_pair", "live_authorized": False})
+    for field in ("config_sha256", "code_commit", "preregistration"):
+        if field in result and result[field] != manifest[field]:
+            raise ResearchGateError("el resultado no corresponde al manifiesto de la comparación")
+        result[field] = manifest[field]
+    if result["experiment_id"] != manifest["experiment_id"]:
+        raise ResearchGateError("el resultado pertenece a otro experimento")
     health = _read_only(database, "comparison_health", {})
     result["health"] = health
     if health.get("status") == "error":
@@ -361,10 +375,11 @@ def status(data_dir: Path) -> dict:
 
 
 def run_once(preregistration_commit: str, data_dir: Path, crypto_prices: Path | None = None,
-             stocks_prices: Path | None = None, provenance: dict | None = None, *, fetch: bool = False) -> dict:
+             stocks_prices: Path | None = None, provenance: dict | None = None, *, fetch: bool = False,
+             plan_path: Path | None = None) -> dict:
     """Run one current pair. No historical date override is accepted."""
-    plan, variants = comparison_plan()
-    proof = verify_preregistration(ROOT, PREREGISTRATION, preregistration_commit, EXPERIMENT_ID,
+    plan, variants = comparison_plan(plan_path) if plan_path is not None else comparison_plan()
+    proof = verify_preregistration(ROOT, preregistration_path(plan), preregistration_commit, plan["experiment_id"],
                                    plan, [variant["id"] for variant in variants])
     assert_current_control(plan)
     if provenance is not None and (not isinstance(provenance, dict)
@@ -438,7 +453,7 @@ def run_once(preregistration_commit: str, data_dir: Path, crypto_prices: Path | 
             history.append(entry)
             ticks[pair] = entry
             snapshot = {"generated": now.isoformat(), "mode": "paper", "sleeves": snapshots,
-                        "experiment_id": EXPERIMENT_ID, "live_authorized": False}
+                        "experiment_id": plan["experiment_id"], "live_authorized": False}
             with store.transaction() as db:
                 store._write(db, "state", state)
                 store._rows(db, "trades", trades)
@@ -471,6 +486,7 @@ def main(argv=None):
     action.add_argument("--status", action="store_true")
     action.add_argument("--describe", action="store_true")
     parser.add_argument("--preregistration-commit")
+    parser.add_argument("--plan", type=Path, help="plan preregistrado v1/v2; por defecto aggressive_v1.yaml")
     parser.add_argument("--data-dir", type=Path)
     parser.add_argument("--crypto-prices", type=Path)
     parser.add_argument("--stocks-prices", type=Path)
@@ -479,21 +495,21 @@ def main(argv=None):
     args = parser.parse_args(argv)
     try:
         if args.describe:
-            plan, variants = comparison_plan()
+            plan, variants = comparison_plan(args.plan) if args.plan is not None else comparison_plan()
             print(json.dumps({"plan": plan, "variants": variants, "config_sha256": canonical_hash(plan),
                               "status": "declared_not_run", "live_authorized": False}, ensure_ascii=False, indent=2))
             return 0
         if not args.data_dir:
             parser.error("se requiere --data-dir dedicado")
         if args.status:
-            print(json.dumps(status(args.data_dir), ensure_ascii=False, indent=2))
+            print(json.dumps(status(args.data_dir, args.plan), ensure_ascii=False, indent=2))
             return 0
         if not args.preregistration_commit:
             parser.error("se requiere --preregistration-commit")
         # Only descriptive provenance is read here; market CSVs and network remain behind the gate.
         provenance = json.loads(args.provenance.read_text()) if args.provenance else None
         report = run_once(args.preregistration_commit, args.data_dir, args.crypto_prices,
-                          args.stocks_prices, provenance, fetch=args.fetch)
+                          args.stocks_prices, provenance, fetch=args.fetch, plan_path=args.plan)
         print(_markdown(report))
         print(f"Evidencia: {args.data_dir / 'comparison.json'}")
         return 0

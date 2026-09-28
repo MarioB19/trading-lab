@@ -55,6 +55,7 @@ def experiment(tmp_path, monkeypatch):
     git(root, "commit", "-m", "synthetic code after registration")
     monkeypatch.setattr(paper, "ROOT", root)
     monkeypatch.setattr(paper, "PREREGISTRATION", prereg)
+    monkeypatch.setattr(paper, "preregistration_path", lambda plan: prereg)
     monkeypatch.setattr(paper, "comparison_plan", lambda: (copy.deepcopy(plan), copy.deepcopy(variants)))
     monkeypatch.setattr(paper, "assert_current_control", lambda p: None)
     clock = {"now": pd.Timestamp("2026-09-28T02:00:00Z")}

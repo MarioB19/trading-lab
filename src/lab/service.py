@@ -3,6 +3,7 @@ from __future__ import annotations
 
 import argparse
 from contextlib import closing
+import hashlib
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import math
@@ -90,7 +91,40 @@ class Reader:
                 f"SELECT payload FROM {table} ORDER BY rowid DESC LIMIT ?", (limit,))]
 
 
-def make_server(data_dir: Path, host="127.0.0.1", port=8080):
+def comparison_status(paper_dir: Path | None, research_dir: Path | None) -> dict:
+    """Read dedicated evidence; never choose a winner or run a strategy."""
+    result = {"paper": {"status": "not_configured"}, "research": {"status": "not_configured"},
+              "live_authorized": False}
+    if paper_dir is not None:
+        from .paper_comparison import status
+        result["paper"] = status(paper_dir)
+    if research_dir is not None:
+        directory = Path(research_dir).resolve()
+        manifest_path, report_path = directory / "manifest.json", directory / "comparison.json"
+        if manifest_path.is_symlink() or report_path.is_symlink():
+            raise ValueError("Los resultados no pueden ser enlaces simbólicos")
+        manifest = json.loads(manifest_path.read_bytes())
+        if manifest.get("status") != "completed":
+            result["research"] = {"status": manifest.get("status", "unverified"),
+                                  "run_id": manifest.get("run_id")}
+        else:
+            raw = report_path.read_bytes()
+            expected = next((item["sha256"] for item in manifest.get("artifacts", [])
+                             if item["file"] == "comparison.json"), None)
+            report = json.loads(raw)
+            if (hashlib.sha256(raw).hexdigest() != expected
+                    or report.get("run_id") != manifest.get("run_id")
+                    or report.get("experiment_id") != manifest.get("experiment_id")
+                    or report.get("experiment_id") not in {"aggressive-v1", "aggressive-v2"}
+                    or report.get("mode") != "paper"
+                    or report.get("live_authorized") is not False):
+                raise ValueError("La comparación no conserva su identidad e integridad")
+            result["research"] = {"status": "completed", "report": report}
+    return result
+
+
+def make_server(data_dir: Path, host="127.0.0.1", port=8080, *, comparison_dir: Path | None = None,
+                research_dir: Path | None = None):
     reader = Reader(data_dir)
 
     class Handler(BaseHTTPRequestHandler):
@@ -123,6 +157,11 @@ def make_server(data_dir: Path, host="127.0.0.1", port=8080):
                 if url.path in {"/readyz", "/api/status"}:
                     status = reader.status()
                     return self.send(200 if url.path == "/api/status" or status["ready"] else 503, status)
+                if url.path == "/api/comparison":
+                    try:
+                        return self.send(200, comparison_status(comparison_dir, research_dir))
+                    except (ValueError, OSError, sqlite3.Error):
+                        return self.send(503, {"error": "Comparación no disponible o integridad no verificada"})
                 if url.path.startswith("/api/"):
                     try:
                         limit = int(parse_qs(url.query).get("limit", ["100"])[0])
@@ -152,8 +191,11 @@ def main(argv=None):
     parser.add_argument("--data-dir", type=Path, required=True)
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8080)
+    parser.add_argument("--comparison-dir", type=Path, help="SQLite paper experimental, lectura exclusiva")
+    parser.add_argument("--research-dir", type=Path, help="corrida histórica congelada para mostrar sus resultados")
     args = parser.parse_args(argv)
-    with make_server(args.data_dir, args.host, args.port) as server:
+    with make_server(args.data_dir, args.host, args.port, comparison_dir=args.comparison_dir,
+                     research_dir=args.research_dir) as server:
         server.serve_forever()
 
 

@@ -29,6 +29,19 @@ class JournalBroker:
         if state.get('account_namespace') not in (None, self.namespace):
             raise RuntimeError('la identidad de cuenta cambió; requiere migración explícita')
         with store.transaction() as db:
+            if getattr(broker, 'account_identity_version', None) == 1:
+                provider_prefix = 'ledger:' + broker.name + ':'
+                stable_prefix = provider_prefix + 'account-id-v1:'
+                # A crash may leave an old ledger before state.account_namespace
+                # was checkpointed. Never allocate again under a new identity.
+                namespaces = [row[0] for row in db.execute(
+                    'SELECT name FROM documents WHERE substr(name,1,?)=?',
+                    (len(provider_prefix), provider_prefix))]
+                namespaces += [row[0] for row in db.execute(
+                    'SELECT DISTINCT namespace FROM orders WHERE substr(namespace,1,?)=?',
+                    (len(provider_prefix), provider_prefix))]
+                if any(not namespace.startswith(stable_prefix) for namespace in namespaces):
+                    raise RuntimeError('ledger con identidad legacy de este proveedor/entorno: requiere migración explícita, no se asigna efectivo')
             ledger = store._read(db, self.namespace)
             if ledger is None:
                 if state.get('last_candle') and ('sleeve_cash' in state or state.get('ledger')):

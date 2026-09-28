@@ -71,8 +71,49 @@ async function fetchJson(path) {
   return response.json();
 }
 
+async function comparison() {
+  const target = el("comparison");
+  target.replaceChildren();
+  el("comparison-checks").textContent = "";
+  el("comparison-paper").textContent = "";
+  try {
+    const data = await fetchJson("/api/comparison");
+    const report = data.research?.report;
+    el("comparison-status").textContent = report
+      ? "Comparación histórica terminada, después de costos. El histórico ya fue inspeccionado; no garantiza ganancias futuras."
+      : "Comparación histórica: " + (data.research?.status === "not_configured" ? "pendiente de enlazar el informe." : data.research?.status);
+    if (report) {
+      const base = report.metrics["0.0045"];
+      for (const role of ["control", "aggressive"]) {
+        const values = base?.[role]?.crypto;
+        if (!values) continue;
+        const card = text("article", null, "sleeve");
+        card.replaceChildren(text("h3", role === "control" ? "Control · top 5 / 40%" : "Agresiva · top 3 / 60%"));
+        const dl = document.createElement("dl");
+        for (const [label, value] of [["CAGR neto cripto", `${(values.cagr * 100).toFixed(2)}%`],
+          ["Caída máxima", `${(values.max_dd * 100).toFixed(2)}%`], ["Sharpe", values.sharpe.toFixed(3)],
+          ["Capital final cripto", money(values.final_equity_usd)], ["Costos modelados", money(values.cost_usd)]]) {
+          dl.append(text("dt", label), text("dd", value));
+        }
+        card.append(dl); target.append(card);
+      }
+      const failed = Object.entries(report.checks).filter(([, passed]) => !passed).map(([name]) => name);
+      el("comparison-checks").textContent = failed.length
+        ? `La candidata no supera todos los criterios. Fallan: ${failed.join(", ")}. No se promueve.`
+        : "Supera los criterios retrospectivos registrados. Aún requiere validación prospectiva y revisión humana.";
+    }
+    const paper = data.paper;
+    el("comparison-paper").textContent = paper?.observed_days != null
+      ? `Seguimiento simulado: ${paper.observed_days} días observados de 28; ${paper.elapsed_days} días transcurridos. Estado: ${paper.status}. Dinero real desactivado.`
+      : "Seguimiento simulado futuro: todavía sin observaciones disponibles en este panel.";
+  } catch (_) {
+    el("comparison-status").textContent = "No se pudo verificar la comparación. Revisa los archivos y el servicio; no hay resultados confirmados disponibles.";
+  }
+}
+
 async function refresh() {
   el("refresh").disabled = true;
+  const comparisonUpdate = comparison();
   try {
     const [status, orders, trades, events] = await Promise.all([
       fetchJson("/api/status"), fetchJson("/api/orders"),
@@ -103,6 +144,7 @@ async function refresh() {
     el("status").textContent = `Conexión no disponible. ${error.message}. Los datos visibles pueden estar desactualizados.`;
     el("status").className = "status error";
   } finally {
+    await comparisonUpdate;
     el("refresh").disabled = false;
   }
 }

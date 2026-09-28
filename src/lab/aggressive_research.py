@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import argparse
 from dataclasses import replace
+import hashlib
+import io
 import json
 from pathlib import Path
 from typing import Callable
@@ -15,8 +17,9 @@ from typing import Callable
 import numpy as np
 import pandas as pd
 
-from .aggressive_plan import (EXPERIMENT_ID, PREREGISTRATION, assert_current_control,
-                              comparison_plan, isolated_directory, validate_registered_variants)
+from .aggressive_plan import (assert_current_control,
+                              comparison_plan, isolated_directory, validate_registered_variants,
+                              preregistration_path, AVAILABILITY_EVIDENCE)
 from .backtest import sharpe
 from .data import ROOT
 from .experiments import ExperimentRun, ResearchGateError, canonical_hash
@@ -68,8 +71,8 @@ def prepare_panels(plan: dict, crypto: pd.DataFrame, eligible: pd.DataFrame,
     return crypto, eligible, stocks
 
 
-def availability(prices: pd.DataFrame, sleeve: str) -> dict:
-    return {"scope": "fixed_bitso_subset" if sleeve == "crypto" else "identical_SPY_IEF",
+def availability(prices: pd.DataFrame, sleeve: str, plan: dict | None = None) -> dict:
+    result = {"scope": "fixed_bitso_subset" if sleeve == "crypto" else "identical_SPY_IEF",
             "historical_listings_verified": False,
             "source": "research_multi.load_sleeve cached historical panel",
             "source_pipeline_expected": "CoinMetrics/Yahoo with possible market-cap proxy" if sleeve == "crypto"
@@ -82,6 +85,12 @@ def availability(prices: pd.DataFrame, sleeve: str) -> dict:
             "missing_assets": [asset for asset in prices if prices[asset].notna().sum() == 0],
             "first_observed_close": {asset: str(prices[asset].first_valid_index()) for asset in prices},
             "limitations": LIMITATIONS[:6]}
+    if plan and "source_snapshot" in plan:
+        result.update(source="pinned_original_run_snapshot", source_run_id=plan["source_snapshot"]["run_id"],
+                      raw_sha256=plan["source_snapshot"][sleeve]["sha256"])
+        if sleeve == "crypto":
+            result["availability_policy"] = plan["availability_policy"]
+    return result
 
 
 def validate_panels(plan: dict, crypto: pd.DataFrame, eligible: pd.DataFrame,
@@ -355,7 +364,7 @@ def compare_panels(plan: dict, crypto: pd.DataFrame, eligible: pd.DataFrame, sto
 
 
 def report_markdown(result: dict) -> str:
-    lines = ["# Comparación retrospectiva paper — agresiva v1", "",
+    lines = [f"# Comparación retrospectiva paper — {result['experiment_id']}", "",
              "Histórico inspeccionado; no es holdout no visto. Comparación primaria: cripto.",
              "Capital virtual: 500 USD cripto + 500 USD SPY/IEF por cartera; sin traspasos entre bloques.", "",
              "| Costo cripto | Cartera | CAGR neto | Sharpe | Caída máxima | Costos USD | Rotación USD |",
@@ -378,6 +387,56 @@ def report_markdown(result: dict) -> str:
     return "\n".join(lines)
 
 
+def load_registered_panels(plan: dict, context: ExperimentRun):
+    """Only called after the registration gate; v2 never refreshes the source cache."""
+    if "source_snapshot" not in plan:
+        crypto, eligible = load_sleeve("crypto", refresh=plan["evaluation"]["refresh"], universe="bitso")
+        stocks, _ = load_sleeve("stocks", refresh=plan["evaluation"]["refresh"])
+        return crypto, eligible, stocks, None
+    from .research_data import apply_availability_policy
+
+    source = plan["source_snapshot"]
+    frozen = context.directory / "source_inputs"
+    frozen.mkdir()
+    raw = {}
+    for name in ("manifest", "crypto", "stocks"):
+        item = source[name]
+        path = ROOT / item["path"]
+        if path.is_symlink() or not path.resolve().is_relative_to((ROOT / "reports/experiments").resolve()):
+            raise ResearchGateError("la fuente original debe permanecer dentro de los experimentos")
+        raw[name] = path.read_bytes()
+        if hashlib.sha256(raw[name]).hexdigest() != item["sha256"]:
+            raise ResearchGateError(f"la captura original cambió: {name}")
+        destination = frozen / ("parent_manifest.json" if name == "manifest" else f"raw_{name}_prices.csv")
+        destination.write_bytes(raw[name])
+    parent = json.loads(raw["manifest"])
+    if parent.get("run_id") != source["run_id"] or parent.get("experiment_id") != "aggressive-v1":
+        raise ResearchGateError("la captura no corresponde al intento original")
+    if (parent.get("status") != "failed" or len(parent.get("variants", [])) != 2
+            or any(v.get("status") != "declared" for v in parent["variants"])):
+        raise ResearchGateError("el intento original ya evaluó variantes o cambió de estado")
+    artifacts = {item["file"]: item["sha256"] for item in parent.get("artifacts", [])}
+    if any(artifacts.get(f"inputs/{name}_prices.csv") != source[name]["sha256"]
+           for name in ("crypto", "stocks")):
+        raise ResearchGateError("los hashes de precios no corresponden al manifiesto original")
+    policy = plan["availability_policy"]
+    evidence = AVAILABILITY_EVIDENCE.read_bytes()
+    if hashlib.sha256(evidence).hexdigest() != policy["evidence_sha256"]:
+        raise ResearchGateError("la evidencia de disponibilidad cambió después del preregistro")
+    (frozen / "availability_evidence.json").write_bytes(evidence)
+    crypto = pd.read_csv(io.BytesIO(raw["crypto"]), index_col=0, parse_dates=True)
+    stocks = pd.read_csv(io.BytesIO(raw["stocks"]), index_col=0, parse_dates=True)
+    crypto, audit = apply_availability_policy(crypto, policy)
+    (context.directory / "data_quality_audit.json").write_text(
+        json.dumps(audit, indent=2, ensure_ascii=False, allow_nan=False) + "\n")
+    context.manifest["source_snapshot"] = source
+    context.manifest["availability_correction"] = audit
+    context._save_manifest()
+    context.event("availability_policy_applied", evidence_sha256=policy["evidence_sha256"],
+                  quarantined_count=audit["quarantined_count"], source_run_id=source["run_id"])
+    return crypto, listed_universe(crypto, min_history=plan["evaluation"]["min_history"]), stocks, audit
+
+
 def _destinations(output_root: Path, ledger: Path) -> tuple[Path, Path]:
     output = isolated_directory(output_root)
     # Validar archivo y directorio: nunca escribir sobre state/, config o fuente.
@@ -392,8 +451,8 @@ def _destinations(output_root: Path, ledger: Path) -> tuple[Path, Path]:
 
 
 def run(preregistration_commit: str | None = None, output_root: Path | None = None,
-        ledger: Path | None = None) -> Path:
-    plan, variants = comparison_plan()
+        ledger: Path | None = None, plan_path: Path | None = None) -> Path:
+    plan, variants = comparison_plan(plan_path) if plan_path else comparison_plan()
     validate_registered_variants(plan)
     if not preregistration_commit:
         raise ResearchGateError("se requiere --preregistration-commit; --describe no corre investigación")
@@ -403,19 +462,20 @@ def run(preregistration_commit: str | None = None, output_root: Path | None = No
     assert_current_control(plan)
     # Este constructor verifica commit previo/aprobación/árbol limpio/config exacta.
     # Debe permanecer ANTES de toda carga de panel y todo cálculo de rendimiento.
-    context = ExperimentRun(ROOT, EXPERIMENT_ID, PREREGISTRATION, preregistration_commit,
+    context = ExperimentRun(ROOT, plan["experiment_id"], preregistration_path(plan), preregistration_commit,
                             plan, variants, output, ledger_path)
     ids = {v["role"]: v["id"] for v in variants}
     try:
-        crypto, eligible = load_sleeve("crypto", refresh=plan["evaluation"]["refresh"], universe="bitso")
-        stocks, _ = load_sleeve("stocks", refresh=plan["evaluation"]["refresh"])
+        crypto, eligible, stocks, data_audit = load_registered_panels(plan, context)
         crypto, eligible, stocks = prepare_panels(plan, crypto, eligible, stocks)
-        context.freeze_dataset("crypto", crypto, eligible, availability(crypto, "crypto"))
+        context.freeze_dataset("crypto", crypto, eligible, availability(crypto, "crypto", plan))
         context.freeze_dataset("stocks", stocks, listed_universe(stocks, plan["evaluation"]["min_history"]),
-                               availability(stocks, "stocks"))
+                               availability(stocks, "stocks", plan))
         result, curves = compare_panels(plan, crypto, eligible, stocks,
                                        lambda role, status: context.variant(ids[role], status))
         result.update(run_id=context.run_id, code_commit=context.proof["code_commit"])
+        if data_audit is not None:
+            result["data_quality_audit"] = data_audit
         curve_dir = context.directory / "curves"
         curve_dir.mkdir()
         for name, curve in curves.items():
@@ -440,18 +500,19 @@ def run(preregistration_commit: str | None = None, output_root: Path | None = No
 def main(argv: list[str] | None = None) -> None:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--describe", action="store_true", help="describir plan e IDs sin cargar datos")
+    parser.add_argument("--plan", type=Path, help="plan congelado; default aggressive_v1.yaml")
     parser.add_argument("--preregistration-commit", help="SHA40 del preregistro aprobado en commit anterior")
     parser.add_argument("--output-root", type=Path, help="directorio aislado (default reports/experiments)")
     parser.add_argument("--ledger", type=Path, help="JSONL aislado (default OUTPUT_ROOT/ledger.jsonl)")
     args = parser.parse_args(argv)
     if args.describe:
-        plan, variants = comparison_plan()
+        plan, variants = comparison_plan(args.plan) if args.plan else comparison_plan()
         validate_registered_variants(plan)
         print(json.dumps({"plan": plan, "config_sha256": canonical_hash(plan), "variants": variants,
                           "executed": False, "live_authorized": False}, indent=2, ensure_ascii=False))
         return
     try:
-        print(run(args.preregistration_commit, args.output_root, args.ledger))
+        print(run(args.preregistration_commit, args.output_root, args.ledger, args.plan))
     except ResearchGateError as exc:
         parser.exit(2, f"Investigación no ejecutada o incompleta: {exc}\n")
 

@@ -9,12 +9,13 @@ Todos exponen la misma interfaz: cash(), positions(), execute(asset, side, qty, 
 from __future__ import annotations
 
 import os
-import hashlib
 import math
 import time
 from dataclasses import dataclass
 
 import requests
+
+from .account_readiness import bitso_nonce_v2, stable_account_key
 
 
 @dataclass
@@ -262,12 +263,14 @@ class AlpacaBroker:
         self.base = "https://paper-api.alpaca.markets" if paper else "https://api.alpaca.markets"
         self.min_order_value = min_order_value
         self.name = "alpaca paper" if paper else "alpaca real"
-        self.account_key = self.name + ":" + hashlib.sha256(self.key.encode()).hexdigest()[:16]
+        account = self._req("GET", "/v2/account")
+        self.account_key = stable_account_key(self.name, account.get("id") if isinstance(account, dict) else None)
+        self.account_identity_version = 1
 
     def _req(self, method: str, path: str, **kw):
         h = {"APCA-API-KEY-ID": self.key, "APCA-API-SECRET-KEY": self.secret}
-        r = requests.request(method, self.base + path, headers=h, timeout=30, **kw)
-        if r.status_code >= 400:
+        r = requests.request(method, self.base + path, headers=h, timeout=30, allow_redirects=False, **kw)
+        if r.status_code >= 300:
             raise BrokerHTTPError(r.status_code, f"Alpaca {method} {path}: HTTP {r.status_code}")
         return r.json() if r.text else {}
 
@@ -353,11 +356,21 @@ class BitsoBroker:
         self.ex = make_exchange("bitso", os.environ.get("BITSO_API_KEY"), os.environ.get("BITSO_API_SECRET"))
         if not self.ex.apiKey or not getattr(self.ex, "secret", None):
             raise RuntimeError("faltan BITSO_API_KEY / BITSO_API_SECRET")
+        # CCXT's default millisecond nonce is v1. Bitso requires the official
+        # timestamp + random salt format; set it before any private request.
+        self.ex.nonce = bitso_nonce_v2
         self.ex.load_markets()
         self.quote, self.offset, self.timeout = quote, limit_offset, timeout_s
         self.min_order_value = min_order_value
         self.name = "bitso real"
-        self.account_key = self.name + ":" + hashlib.sha256(str(self.ex.apiKey).encode()).hexdigest()[:16]
+        try:
+            response = self.ex.private_get_account_status()
+            account = response.get("payload") if isinstance(response, dict) and response.get("success") is True else None
+            self.account_key = stable_account_key(self.name, account.get("client_id") if isinstance(account, dict) else None)
+        except Exception:
+            # Provider exceptions may contain signed headers or account details.
+            raise RuntimeError("Bitso: no se pudo verificar la identidad estable de cuenta; revisa permiso de información de cuenta") from None
+        self.account_identity_version = 1
 
     def cash(self) -> float:
         return float(self.ex.fetch_balance()["free"].get(self.quote, 0) or 0)

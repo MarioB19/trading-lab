@@ -7,6 +7,7 @@ from __future__ import annotations
 import copy
 import os
 from pathlib import Path
+import re
 
 import yaml
 
@@ -18,11 +19,14 @@ from .portfolio import PortfolioParams
 PLAN_PATH = ROOT / "configs/experiments/aggressive_v1.yaml"
 EXPERIMENT_ID = "aggressive-v1"
 PREREGISTRATION = ROOT / "reports/aggressive_v1_preregistro.md"
+PLAN_V1_HASH = "4d7d97add8f79e86d5dd942691cf99ad4d0bac030508c3cff427fb66ac86886e"
+EXPERIMENT_IDS = {EXPERIMENT_ID, "aggressive-v2"}
+AVAILABILITY_EVIDENCE = ROOT / "reports/data_quality/avax_spot_availability.json"
 
 
-def comparison_plan() -> tuple[dict, list[dict]]:
+def comparison_plan(plan_path: Path | None = None) -> tuple[dict, list[dict]]:
     """Return independent copies of the exact plan and its two declared variants."""
-    plan = yaml.safe_load(PLAN_PATH.read_text())
+    plan = yaml.safe_load(Path(plan_path or PLAN_PATH).read_text())
     validate_plan(plan)
     variants = []
     for role in ("control", "aggressive"):
@@ -32,11 +36,40 @@ def comparison_plan() -> tuple[dict, list[dict]]:
     return copy.deepcopy(plan), variants
 
 
+def preregistration_path(plan: dict) -> Path:
+    identity = plan.get("experiment_id")
+    if identity not in EXPERIMENT_IDS:
+        raise ResearchGateError("identidad de experimento desconocida")
+    return ROOT / "reports" / f"{identity.replace('-', '_')}_preregistro.md"
+
+
 def validate_plan(plan: dict) -> None:
     if plan.get("mode") != "paper" or plan.get("live_authorized") is not False:
         raise ResearchGateError("el experimento admite exclusivamente dinero simulado")
-    if plan.get("experiment_id") != EXPERIMENT_ID or plan.get("protocol_version") != 1:
+    if plan.get("experiment_id") not in EXPERIMENT_IDS or plan.get("protocol_version") != 1:
         raise ResearchGateError("identidad de experimento desconocida")
+    if plan["experiment_id"] == "aggressive-v2":
+        base = copy.deepcopy(plan)
+        snapshot = base.pop("source_snapshot", None)
+        policy = base.pop("availability_policy", None)
+        base["experiment_id"] = EXPERIMENT_ID
+        if canonical_hash(base) != PLAN_V1_HASH:
+            raise ResearchGateError("v2 sólo corrige disponibilidad; no cambia reglas, costos ni criterios de v1")
+        if (not isinstance(policy, dict) or set(policy) != {"asset", "available_from", "evidence_sha256"}
+                or policy["asset"] != "AVAX" or policy["available_from"] != "2020-09-22"
+                or not re.fullmatch(r"[0-9a-f]{64}", str(policy["evidence_sha256"]))):
+            raise ResearchGateError("política de disponibilidad AVAX inválida")
+        if (not isinstance(snapshot, dict) or set(snapshot) != {"run_id", "manifest", "crypto", "stocks"}
+                or snapshot["run_id"] != "20260928T013517Z-4fe72d3e"):
+            raise ResearchGateError("v2 requiere la captura original, no descargar otra muestra")
+        prefix = f"reports/experiments/aggressive-v1/{snapshot['run_id']}/"
+        for name, suffix in (("manifest", "manifest.json"), ("crypto", "inputs/crypto_prices.csv"),
+                             ("stocks", "inputs/stocks_prices.csv")):
+            item = snapshot[name]
+            if (not isinstance(item, dict) or set(item) != {"path", "sha256"}
+                    or item["path"] != prefix + suffix
+                    or not re.fullmatch(r"[0-9a-f]{64}", str(item["sha256"]))):
+                raise ResearchGateError(f"fuente congelada inválida: {name}")
     if plan.get("initial_capital_usd") != 1000.0:
         raise ResearchGateError("el capital virtual debe ser idéntico y preregistrado")
     if plan.get("max_price_jump") != .40:

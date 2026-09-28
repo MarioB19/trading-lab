@@ -159,6 +159,11 @@ def test_alpaca_order_payload(monkeypatch):
             return {"id": "abc12345xyz", "status": "accepted"}
 
     def fake(method, url, headers=None, timeout=None, **kw):
+        if method == "GET" and url.endswith("/v2/account"):
+            class Account(R):
+                def json(self):
+                    return {"id": "11111111-2222-3333-4444-555555555555", "status": "ACTIVE"}
+            return Account()
         sent.update(method=method, url=url, body=kw.get("json"), headers=headers)
         return R()
 
