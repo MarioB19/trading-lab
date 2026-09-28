@@ -1,0 +1,280 @@
+{
+  "experiment_id": "aggressive-v1",
+  "run_id": "20260928T013517Z-4fe72d3e",
+  "result": "incomplete_data_coverage",
+  "comparison_evaluated": false,
+  "variants_evaluated": 0,
+  "preregistration_commit": "49c7dc42ec552c45e6dbd8e6bd8d03683e46d27a",
+  "code_commit": "c2758dd274e47c36f8c4c0012c7b07ba4a88e504",
+  "config_sha256": "4d7d97add8f79e86d5dd942691cf99ad4d0bac030508c3cff427fb66ac86886e",
+  "original_run_directory": "reports/experiments/aggressive-v1/20260928T013517Z-4fe72d3e",
+  "manifest_sha256": "b582bfc7f5b511cba204e3a69154b00732484b972eaff62c3f485fe04a866358",
+  "failure": {
+    "error_type": "ResearchGateError",
+    "message": "crypto/AVAX: cierre ausente en 2020-07-15 tras el primer precio observado; comparación no ejecutada para evitar valorar u operar a precio imputado",
+    "live_authorized": false,
+    "ready_for_promotion": false,
+    "limitations": [
+      "Histórico ya inspeccionado: no es un holdout no visto ni evidencia prospectiva.",
+      "Subconjunto Bitso actual retrospectivo; no hay fechas históricas verificadas de listings/delistings.",
+      "Precios históricos del proveedor de research, no cotizaciones/fills históricos exactos de Bitso.",
+      "El pipeline CoinMetrics/Yahoo puede aproximar historia temprana con capitalización escalada; el cache no conserva procedencia ni banderas de proxy por observación.",
+      "Cierre diario con costo proporcional: no reproduce libros, colas maker, fills parciales, mínimos, límites por orden ni el filtro operativo max_price_jump. No certifica equivalencia exacta con el bot.",
+      "Un kill se verifica en la siguiente decisión diaria: una caída puede superar el umbral entre cierres.",
+      "SPY/IEF usa sesiones presentes en el panel; no verifica un calendario bursátil externo.",
+      "Placebo prueba timing de la candidata en esta ventana, no superioridad incremental al control.",
+      "Bootstrap pareado describe incertidumbre retrospectiva; no garantiza resultados futuros.",
+      "No calcula DSR global: dos variantes de esta corrida no representan todos los intentos históricos.",
+      "Requiere 28 días futuros completos en paper y revisión humana; live_authorized permanece false."
+    ]
+  },
+  "variant_states": {
+    "crypto:2b12bfad2351b6e2494a": "declared",
+    "crypto:95174601ed2699fa924a": "declared"
+  },
+  "ledger_events": [
+    "run_started",
+    "dataset_frozen",
+    "dataset_frozen",
+    "run_failed"
+  ],
+  "coverage": {
+    "crypto": {
+      "rows": 2826,
+      "evaluation_rows": 2095,
+      "assets": {
+        "BTC": {
+          "first_observed_close": "2019-01-01",
+          "missing_before_first": 0,
+          "internal_missing_warmup": 0,
+          "internal_missing_evaluation": 0,
+          "internal_missing_dates": []
+        },
+        "ETH": {
+          "first_observed_close": "2019-01-01",
+          "missing_before_first": 0,
+          "internal_missing_warmup": 0,
+          "internal_missing_evaluation": 0,
+          "internal_missing_dates": []
+        },
+        "SOL": {
+          "first_observed_close": "2020-04-10",
+          "missing_before_first": 465,
+          "internal_missing_warmup": 0,
+          "internal_missing_evaluation": 0,
+          "internal_missing_dates": []
+        },
+        "XRP": {
+          "first_observed_close": "2019-01-01",
+          "missing_before_first": 0,
+          "internal_missing_warmup": 0,
+          "internal_missing_evaluation": 0,
+          "internal_missing_dates": []
+        },
+        "ADA": {
+          "first_observed_close": "2019-01-01",
+          "missing_before_first": 0,
+          "internal_missing_warmup": 0,
+          "internal_missing_evaluation": 0,
+          "internal_missing_dates": []
+        },
+        "DOGE": {
+          "first_observed_close": "2019-01-01",
+          "missing_before_first": 0,
+          "internal_missing_warmup": 0,
+          "internal_missing_evaluation": 0,
+          "internal_missing_dates": []
+        },
+        "LINK": {
+          "first_observed_close": "2019-01-01",
+          "missing_before_first": 0,
+          "internal_missing_warmup": 0,
+          "internal_missing_evaluation": 0,
+          "internal_missing_dates": []
+        },
+        "AVAX": {
+          "first_observed_close": "2020-07-13",
+          "missing_before_first": 559,
+          "internal_missing_warmup": 69,
+          "internal_missing_evaluation": 0,
+          "internal_missing_dates": [
+            "2020-07-15",
+            "2020-07-16",
+            "2020-07-17",
+            "2020-07-18",
+            "2020-07-19",
+            "2020-07-20",
+            "2020-07-21",
+            "2020-07-22",
+            "2020-07-23",
+            "2020-07-24",
+            "2020-07-25",
+            "2020-07-26",
+            "2020-07-27",
+            "2020-07-28",
+            "2020-07-29",
+            "2020-07-30",
+            "2020-07-31",
+            "2020-08-01",
+            "2020-08-02",
+            "2020-08-03",
+            "2020-08-04",
+            "2020-08-05",
+            "2020-08-06",
+            "2020-08-07",
+            "2020-08-08",
+            "2020-08-09",
+            "2020-08-10",
+            "2020-08-11",
+            "2020-08-12",
+            "2020-08-13",
+            "2020-08-14",
+            "2020-08-15",
+            "2020-08-16",
+            "2020-08-17",
+            "2020-08-18",
+            "2020-08-19",
+            "2020-08-20",
+            "2020-08-21",
+            "2020-08-22",
+            "2020-08-23",
+            "2020-08-24",
+            "2020-08-25",
+            "2020-08-26",
+            "2020-08-27",
+            "2020-08-28",
+            "2020-08-29",
+            "2020-08-30",
+            "2020-08-31",
+            "2020-09-01",
+            "2020-09-02",
+            "2020-09-03",
+            "2020-09-04",
+            "2020-09-05",
+            "2020-09-06",
+            "2020-09-07",
+            "2020-09-08",
+            "2020-09-09",
+            "2020-09-10",
+            "2020-09-11",
+            "2020-09-12",
+            "2020-09-13",
+            "2020-09-14",
+            "2020-09-15",
+            "2020-09-16",
+            "2020-09-17",
+            "2020-09-18",
+            "2020-09-19",
+            "2020-09-20",
+            "2020-09-21"
+          ]
+        },
+        "LTC": {
+          "first_observed_close": "2019-01-01",
+          "missing_before_first": 0,
+          "internal_missing_warmup": 0,
+          "internal_missing_evaluation": 0,
+          "internal_missing_dates": []
+        },
+        "BCH": {
+          "first_observed_close": "2019-01-01",
+          "missing_before_first": 0,
+          "internal_missing_warmup": 0,
+          "internal_missing_evaluation": 0,
+          "internal_missing_dates": []
+        },
+        "XLM": {
+          "first_observed_close": "2019-01-01",
+          "missing_before_first": 0,
+          "internal_missing_warmup": 0,
+          "internal_missing_evaluation": 0,
+          "internal_missing_dates": []
+        },
+        "TRX": {
+          "first_observed_close": "2019-01-01",
+          "missing_before_first": 0,
+          "internal_missing_warmup": 0,
+          "internal_missing_evaluation": 0,
+          "internal_missing_dates": []
+        },
+        "HBAR": {
+          "first_observed_close": "2019-09-17",
+          "missing_before_first": 259,
+          "internal_missing_warmup": 0,
+          "internal_missing_evaluation": 0,
+          "internal_missing_dates": []
+        },
+        "NEAR": {
+          "first_observed_close": "2020-10-14",
+          "missing_before_first": 652,
+          "internal_missing_warmup": 0,
+          "internal_missing_evaluation": 0,
+          "internal_missing_dates": []
+        },
+        "UNI": {
+          "first_observed_close": "2020-09-18",
+          "missing_before_first": 626,
+          "internal_missing_warmup": 0,
+          "internal_missing_evaluation": 0,
+          "internal_missing_dates": []
+        },
+        "ATOM": {
+          "first_observed_close": "2019-03-14",
+          "missing_before_first": 72,
+          "internal_missing_warmup": 0,
+          "internal_missing_evaluation": 0,
+          "internal_missing_dates": []
+        }
+      }
+    },
+    "stocks": {
+      "rows": 1944,
+      "evaluation_rows": 1439,
+      "assets": {
+        "SPY": {
+          "first_observed_close": "2019-01-02",
+          "missing_before_first": 0,
+          "internal_missing_warmup": 0,
+          "internal_missing_evaluation": 0,
+          "internal_missing_dates": []
+        },
+        "IEF": {
+          "first_observed_close": "2019-01-02",
+          "missing_before_first": 0,
+          "internal_missing_warmup": 0,
+          "internal_missing_evaluation": 0,
+          "internal_missing_dates": []
+        }
+      }
+    }
+  },
+  "integrity": {
+    "artifact_hashes_verified": 5,
+    "ledger_hash_chain_verified": true,
+    "preregistration_approved_ancestor_verified": true,
+    "preregistration_own_commit_verified": true,
+    "operational_config_and_state_unchanged": true
+  },
+  "quantitative_checks": {
+    "cagr": "not_evaluated",
+    "sharpe": "not_evaluated",
+    "drawdown": "not_evaluated",
+    "walk_forward": "not_evaluated",
+    "bootstrap": "not_evaluated",
+    "placebo": "not_evaluated",
+    "cost_stress": "not_evaluated"
+  },
+  "live_authorized": false,
+  "ready_for_promotion": false,
+  "forward_paper_started": false,
+  "source_diagnosis": {
+    "yahoo_query": "https://query1.finance.yahoo.com/v8/finance/chart/AVAX-USD?period1=1388534400&period2=1601856000&interval=1d&includeAdjustedClose=true",
+    "yahoo_status": 200,
+    "yahoo_reproduces_initial_two_observations_and_null_gap": true,
+    "coinmetrics_query": "https://raw.githubusercontent.com/coinmetrics/data/master/csv/avax.csv",
+    "coinmetrics_current_PriceUSD_available": false,
+    "original_source_by_observation_available": false,
+    "early_observations_verified_as_spot": false
+  },
+  "next_step": "Preregistrar una corrección trazable de calidad/disponibilidad histórica y reconstruir un dataset con procedencia verificable; conservar el intento original, sin interpolar ni eliminar observaciones para forzar una corrida."
+}

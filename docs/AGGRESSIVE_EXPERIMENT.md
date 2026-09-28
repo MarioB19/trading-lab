@@ -1,6 +1,8 @@
 # Cartera experimental agresiva: preparación y comparación
 
-Estado previo a la primera corrida: **protocolo y commits locales confirmados por Brandon el 27-sep CDMX / 28-sep UTC**. La comparación se ejecutará después de registrar el preregistro y el código; el paper prospectivo aún no se inicia. El bot actual conserva su configuración. La integración GCP sigue pendiente de la conexión posterior.
+Estado: **primera corrida registrada e incompleta por calidad del histórico**. AVAX presenta 69 cierres ausentes en el calentamiento; el control detuvo la prueba antes de calcular rendimiento. No hay evidencia a favor o en contra de la candidata. Ver [resultado y diagnóstico](../reports/aggressive_v1_ejecucion.md).
+
+Brandon confirmó el protocolo y los commits locales el 27-sep CDMX / 28-sep UTC. Preregistro: `49c7dc42ec552c45e6dbd8e6bd8d03683e46d27a`; código ejecutado y base GCP: `c2758dd274e47c36f8c4c0012c7b07ba4a88e504`. El paper prospectivo aún no se inicia. El bot actual conserva su configuración. Push y conexión/despliegue GCP siguen pendientes de autorización posterior.
 
 ## Qué se comparará
 
@@ -41,15 +43,15 @@ Preparación sin descargar datos ni calcular rentabilidad:
 python -m lab.aggressive_research --describe
 ```
 
-El preregistro aprobado debe guardarse en **su propio commit**, seguido por el commit del código que se ejecutará, incluyendo la base técnica GCP. Brandon autorizó estos commits y la primera comparación; push y despliegue permanecen fuera de esta autorización. El gate valida contenido exacto, hash, variantes, ancestro y árbol limpio antes de cargar datos.
+El preregistro aprobado quedó guardado en **su propio commit**, seguido por el commit del código ejecutado, incluyendo la base técnica GCP. El gate verificó contenido exacto, hash, variantes, ancestro y árbol limpio antes de cargar datos. La corrida fallida se conserva; no repetirla cambiando datos o criterios sin el registro correspondiente.
 
-Después, con los commits autorizados:
+Comando usado en la primera corrida (referencia, no indicación de repetir):
 
 ```bash
-python -m lab.aggressive_research --preregistration-commit SHA_COMPLETO_DEL_PREREGISTRO
+python -m lab.aggressive_research --preregistration-commit 49c7dc42ec552c45e6dbd8e6bd8d03683e46d27a
 ```
 
-Conserva manifiesto, datasets congelados, curvas, costos, comparación JSON/Markdown y ledger en `reports/experiments/`. El periodo histórico está fijado a 2021-01-01..2026-09-26, usando historia de señales desde 2019. Los máximos y kills son continuos. No sobrescribe informes anteriores.
+Una corrida completa generaría manifiesto, datasets congelados, curvas, costos, comparación JSON/Markdown y ledger en `reports/experiments/`. **Esta corrida conserva únicamente manifiesto, inputs congelados, fallo y ledger**: no calculó curvas ni métricas. El periodo histórico está fijado a 2021-01-01..2026-09-26, usando historia de señales desde 2019. El diseño mantiene máximos y kills continuos y no sobrescribe informes anteriores.
 
 ## Paper prospectivo separado
 
@@ -110,4 +112,4 @@ Pruebas técnicas con datos sintéticos verifican causalidad, aislamiento, ident
 - Ambos comandos `--describe` entregan el mismo SHA256 del protocolo: `4d7d97add8f79e86d5dd942691cf99ad4d0bac030508c3cff427fb66ac86886e`.
 - Importación del runner paper y lectura del plan verificadas sin SciPy/sklearn. No equivale a una imagen Docker construida.
 - `git diff --check` sin errores; `config.yaml` y `state/` sin diferencias frente al estado sincronizado `12a54c296d41e960ccc35f311979fa7ddb3dc060`.
-- Estas pruebas preceden a la primera corrida de mercado. El preregistro ya está aprobado; el registro de la ejecución documentará su SHA y el del código. Todavía sin observaciones prospectivas ni despliegue.
+- Estas pruebas preceden a la primera corrida de mercado. Se repitieron antes de los dos commits: **203 pasaron** en 70.85 s y 76.12 s. El [registro de la ejecución](../reports/aggressive_v1_ejecucion.json) conserva SHAs, cobertura y resultado incompleto. Todavía sin observaciones prospectivas ni despliegue.

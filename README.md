@@ -156,7 +156,7 @@ El panel abre en `http://127.0.0.1:8080/`; el worker permanece apagado. No lanza
 
 Se preparó una comparación aislada entre la regla actual y una variante con hasta tres criptos y volatilidad objetivo del 60%. Ambas empiezan con US$1,000 ficticios, mantienen SPY/IEF y conservan frenos y kill switches. La configuración activa no cambia.
 
-El [protocolo y guía](docs/AGGRESSIVE_EXPERIMENT.md) fijan costos, caída máxima y criterios antes de ejecutar. La comparación histórica y el seguimiento diario usan los mismos precios para las dos carteras. **Todavía no se ejecutaron con datos de mercado**: el preregistro debe quedar aprobado en su propio commit previo y el árbol debe estar limpio. Las pruebas sintéticas verifican funcionamiento, no rentabilidad.
+El [protocolo y guía](docs/AGGRESSIVE_EXPERIMENT.md) fijan costos, caída máxima y criterios antes de ejecutar. La comparación histórica y el seguimiento diario usan los mismos precios para las dos carteras. **La primera corrida quedó incompleta**: el control detectó 69 cierres ausentes de AVAX en el calentamiento y se detuvo antes de evaluar las carteras. [Resultado y evidencia](reports/aggressive_v1_ejecucion.md). El preregistro y el código ya tienen commits locales; las 203 pruebas sintéticas verifican funcionamiento, no rentabilidad. El paper prospectivo no ha comenzado.
 
 ```bash
 python -m lab.aggressive_research --describe

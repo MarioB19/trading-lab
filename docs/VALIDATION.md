@@ -2,7 +2,7 @@
 
 Revisión: 2026-09-27, America/Mexico_City (las últimas pruebas terminaron el 28-sep UTC).
 Rama: `codex/gcp-platform`. Base: `2be1139e2a55e0d61699ade8ae196e455718286f`.
-Cambios locales sin commit/push: la base no identifica el contenido final modificado ni una imagen publicada.
+Este informe conserva la validación inicial anterior a commits. Posteriormente se registró la base técnica y el experimento agresivo en `c2758dd274e47c36f8c4c0012c7b07ba4a88e504`, tras el preregistro exclusivo `49c7dc42ec552c45e6dbd8e6bd8d03683e46d27a`. **203 pruebas pasan** en la suite ampliada. La primera comparación agresiva quedó incompleta por datos, antes de calcular rendimientos: [evidencia](../reports/aggressive_v1_ejecucion.md). Sin push ni imagen publicada; el resto de las limitaciones cloud continúa vigente.
 
 ## Verificado
 

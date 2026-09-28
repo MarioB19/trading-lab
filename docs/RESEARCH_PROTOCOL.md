@@ -1,6 +1,8 @@
 # Protocolo de investigación reproducible
 
-Estado: motor preparado; ningún experimento nuevo ejecutado ni aprobado durante esta implementación.
+Estado: motor preparado. La suite general continúa pendiente de su propio preregistro aprobado.
+El ensayo específico `aggressive-v1` sí fue preregistrado e intentado posteriormente; quedó incompleto
+por calidad del histórico, antes de calcular rentabilidad. Ver [su evidencia](../reports/aggressive_v1_ejecucion.md).
 La estrategia activa y `config.yaml` permanecen fuera de este proceso. El paso a dinero real sigue siendo
 una decisión y acción manual de Brandon. Una infraestructura más confiable no demuestra una ventaja estadística.
 
@@ -66,8 +68,9 @@ El preregistro necesita **su propio commit**. El SHA del preregistro debe ser un
 HEAD: el código ejecutado corresponde a un commit posterior. El archivo debe seguir idéntico al blob
 del commit declarado, y el árbol de trabajo debe estar limpio. Los resultados bajo `reports/experiments/`
 se excluyen de esa última comprobación. Cambiar parámetros, universo o reparto después del preregistro
-invalida su hash y exige un protocolo nuevo. No se hicieron commits ni push del repositorio como parte
-de esta implementación.
+invalida su hash y exige un protocolo nuevo. La base técnica está registrada en el commit local
+`c2758dd274e47c36f8c4c0012c7b07ba4a88e504`; no hubo push. El preregistro agresivo no autoriza
+otras investigaciones ni la suite general todavía pendiente.
 
 ## Ejecución registrada
 
