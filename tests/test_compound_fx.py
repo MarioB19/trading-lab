@@ -117,6 +117,20 @@ def test_withdrawal_sells_and_is_not_a_loss():
     assert st["capital_base"] == 500
 
 
+def test_withdrawal_with_costs_never_leaves_negative_cash():
+    """Con deslizamiento real, vender justo hasta 60/40 dejaba el efectivo en −$0.10 (28-sep)."""
+    sc = _stocks_sc(capital=700, slippage=0.0005)
+    P = _prices()
+    st: dict = {}
+    br = SimBroker(st.setdefault("ledger", {"cash": 700.0, "positions": {}}), 0.0, 0.0005, 1.0)
+    eq = pd.Series(dtype=float)
+    r1 = bot.run_sleeve("stocks", sc, P.iloc[:-1], br, st, P.index[-2] + pd.Timedelta(days=1, hours=2), "paper", eq, 10.0)
+    eq.loc[P.index[-2]] = r1["equity_row"]["equity"]
+    sc["capital"] = 500
+    r2 = bot.run_sleeve("stocks", sc, P, br, st, P.index[-1] + pd.Timedelta(days=1, hours=2), "paper", eq, 10.0)
+    assert br.cash() >= 0 and r2["equity_row"]["flow"] == pytest.approx(-200)
+
+
 def test_deposit_is_invested_and_is_not_a_gain():
     st, br, r1, r2 = _sim_two_days(300, 500, last_mult=1.0)
     assert r2["equity_row"]["flow"] == pytest.approx(200)

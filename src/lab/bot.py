@@ -356,6 +356,15 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
             notes.append("rebalanceo mensual: hoy no toca")
     st["last_brake"] = brake
 
+    # Sin apalancamiento: si el efectivo del bloque quedó negativo (p. ej. tras un retiro), las ventas
+    # deben cubrirlo con margen para comisiones y deslizamiento, no solo llegar a los pesos objetivo.
+    own_now = broker.cash() if not capped else min(float(st["sleeve_cash"]), broker.cash())
+    if own_now < 0:
+        room = 1.0 - (sc["fee"] + sc["slippage"] + 0.005)
+        tot_w = sum(desired.values())
+        if tot_w > room:
+            desired = {k: v * room / tot_w for k, v in desired.items()}
+
     # ¿se puede operar en TU cuenta? (Alpaca responde por activo; el simulado acepta todo)
     info_fn = getattr(broker, "asset_info", None)
     info: dict[str, dict] = {}
