@@ -18,3 +18,6 @@ run_at_utc,sleeve,mode,broker,candle,asset,side,qty,price,value,fee,status,note,
 2026-09-28 00:35,crypto,paper,simulado · libro real de Bitso,2026-09-27,SOL,buy,0.75793919,121.742039,92.27,0.3322,filled,,121.6945,39.9
 2026-09-28 21:52,stocks,paper,simulado,2026-09-28,SPY,sell,0.15375706,765.22718,117.66,0.0,filled,,765.609985,5.0
 2026-09-28 21:52,stocks,paper,simulado,2026-09-28,IEF,sell,0.89558368,89.485234,80.14,0.0,filled,,89.529999,5.0
+2026-09-29 01:31,crypto,paper,simulado · libro real de Bitso,2026-09-28,SOL,sell,0.75793919,116.558,88.34,0.265,filled,límite: 100% como maker,116.509,25.8
+2026-09-29 01:31,crypto,paper,simulado · libro real de Bitso,2026-09-28,LINK,sell,0.90393177,15.2809,13.81,0.0414,filled,límite: 100% como maker,15.26525,19.7
+2026-09-29 01:31,crypto,paper,simulado · libro real de Bitso,2026-09-28,ETH,buy,0.04196214,2662.2,111.71,0.3351,filled,límite: 100% como maker,2662.4,29.2
