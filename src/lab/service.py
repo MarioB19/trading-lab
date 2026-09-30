@@ -1,16 +1,23 @@
-"""Read-only operational API. Bind locally or expose only through an IAP tunnel."""
+"""Read-only operational API; hosted use requires authentication and HTTPS termination."""
 from __future__ import annotations
 
 import argparse
+import base64
+import binascii
 from contextlib import closing
 import hashlib
+import hmac
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import json
 import math
+import os
 from pathlib import Path
 import sqlite3
 from urllib.parse import parse_qs, urlparse
 
+import yaml
+
+from .performance import build_performance
 from .runtime import DATABASE_NAME, readiness
 
 ASSET_DIR = Path(__file__).resolve().parents[2] / "dashboard"
@@ -30,9 +37,10 @@ def safe_json(value):
 
 
 class Reader:
-    def __init__(self, data_dir: Path):
+    def __init__(self, data_dir: Path, config_path: Path | None = None):
         self.directory = data_dir.resolve()
         self.path = self.directory / DATABASE_NAME
+        self.config_path = (config_path or ASSET_DIR.parent / "config.yaml").resolve()
 
     def connect(self):
         db = sqlite3.connect(self.path.as_uri() + "?mode=ro", uri=True, timeout=3)
@@ -47,10 +55,13 @@ class Reader:
     def status(self):
         if not self.path.exists():
             return {"ready": False, "reason": "Pendiente de importar el estado", "mode": "unverified",
-                    "snapshot": {}, "live": {}, "runtime": {}, "storage": {}, "last_backup": {}}
+                    "snapshot": {}, "live": {}, "runtime": {}, "storage": {}, "last_backup": {}, "hosted": {}}
         with closing(self.connect()) as db:
             db.execute("BEGIN")
             runtime = self.document(db, "runtime_health", {})
+            no_hosted = object()
+            hosted = self.document(db, "hosted_health", no_hosted)
+            has_hosted = hosted is not no_hosted
             pending = db.execute("SELECT count(*) FROM orders WHERE terminal=0").fetchone()[0]
             unknown = db.execute("SELECT count(*) FROM orders WHERE status IN ('unknown','intent')").fetchone()[0]
             deployment = self.document(db, "deployment", {}) or {}
@@ -65,6 +76,21 @@ class Reader:
                          s.get("mode", "paper") == "paper" for s in doc.get("sleeves", {}).values())
                          for doc in (snapshot, live)))
             okay, reason = readiness(runtime, (self.directory / "worker.enabled").is_file())
+            if has_hosted:
+                hosted = hosted if isinstance(hosted, dict) else {}
+                supervisor, worker = hosted.get("status"), hosted.get("worker_status")
+                if supervisor != "running" or worker != "running":
+                    okay = False
+                    if "error" in (supervisor, worker):
+                        reason = "Supervisor o ejecutor alojado con error; ejecución bloqueada"
+                    elif "stopped" in (supervisor, worker):
+                        reason = "Supervisor o ejecutor alojado detenido; ejecución bloqueada"
+                    elif "paused" in (supervisor, worker):
+                        reason = "Ejecutor alojado pausado"
+                    else:
+                        reason = "Estado del ejecutor alojado no verificado; ejecución bloqueada"
+                if hosted.get("backup_status") == "error":
+                    okay, reason = False, "Error de backup alojado; respaldo no verificado"
             if pending:
                 okay, reason = False, "Órdenes pendientes de conciliación"
             if unknown:
@@ -72,7 +98,7 @@ class Reader:
             if not paper or schema_version != 1:
                 okay, reason = False, "Modo paper o versión de datos no verificados; ejecución bloqueada"
             return {"ready": okay, "reason": reason, "mode": "paper" if paper else "unverified", "runtime": runtime,
-                    "snapshot": snapshot, "live": live,
+                    "snapshot": snapshot, "live": live, "hosted": hosted if has_hosted else {},
                     "storage": {"pending_orders": pending, "unknown_orders": unknown,
                                 "schema_version": schema_version},
                     "last_backup": self.document(db, "last_backup", {}),
@@ -89,6 +115,21 @@ class Reader:
                         for row in db.execute("SELECT kind,created_at,payload FROM events ORDER BY id DESC LIMIT ?", (limit,))]
             return [json.loads(row[0]) for row in db.execute(
                 f"SELECT payload FROM {table} ORDER BY rowid DESC LIMIT ?", (limit,))]
+
+    def performance(self):
+        # Read configuration directly: importing bot.load_config would load .env.
+        config = yaml.safe_load(self.config_path.read_text())
+        if not isinstance(config, dict) or not isinstance(config.get("sleeves"), dict):
+            raise ValueError("Configuración de capital no disponible")
+        if not self.path.exists():
+            return build_performance({}, {}, {}, [], config)
+        with closing(self.connect()) as db:
+            db.execute("BEGIN")
+            state = self.document(db, "state", {})
+            snapshot = self.document(db, "snapshot", {})
+            live = self.document(db, "live", {})
+            rows = [json.loads(row[0]) for row in db.execute("SELECT payload FROM equity ORDER BY rowid")]
+        return build_performance(state, snapshot, live, rows, config)
 
 
 def comparison_status(paper_dir: Path | None, research_dir: Path | None) -> dict:
@@ -124,8 +165,18 @@ def comparison_status(paper_dir: Path | None, research_dir: Path | None) -> dict
 
 
 def make_server(data_dir: Path, host="127.0.0.1", port=8080, *, comparison_dir: Path | None = None,
-                research_dir: Path | None = None):
-    reader = Reader(data_dir)
+                research_dir: Path | None = None, config_path: Path | None = None,
+                require_auth: bool = False):
+    reader = Reader(data_dir, config_path)
+    auth_digest = None
+    if require_auth:
+        user = os.environ.get("TRADING_DASHBOARD_USER", "")
+        password = os.environ.get("TRADING_DASHBOARD_PASSWORD", "")
+        if user and password and ":" not in user:
+            try:
+                auth_digest = hashlib.sha256(f"{user}:{password}".encode("utf-8")).digest()
+            except UnicodeError:
+                pass  # Invalid environment encoding must fail closed without logging it.
 
     class Handler(BaseHTTPRequestHandler):
         server_version = "TradingLab"
@@ -133,18 +184,47 @@ def make_server(data_dir: Path, host="127.0.0.1", port=8080, *, comparison_dir: 
         def log_message(self, *_):
             pass
 
+        def parse_request(self):
+            if not super().parse_request():
+                return False
+            # Enforce this before dispatch, including unknown paths and HTTP methods.
+            public_health = self.command in {"GET", "HEAD"} and self.path.split("?", 1)[0] == "/healthz"
+            if not require_auth or public_health:
+                return True
+            if auth_digest is None:
+                self.send(503, {"error": "Servicio temporalmente no disponible"})
+                return False
+            headers = self.headers.get_all("Authorization", [])
+            supplied = None
+            if len(headers) == 1:
+                parts = headers[0].split()
+                if len(parts) == 2 and parts[0].lower() == "basic":
+                    try:
+                        supplied = base64.b64decode(parts[1], validate=True)
+                    except (binascii.Error, ValueError):
+                        pass
+            # Fixed-size byte digests support Unicode without disclosing which field failed.
+            candidate = hashlib.sha256(supplied if supplied is not None else b"").digest()
+            if hmac.compare_digest(candidate, auth_digest) and supplied is not None:
+                return True
+            self.send(401, {"error": "Autenticación requerida"})
+            return False
+
         def send(self, status, payload, content_type="application/json; charset=utf-8"):
             body = payload if isinstance(payload, bytes) else json.dumps(safe_json(payload), ensure_ascii=False, allow_nan=False).encode()
             self.send_response(status)
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(body)))
+            if status == 401:
+                self.send_header("WWW-Authenticate", 'Basic realm="Trading Lab", charset="UTF-8"')
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("X-Frame-Options", "DENY")
             self.send_header("Referrer-Policy", "no-referrer")
             self.send_header("Content-Security-Policy", "default-src 'self'; script-src 'self'; style-src 'self'; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'none'")
             self.end_headers()
-            self.wfile.write(body)
+            if self.command != "HEAD":
+                self.wfile.write(body)
 
         def do_GET(self):
             url = urlparse(self.path)
@@ -157,6 +237,11 @@ def make_server(data_dir: Path, host="127.0.0.1", port=8080, *, comparison_dir: 
                 if url.path in {"/readyz", "/api/status"}:
                     status = reader.status()
                     return self.send(200 if url.path == "/api/status" or status["ready"] else 503, status)
+                if url.path == "/api/performance":
+                    try:
+                        return self.send(200, reader.performance())
+                    except (ValueError, yaml.YAMLError):
+                        return self.send(503, {"error": "Ganancias no disponibles: configuración o datos no válidos"})
                 if url.path == "/api/comparison":
                     try:
                         return self.send(200, comparison_status(comparison_dir, research_dir))
@@ -182,6 +267,7 @@ def make_server(data_dir: Path, host="127.0.0.1", port=8080, *, comparison_dir: 
         do_PUT = do_POST
         do_PATCH = do_POST
         do_DELETE = do_POST
+        do_HEAD = do_GET
 
     return ThreadingHTTPServer((host, port), Handler)
 
@@ -191,11 +277,13 @@ def main(argv=None):
     parser.add_argument("--data-dir", type=Path, required=True)
     parser.add_argument("--host", default="127.0.0.1")
     parser.add_argument("--port", type=int, default=8080)
+    parser.add_argument("--config", type=Path, help="YAML de capital objetivo; por defecto config.yaml del proyecto")
+    parser.add_argument("--require-auth", action="store_true", help="Requerir HTTP Basic; credenciales TRADING_DASHBOARD_USER/PASSWORD")
     parser.add_argument("--comparison-dir", type=Path, help="SQLite paper experimental, lectura exclusiva")
     parser.add_argument("--research-dir", type=Path, help="corrida histórica congelada para mostrar sus resultados")
     args = parser.parse_args(argv)
     with make_server(args.data_dir, args.host, args.port, comparison_dir=args.comparison_dir,
-                     research_dir=args.research_dir) as server:
+                     research_dir=args.research_dir, config_path=args.config, require_auth=args.require_auth) as server:
         server.serve_forever()
 
 

@@ -1,6 +1,6 @@
 # Trading Lab
 
-Piloto de inversión **simulado**, con dos bloques y una única ruta de operación preparada para GCP. Cuenta prevista: `brandonmuro.work@gmail.com`; presupuesto de infraestructura de hasta US$60/mes. Conexión y despliegue pendientes.
+Piloto de inversión **simulado**, con dos bloques. Railway es el destino elegido para simplificar la operación; GCP queda como alternativa preparada. El estado de cada despliegue se verifica por separado: tener código o imagen no demuestra que el bot esté ejecutándose.
 
 ## Qué se conserva para operar
 
@@ -15,12 +15,14 @@ La candidata agresiva **falló los siete criterios**: CAGR cripto neto 17.08% fr
 
 ## Empezar aquí
 
+0. [Despliegue, corte y recuperación en Railway](docs/RAILWAY_RUNBOOK.md).
 1. [Lista única de conexión y criterios GO/NO GO](docs/CONNECT_CHECKLIST.md).
 2. [Runbook de instalación, corte y recuperación GCP](docs/GCP_RUNBOOK.md).
 3. [Conectar una cuenta para consulta GET](docs/REAL_ACCOUNT_RUNBOOK.md).
 4. [Estado de preparación y evidencia vigente](docs/CONNECTION_READINESS.md).
+5. [Vista en pesos, capital de US$1,000 y ganancias por día](docs/PERFORMANCE_VIEW.md).
 
-GitHub conserva código y validación. Al conectar GCP, un único runtime guarda SQLite en disco persistente, con panel privado por IAP, respaldo verificado en GCS, alertas y recuperación ensayada. El escritor GitHub existente continúa hasta el corte; nunca se activan ambos a la vez.
+GitHub conserva código y validación; su workflow de operación está desactivado desde el corte del 28-sep-2026. Railway aloja una instancia con API protegida y worker simulado supervisado, SQLite persistente y backups verificados. [Panel publicado](https://trading-lab-production-a56b.up.railway.app/), usuario `brandon`: acceso autenticado y ciclo posterior al reinicio comprobados el 29-sep 04:08 UTC. No activar dos escritores. La copia externa automática sigue pendiente. La arquitectura alternativa GCP usa IAP y GCS, descritos en su propia guía.
 
 ## Procedimientos que se conservan
 
@@ -62,12 +64,12 @@ No iniciar un bot local sobre el estado activo mientras GitHub sea escritor. Par
 
 ```sh
 .venv/bin/python -m lab.service \
-  --data-dir runtime-data/delivery-20260928/operational-readonly --port 8847
+  --data-dir runtime-data/pesos-20260928/operational-readonly --port 8847
 ```
 
-Abrir `http://127.0.0.1:8847/`. Este panel local no es una conexión cloud ni prueba de ejecución continua.
+Abrir `http://127.0.0.1:8847/`. La vista usa pesos por defecto, permite USD y separa resultados diarios de movimientos de capital. La copia local procede del estado publicado `2a78cf8`; actualizar la página consulta esa copia, no sincroniza GitHub. Este panel local no es una conexión cloud ni prueba de ejecución continua.
 
-## Límites pendientes de conexión
+## Alternativa GCP: pendientes de conexión
 
 Faltan verificar proyecto/facturación/créditos, aplicar el plan revisado, publicar/instalar la imagen, cortar GitHub, observar un ciclo remoto, descargar/restaurar un respaldo GCS, comprobar notificaciones y medir costo/consumo. Después se observa la versión operativa en paper durante al menos cuatro semanas. El rechazo de la variante agresiva se conserva y no se revoca por esperar más días.
 

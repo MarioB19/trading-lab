@@ -4,17 +4,18 @@ Laboratorio y bot de inversión de Brandon, con dinero potencialmente real. El o
 
 ## Qué es
 
-- Bot diario en GitHub Actions (`.github/workflows/daily.yml`) con dos bloques de $500 USD cada uno:
+- Bot diario simulado en Railway, con dos bloques de $500 USD cada uno. GitHub Actions (`.github/workflows/daily.yml`) quedó desactivado en el corte del 28-sep-2026:
   - **Cripto:** portafolio táctico (tendencia + momentum + paridad de riesgo + volatilidad objetivo 40%) en los mercados contra USD de Bitso. Simulado contra el libro real de Bitso, con órdenes límite primero.
   - **Acciones:** 60/40 SPY/IEF pasivo en Alpaca (simulado interno mientras no haya llaves de Alpaca paper).
-- Revisa cada hora (`lab.realtime`, solo observa) y opera una vez al día tras el cierre de las 00:00 UTC (`lab.bot --if-due`).
+- Revisa cada cinco minutos (`lab.realtime`, solo observa) y opera una vez al día tras el cierre de las 00:00 UTC (`lab.bot --if-due`).
 - Todo está en **modo simulado**. Nada mueve dinero real.
+- Railway: `docs/RAILWAY_RUNBOOK.md`; una instancia `lab.hosted`, SQLite en `/data/runtime`, backup interno diario. Un solo escritor. Build vigente `railway-d22975cab19f4797` con gráfica de balance diario y 432 pruebas; ciclo remoto sano el 29-sep 05:26 UTC. Contraseña del panel configurada por autorización explícita de Brandon; acceso HTTPS y ciclo posterior al reinicio verificados a las 04:08 UTC. Copia externa automática pendiente (Hobby no incluye backups nativos).
 - Plataforma GCP implementada localmente, pendiente de conexión y despliegue. Cuenta prevista `brandonmuro.work@gmail.com`; US$60/mes máximo. Empezar por `docs/CONNECT_CHECKLIST.md` y `docs/CONNECTION_READINESS.md`; detalles en `GCP_RUNBOOK.md`. Tras el corte, SQLite será la fuente primaria; `state/` será histórico/exportación. No ejecutar dos escritores.
-- Tablero: https://claude.ai/artifact/YLtHeryBpEfs882YJafAGG (lee `state/` del repositorio con el conector de GitHub).
+- Panel actual: https://trading-lab-production-a56b.up.railway.app/ (autenticado). El tablero anterior de Claude y `state/` en GitHub conservan el corte histórico y ya no reciben actualizaciones del bot.
 
 ## Antes de trabajar
 
-1. Revisar cambios locales y usar `git pull --ff-only origin main`: el bot hace commit de `state/` varias veces al día. Si hay divergencia, inspeccionar e integrar sin reescribir commits utilizados por preregistros, corridas o imágenes. No hacer rebase de evidencia publicada o registrada; conservar cambios ajenos y SHAs científicos.
+1. Revisar cambios locales y usar `git pull --ff-only origin main`: el antiguo bot hacía commit de `state/`; tras el corte Railway, ese estado es histórico y no debe reactivarse para sincronizarlo. Si hay divergencia, inspeccionar e integrar sin reescribir commits utilizados por preregistros, corridas o imágenes. No hacer rebase de evidencia publicada o registrada; conservar cambios ajenos y SHAs científicos.
 2. Entorno Python 3.13: crear `.venv`, instalar `requirements-dev.lock.txt` y luego `pip install --no-deps -e .`.
 3. Lee `README.md` (qué hace, qué dice la evidencia, candados) y el informe que toque en `reports/`.
 
@@ -23,7 +24,7 @@ Laboratorio y bot de inversión de Brandon, con dinero potencialmente real. El o
 - Pruebas: `python -m pytest -q -W ignore` (todas deben pasar antes de terminar cualquier cambio)
 - Consistencia bot/backtest: `python -m lab.bot --replay 365 --sleeve crypto` (diferencia < 2%)
 - Estado: `python -m lab.bot --status`; capital diario en `state/equity.csv`, operaciones en `state/trades.csv`, análisis FIFO en `state/analysis.json`
-- Tiempo real legacy: `python -m lab.realtime --once` (foto en `state/live.json`); no lanzarlo contra el estado activo mientras otro escritor esté corriendo. En GCP usar exclusivamente systemd/`lab.runtime`.
+- Tiempo real legacy: `python -m lab.realtime --once` (foto en `state/live.json`); no lanzarlo contra el estado activo mientras otro escritor esté corriendo. En Railway usar exclusivamente `lab.hosted`/`lab.runtime`; en GCP, systemd/`lab.runtime`.
 - Investigación: `python -m lab.research_multi --describe` no ejecuta experimentos. Para correr, seguir `docs/RESEARCH_PROTOCOL.md`: preregistro aprobado en commit previo, IDs/config exactos y árbol limpio. Las rutas legacy RT/corto plazo también requieren preregistro conforme a la regla 4; no ejecutarlas para explorar sin declarar.
 - Tablero: `python -m lab.dashboard` regenera `dashboard/index.html`
 

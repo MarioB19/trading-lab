@@ -17,8 +17,9 @@ concurrency:
   cancel-in-progress: false
 jobs:
   run:
-    # Set TRADING_RUNTIME=gcp BEFORE enabling the GCP worker during cutover.
-    if: ${{ vars.TRADING_RUNTIME != 'gcp' }}
+    # Any external runtime owns execution after cutover (Railway, GCP, etc.).
+    # Disable this workflow remotely too when the installed revision is older.
+    if: ${{ vars.TRADING_RUNTIME == '' || vars.TRADING_RUNTIME == 'github' }}
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
