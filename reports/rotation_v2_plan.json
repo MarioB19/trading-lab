@@ -1,0 +1,3355 @@
+{
+  "config": {
+    "protocol_version": 1,
+    "engine_version": "causal-wf-v2",
+    "refresh": false,
+    "multi_market": false,
+    "sleeves": {
+      "crypto": {
+        "config": {
+          "label": "Criptomonedas",
+          "ann": 365,
+          "eval_start": "2019-01-01",
+          "oos_year": 2021,
+          "cost": 0.0045,
+          "band": 0.02,
+          "base": {
+            "mom_windows": [
+              30,
+              90,
+              180
+            ],
+            "max_weight": 0.4
+          },
+          "grid": {
+            "top_k": [
+              1,
+              3,
+              5
+            ],
+            "vol_target": [
+              null,
+              0.4,
+              0.6
+            ],
+            "regime_asset": [
+              "BTC",
+              null
+            ],
+            "dd_brake": [
+              true,
+              false
+            ],
+            "rotation_buffer": [
+              0.0,
+              0.15
+            ],
+            "check": [
+              "1d",
+              "4h",
+              "1h",
+              "vigia"
+            ],
+            "short_term": [
+              "C1",
+              "C2",
+              "C3",
+              "C4"
+            ],
+            "cov_estimator": [
+              "sample"
+            ]
+          },
+          "costs_test": [
+            0.003,
+            0.0045,
+            0.006,
+            0.01
+          ],
+          "benchmark": "BTC",
+          "kill_dd": 0.45,
+          "passive": null
+        },
+        "candidate": {
+          "top_k": 5,
+          "vol_target": 0.4,
+          "regime_asset": "BTC",
+          "dd_brake": true,
+          "cov_estimator": "sample",
+          "rotation_buffer": 0.15
+        },
+        "universe": "bitso",
+        "legacy_external_trial_labels": [
+          "4h",
+          "1h",
+          "vigia",
+          "C1",
+          "C2",
+          "C3",
+          "C4"
+        ]
+      },
+      "stocks": {
+        "config": {
+          "label": "Acciones y ETFs",
+          "ann": 252,
+          "eval_start": "2005-01-01",
+          "oos_year": 2010,
+          "cost": 0.0005,
+          "band": 0.02,
+          "base": {
+            "mom_windows": [
+              21,
+              63,
+              126
+            ],
+            "max_weight": 0.35,
+            "ann": 252,
+            "cov_window": 63,
+            "dd_peak_window": 126
+          },
+          "grid": {
+            "top_k": [
+              1,
+              3,
+              5
+            ],
+            "vol_target": [
+              null,
+              0.1,
+              0.15
+            ],
+            "regime_asset": [
+              null
+            ],
+            "dd_brake": [
+              true,
+              false
+            ],
+            "cov_estimator": [
+              "sample"
+            ]
+          },
+          "costs_test": [
+            0.0002,
+            0.0005,
+            0.002,
+            0.005
+          ],
+          "benchmark": "SPY",
+          "kill_dd": 0.25,
+          "passive": "60/40 (SPY/IEF)"
+        },
+        "candidate": {
+          "top_k": 5,
+          "vol_target": 0.1,
+          "regime_asset": null,
+          "dd_brake": true,
+          "cov_estimator": "sample"
+        },
+        "universe": "historical",
+        "legacy_external_trial_labels": []
+      }
+    },
+    "crypto_share": 0.5
+  },
+  "config_sha256": "6dffbd1a1f51ffdb440dd6a67c3cc3e0644cd3d29ee52d6a8cc20cccda73cca3",
+  "variants": [
+    {
+      "id": "crypto:2556ba33f438fb24984b",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": null,
+        "regime_asset": "BTC",
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:70a0d62d363a70c0c768",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": null,
+        "regime_asset": "BTC",
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:b55ee4b39c1951067253",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": null,
+        "regime_asset": "BTC",
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:900c772617bd2a237263",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": null,
+        "regime_asset": "BTC",
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:6e2524e6e35ef79075c9",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": null,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:04bb2f18ce2a545767f8",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": null,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:615399435e7790df8cb6",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": null,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:aa6fb3caee9334e04e7f",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": null,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:81851c9eda68767117e5",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.4,
+        "regime_asset": "BTC",
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:deabaa77253508b22f3b",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.4,
+        "regime_asset": "BTC",
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:a74e069540b13527bc82",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.4,
+        "regime_asset": "BTC",
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:1ad098d641fface79658",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.4,
+        "regime_asset": "BTC",
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:1c0a7d46fcf0cb4cddf7",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.4,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:93a8453229eaee9f2492",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.4,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:3b11b8ae256e5e619fc1",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.4,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:7d799fe5272f61782d4f",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.4,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:e3aae0ba782eefa36d63",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.6,
+        "regime_asset": "BTC",
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:0715752a40d15a64d203",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.6,
+        "regime_asset": "BTC",
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:d6953d39d26c3971df41",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.6,
+        "regime_asset": "BTC",
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:07a62a82fc331b14e6dc",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.6,
+        "regime_asset": "BTC",
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:650af28249c6b2fa3e28",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.6,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:13327dea0001a46a6c74",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.6,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:f590e38bfadf2899bbff",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.6,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:dff83252d27a3057cd9d",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.6,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:de03f28c152eef4ff848",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": null,
+        "regime_asset": "BTC",
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:d6870f0731196812054b",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": null,
+        "regime_asset": "BTC",
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:d33afc806c85e0af51ee",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": null,
+        "regime_asset": "BTC",
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:e9fd992a936f466908ea",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": null,
+        "regime_asset": "BTC",
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:3149cd26f5be8c911a35",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": null,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:433f3d009056118da249",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": null,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:4b9ee736706f8fb0b180",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": null,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:780f664eacefa273e069",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": null,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:3ae1e7c0d2d772c0da07",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.4,
+        "regime_asset": "BTC",
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:4a08c4274ca9553273a1",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.4,
+        "regime_asset": "BTC",
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:1e879918a6cb8b59d5ae",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.4,
+        "regime_asset": "BTC",
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:095d0690eacd92b2639e",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.4,
+        "regime_asset": "BTC",
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:b159060c4563f3fdc407",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.4,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:18488d547023e3780f32",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.4,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:c741fb4fd71f08d89f2e",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.4,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:20c7c15c3231c1b3b680",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.4,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:95174601ed2699fa924a",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.6,
+        "regime_asset": "BTC",
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:ebb8eaf0a4676f5e1936",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.6,
+        "regime_asset": "BTC",
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:e24be3879848f9cf33e4",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.6,
+        "regime_asset": "BTC",
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:8712ed0dc5f33a86ceb0",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.6,
+        "regime_asset": "BTC",
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:3cc1cb784616f74b4310",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.6,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:3d2afb4224c9e4fcb05e",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.6,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:c4016afa3e18bff91d07",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.6,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:73c9c0a01fe741586ff7",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.6,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:554e1be9da2b10bd82e0",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": null,
+        "regime_asset": "BTC",
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:ffd21730e6c12e743f80",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": null,
+        "regime_asset": "BTC",
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:0acb8251ec6a69511c62",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": null,
+        "regime_asset": "BTC",
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:061a0915f368832b8d20",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": null,
+        "regime_asset": "BTC",
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:11e7e5e9801e1238bbfa",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": null,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:beadb0783804670a3da2",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": null,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:da0494f350d6e8d05278",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": null,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:c22c0b5b1b3accfe4ad2",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": null,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:2b12bfad2351b6e2494a",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.4,
+        "regime_asset": "BTC",
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:29cdff1eb71e3ac7c4ba",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.4,
+        "regime_asset": "BTC",
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:c556a1d5659373e3ba62",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.4,
+        "regime_asset": "BTC",
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:000f8c18d6d675823622",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.4,
+        "regime_asset": "BTC",
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:8ad0302a8ff89d73545f",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.4,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:fda8e93d98839d4cd293",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.4,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:15fd191df31d41d1afc1",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.4,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:95e5482b523053db12a1",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.4,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:4abe4e54f064b8c93707",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.6,
+        "regime_asset": "BTC",
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:5c439bc40a7bc42baf09",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.6,
+        "regime_asset": "BTC",
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:3b08243fb6457e30e080",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.6,
+        "regime_asset": "BTC",
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:906e7d0f46a5c2e33750",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.6,
+        "regime_asset": "BTC",
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:8cb81051ec7c1dc57262",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.6,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:9557db6d2106e6265548",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.6,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:2aeeb132e534342c6fcd",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.6,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "crypto:f733276450ed2743de44",
+      "sleeve": "crypto",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.6,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.4,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          30,
+          90,
+          180
+        ],
+        "vol_halflife": 20,
+        "cov_window": 90,
+        "min_trend": 0.5,
+        "ann": 365,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 180,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample",
+        "rotation_buffer": 0.15
+      },
+      "universe": "bitso",
+      "status": "declared"
+    },
+    {
+      "id": "stocks:46f174273193e39a79eb",
+      "sleeve": "stocks",
+      "params": {
+        "top_k": 1,
+        "vol_target": null,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.35,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          21,
+          63,
+          126
+        ],
+        "vol_halflife": 20,
+        "cov_window": 63,
+        "min_trend": 0.5,
+        "ann": 252,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 126,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "historical",
+      "status": "declared"
+    },
+    {
+      "id": "stocks:6717a33949e726c4d521",
+      "sleeve": "stocks",
+      "params": {
+        "top_k": 1,
+        "vol_target": null,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.35,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          21,
+          63,
+          126
+        ],
+        "vol_halflife": 20,
+        "cov_window": 63,
+        "min_trend": 0.5,
+        "ann": 252,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 126,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "historical",
+      "status": "declared"
+    },
+    {
+      "id": "stocks:31ea28f59d7497c4c9bd",
+      "sleeve": "stocks",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.1,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.35,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          21,
+          63,
+          126
+        ],
+        "vol_halflife": 20,
+        "cov_window": 63,
+        "min_trend": 0.5,
+        "ann": 252,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 126,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "historical",
+      "status": "declared"
+    },
+    {
+      "id": "stocks:045e3fdeff27e616d751",
+      "sleeve": "stocks",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.1,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.35,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          21,
+          63,
+          126
+        ],
+        "vol_halflife": 20,
+        "cov_window": 63,
+        "min_trend": 0.5,
+        "ann": 252,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 126,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "historical",
+      "status": "declared"
+    },
+    {
+      "id": "stocks:086f7528e55718c55340",
+      "sleeve": "stocks",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.15,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.35,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          21,
+          63,
+          126
+        ],
+        "vol_halflife": 20,
+        "cov_window": 63,
+        "min_trend": 0.5,
+        "ann": 252,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 126,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "historical",
+      "status": "declared"
+    },
+    {
+      "id": "stocks:46144c084803495036b7",
+      "sleeve": "stocks",
+      "params": {
+        "top_k": 1,
+        "vol_target": 0.15,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.35,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          21,
+          63,
+          126
+        ],
+        "vol_halflife": 20,
+        "cov_window": 63,
+        "min_trend": 0.5,
+        "ann": 252,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 126,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "historical",
+      "status": "declared"
+    },
+    {
+      "id": "stocks:9145befac8919825bdff",
+      "sleeve": "stocks",
+      "params": {
+        "top_k": 3,
+        "vol_target": null,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.35,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          21,
+          63,
+          126
+        ],
+        "vol_halflife": 20,
+        "cov_window": 63,
+        "min_trend": 0.5,
+        "ann": 252,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 126,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "historical",
+      "status": "declared"
+    },
+    {
+      "id": "stocks:e633e64c9d8d5c86c486",
+      "sleeve": "stocks",
+      "params": {
+        "top_k": 3,
+        "vol_target": null,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.35,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          21,
+          63,
+          126
+        ],
+        "vol_halflife": 20,
+        "cov_window": 63,
+        "min_trend": 0.5,
+        "ann": 252,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 126,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "historical",
+      "status": "declared"
+    },
+    {
+      "id": "stocks:2930bf86b9f46361e9fb",
+      "sleeve": "stocks",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.1,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.35,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          21,
+          63,
+          126
+        ],
+        "vol_halflife": 20,
+        "cov_window": 63,
+        "min_trend": 0.5,
+        "ann": 252,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 126,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "historical",
+      "status": "declared"
+    },
+    {
+      "id": "stocks:ea33d7259042f54cf302",
+      "sleeve": "stocks",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.1,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.35,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          21,
+          63,
+          126
+        ],
+        "vol_halflife": 20,
+        "cov_window": 63,
+        "min_trend": 0.5,
+        "ann": 252,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 126,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "historical",
+      "status": "declared"
+    },
+    {
+      "id": "stocks:1f1e82012a9b150aae1f",
+      "sleeve": "stocks",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.15,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.35,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          21,
+          63,
+          126
+        ],
+        "vol_halflife": 20,
+        "cov_window": 63,
+        "min_trend": 0.5,
+        "ann": 252,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 126,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "historical",
+      "status": "declared"
+    },
+    {
+      "id": "stocks:68f2703627c9c7d01072",
+      "sleeve": "stocks",
+      "params": {
+        "top_k": 3,
+        "vol_target": 0.15,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.35,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          21,
+          63,
+          126
+        ],
+        "vol_halflife": 20,
+        "cov_window": 63,
+        "min_trend": 0.5,
+        "ann": 252,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 126,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "historical",
+      "status": "declared"
+    },
+    {
+      "id": "stocks:dd087bc69acdfc376ffe",
+      "sleeve": "stocks",
+      "params": {
+        "top_k": 5,
+        "vol_target": null,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.35,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          21,
+          63,
+          126
+        ],
+        "vol_halflife": 20,
+        "cov_window": 63,
+        "min_trend": 0.5,
+        "ann": 252,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 126,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "historical",
+      "status": "declared"
+    },
+    {
+      "id": "stocks:3935d2516c5afefdfd0c",
+      "sleeve": "stocks",
+      "params": {
+        "top_k": 5,
+        "vol_target": null,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.35,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          21,
+          63,
+          126
+        ],
+        "vol_halflife": 20,
+        "cov_window": 63,
+        "min_trend": 0.5,
+        "ann": 252,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 126,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "historical",
+      "status": "declared"
+    },
+    {
+      "id": "stocks:356f9a2bf12da4f0faa4",
+      "sleeve": "stocks",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.1,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.35,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          21,
+          63,
+          126
+        ],
+        "vol_halflife": 20,
+        "cov_window": 63,
+        "min_trend": 0.5,
+        "ann": 252,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 126,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "historical",
+      "status": "declared"
+    },
+    {
+      "id": "stocks:79b5db0e27b7dcbff1f6",
+      "sleeve": "stocks",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.1,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.35,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          21,
+          63,
+          126
+        ],
+        "vol_halflife": 20,
+        "cov_window": 63,
+        "min_trend": 0.5,
+        "ann": 252,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 126,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "historical",
+      "status": "declared"
+    },
+    {
+      "id": "stocks:86c0ce44db2f6f5ca148",
+      "sleeve": "stocks",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.15,
+        "regime_asset": null,
+        "dd_brake": true,
+        "max_weight": 0.35,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          21,
+          63,
+          126
+        ],
+        "vol_halflife": 20,
+        "cov_window": 63,
+        "min_trend": 0.5,
+        "ann": 252,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 126,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "historical",
+      "status": "declared"
+    },
+    {
+      "id": "stocks:15a65e6eeaa42901bbe2",
+      "sleeve": "stocks",
+      "params": {
+        "top_k": 5,
+        "vol_target": 0.15,
+        "regime_asset": null,
+        "dd_brake": false,
+        "max_weight": 0.35,
+        "lookbacks": [
+          20,
+          50,
+          100,
+          200
+        ],
+        "mom_windows": [
+          21,
+          63,
+          126
+        ],
+        "vol_halflife": 20,
+        "cov_window": 63,
+        "min_trend": 0.5,
+        "ann": 252,
+        "dd_start": 0.1,
+        "dd_full": 0.3,
+        "dd_floor": 0.25,
+        "dd_peak_window": 126,
+        "cash_asset": null,
+        "rebalance": "daily",
+        "cov_estimator": "sample"
+      },
+      "universe": "historical",
+      "status": "declared"
+    }
+  ],
+  "availability_policy": {
+    "asset": "AVAX",
+    "available_from": "2020-09-22",
+    "evidence_sha256": "b6483adcc33ea32a162e9cd4dad52224714832a8d3abf9aff5dc55ca93848850"
+  },
+  "source_sha256": {
+    "crypto_prices.csv": "d80331a61666d98a9998f5d2f4de666fbbdd69763529765ef4b34df1568577fa",
+    "crypto_mcap.csv": "bc324df4a6ea20ac1269fe2b43c3602b007c9771cca0eca586dbd0bdc23d3863",
+    "etf_prices.csv": "a4391485e8d632cc127e72a93409ec4ee54981d4533a077763fa8fc620c97b92"
+  }
+}
