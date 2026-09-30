@@ -11,11 +11,12 @@ from __future__ import annotations
 import os
 import math
 import time
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import requests
 
 from .account_readiness import bitso_nonce_v2, stable_account_key
+from .execution_quality import book_quality
 
 
 @dataclass
@@ -32,6 +33,7 @@ class Fill:
     client_order_id: str = ""
     terminal: bool = True
     execution_id: str = ""
+    execution: dict = field(default_factory=dict)
 
 
 class SimBroker:
@@ -160,6 +162,13 @@ class BookSimBroker(SimBroker):
         return got
 
     def execute(self, asset: str, side: str, qty: float, ref_price: float) -> Fill:
+        start = self._clock()
+        self._maker_quote = {}
+        fill = self._execute(asset, side, qty, ref_price)
+        fill.execution["execution_wait_s"] = round(max(0.0, self._clock() - start), 3)
+        return fill
+
+    def _execute(self, asset: str, side: str, qty: float, ref_price: float) -> Fill:
         sym = f"{asset}/{self.quote}"
         m = self.ex.markets.get(sym)
         if not m:
@@ -183,7 +192,13 @@ class BookSimBroker(SimBroker):
         fee = mfee + (tk.fee if tq else 0.0)
         status = "filled" if tot >= qty * 0.999 else "partial"
         note = f"límite: {mq / tot:.0%} como maker" + (", resto a mercado" if tq else "")
-        return Fill(asset, side, tot, avg, fee, status, note, mid0)
+        source = "public_book_simulation"
+        if tq and tk.execution.get("execution_source") == "assumed_simulation":
+            source = "public_book_with_assumed_remainder"
+        metrics = {**self._maker_quote, "execution_source": source,
+                   "maker_value_usd": round(mq * mpx, 8),
+                   "taker_value_usd": round(tq * tk.price, 8) if tq else 0.0}
+        return Fill(asset, side, tot, avg, fee, status, note, mid0, execution=metrics)
 
     def _taker(self, asset: str, sym: str, m: dict, side: str, qty: float, ref_price: float) -> Fill:
         """Orden a mercado: recorre el libro real con la comisión taker."""
@@ -193,6 +208,8 @@ class BookSimBroker(SimBroker):
         except Exception as exc:  # noqa: BLE001  sin libro: deslizamiento supuesto
             f = SimBroker.execute(self, asset, side, qty, ref_price)
             f.note = f"libro no disponible, se supuso {self.slip:.2%} ({str(exc)[:60]})"
+            f.execution = {"execution_source": "assumed_simulation",
+                           "maker_value_usd": 0.0, "taker_value_usd": round(f.qty * f.price, 8)}
             return f
         if not book["bids"] or not book["asks"]:
             return Fill(asset, side, 0.0, ref_price, 0.0, "failed", "libro vacío", ref_price)
@@ -211,7 +228,10 @@ class BookSimBroker(SimBroker):
         got, fee = self._apply(asset, side, got, avg)
         self._drop_dust(asset, side)
         status = "filled" if got >= qty * 0.999 else "partial"
-        return Fill(asset, side, got, avg, fee, status, "" if status == "filled" else "profundidad insuficiente", mid)
+        metrics = {**book_quality(book, side, qty, self.fee), "execution_source": "public_book_simulation",
+                   "maker_value_usd": 0.0, "taker_value_usd": round(got * avg, 8)}
+        return Fill(asset, side, got, avg, fee, status, "" if status == "filled" else "profundidad insuficiente", mid,
+                    execution=metrics)
 
     def _drop_dust(self, asset: str, side: str) -> None:
         left = self.l["positions"].get(asset)
@@ -227,6 +247,7 @@ class BookSimBroker(SimBroker):
             return None
         if not top["bids"] or not top["asks"]:
             return None
+        self._maker_quote = book_quality(top, side, qty, self.fee)
         mid = (top["bids"][0][0] + top["asks"][0][0]) / 2
         price = top["bids"][0][0] if side == "buy" else top["asks"][0][0]
         got = self._maker_fill(sym, side, qty, price)

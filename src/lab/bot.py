@@ -76,7 +76,9 @@ DEFAULT_CONFIG = {"mode": "paper", "max_price_jump": 0.40, "sleeves": SLEEVE_DEF
                   "paths": {"state": "state/state.json", "trades": "state/trades.csv",
                             "equity": "state/equity.csv", "snapshot": "state/snapshot.json"}}
 TRADE_FIELDS = ["run_at_utc", "sleeve", "mode", "broker", "candle", "asset", "side", "qty", "price",
-                "value", "fee", "status", "note", "ref_price", "cost_bps", "order_id", "execution_id"]
+                "value", "fee", "status", "note", "ref_price", "cost_bps", "order_id", "execution_id",
+                "execution_source", "maker_value_usd", "taker_value_usd", "execution_wait_s",
+                "spread_bps", "visible_depth_usd", "depth_fill_ratio", "estimated_taker_cost_bps"]
 EQUITY_FIELDS = ["date", "sleeve", "mode", "equity", "cash", "exposure", "drawdown", "brake",
                  "benchmark_price", "n_positions", "usd_mxn", "flow"]
 
@@ -451,7 +453,8 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
                               "price": round(f.price, 6), "value": round(f.qty * f.price, 2),
                               "fee": round(f.fee, 4), "status": f.status, "note": f.note,
                               "ref_price": round(f.ref, 6) if f.ref else "", "cost_bps": cost_bps,
-                              "order_id": f.order_id, "execution_id": f.execution_id})
+                              "order_id": f.order_id, "execution_id": f.execution_id,
+                              **{key: f.execution[key] for key in TRADE_FIELDS if key in f.execution}})
         if f.status == "failed":
             notes.append(f"orden fallida {f.side} {f.asset}: {f.note}")
 

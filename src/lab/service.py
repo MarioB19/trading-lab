@@ -18,6 +18,7 @@ from urllib.parse import parse_qs, urlparse
 import yaml
 
 from .performance import build_performance
+from .execution_quality import build_execution_quality
 from .runtime import DATABASE_NAME, readiness
 
 ASSET_DIR = Path(__file__).resolve().parents[2] / "dashboard"
@@ -131,6 +132,14 @@ class Reader:
             rows = [json.loads(row[0]) for row in db.execute("SELECT payload FROM equity ORDER BY rowid")]
         return build_performance(state, snapshot, live, rows, config)
 
+    def execution_quality(self):
+        if not self.path.exists():
+            return build_execution_quality([])
+        with closing(self.connect()) as db:
+            db.execute("BEGIN")
+            trades = [json.loads(row[0]) for row in db.execute("SELECT payload FROM trades ORDER BY rowid")]
+        return build_execution_quality(trades)
+
 
 def comparison_status(paper_dir: Path | None, research_dir: Path | None) -> dict:
     """Read dedicated evidence; never choose a winner or run a strategy."""
@@ -242,6 +251,8 @@ def make_server(data_dir: Path, host="127.0.0.1", port=8080, *, comparison_dir: 
                         return self.send(200, reader.performance())
                     except (ValueError, yaml.YAMLError):
                         return self.send(503, {"error": "Ganancias no disponibles: configuración o datos no válidos"})
+                if url.path == "/api/execution-quality":
+                    return self.send(200, reader.execution_quality())
                 if url.path == "/api/comparison":
                     try:
                         return self.send(200, comparison_status(comparison_dir, research_dir))

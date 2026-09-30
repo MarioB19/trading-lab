@@ -55,7 +55,7 @@ def credentials(monkeypatch):
 def test_auth_protects_assets_apis_readiness_and_unknown_paths(tmp_path, credentials):
     with serving(tmp_path) as port:
         for path in ("/", "/operations.js", "/operations.css", "/api/status", "/api/performance",
-                     "/api/trades", "/api/comparison", "/readyz", "/unknown"):
+                     "/api/trades", "/api/comparison", "/api/execution-quality", "/readyz", "/unknown"):
             status, headers, body = request(port, path)
             assert status == 401, path
             assert headers["WWW-Authenticate"] == 'Basic realm="Trading Lab", charset="UTF-8"'

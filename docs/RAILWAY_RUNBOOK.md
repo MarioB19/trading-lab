@@ -15,7 +15,23 @@ La estrategia, los movimientos de capital y el historial se conservan.
 
 ## Configuración
 
-**Versión vigente:** `railway-d22975cab19f4797`, deployment
+**Versión vigente:** `railway-1ae90503c3b9007d`, deployment
+`035ebf32-cf75-4eaa-8143-9b1730db4798` (`SUCCESS`, 30-sep 00:59 UTC).
+Añade diagnóstico autenticado de costos/rotación y telemetría futura de ejecución;
+mantiene configuración e historial. 454 pruebas y replay 0.458%; 40 archivos
+instalados y assets HTTPS coinciden con el paquete. Primer ciclo sano del
+30-sep 01:00:41 UTC: paper, ready=true, un único worker y cero órdenes
+pendientes/desconocidas. Endpoint nuevo HTTPS 200 autenticado / 401 sin credencial.
+Backups antes/después descargados/restaurados desactivados, 24 trades y 10 cierres
+conservados. `rotation_buffer=0.15` sólo está preparado para investigación y
+no puede activarse en el runtime. Plan en `docs/IMPROVEMENT_PLAN.md`; evidencia
+en `runtime-data/improvements-20260929/`. HEAD `c1b226a` con cambios sin commit;
+la identidad desplegada corresponde al hash del paquete, no a un commit nuevo.
+Registro local posterior autorizado por Brandon: base `5d6f5ff`, preregistro
+`af34687` y código posterior. La coincidencia entre código comprometido y paquete
+publicado se comprueba por hashes; no se vuelve a desplegar por versionar el código.
+
+**Versión anterior:** `railway-d22975cab19f4797`, deployment
 `77ca3681-9e36-4c54-8395-9bc13d481a6b` (`SUCCESS`, 29-sep 05:24 UTC).
 Añade balance diario en MXN/USD, capital neto y selección de fecha/bloque.
 432 pruebas aprobadas; 39 archivos instalados comparados con su manifiesto.

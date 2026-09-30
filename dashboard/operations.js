@@ -441,11 +441,35 @@ function renderOperating(values) {
   if (!events.items.length) el("events").append(text("li", "Sin eventos."));
 }
 
+function renderExecutionQuality(data) {
+  const crypto = data.by_sleeve?.crypto || {};
+  const cost = numeric(crypto.book_cost_bps);
+  el("execution-status").textContent = `Diagnóstico actualizado ${date(data.as_of_utc)}. La regla vigente continúa; la variante de menor rotación espera validación.`;
+  el("execution-cost").textContent = cost === null ? "Sin dato" : `${cost.toFixed(1)} bps`;
+  el("execution-cost-coverage").textContent = `${crypto.book_cost_trades || 0} operaciones medidas · ${crypto.assumed_cost_trades || 0} con costo supuesto`;
+  const maker = numeric(crypto.maker_share);
+  el("execution-maker").textContent = maker === null ? "Sin dato" : `${(maker * 100).toFixed(1)}%`;
+  el("execution-maker-coverage").textContent = `${crypto.maker_known_trades || 0} operaciones con importes maker/taker registrados`;
+  el("execution-reentries").textContent = String(crypto.reentries_48h?.length || 0);
+  el("execution-liquidity").textContent = crypto.liquidity_known_trades ? `${crypto.liquidity_warnings} alertas` : "Sin dato";
+  const wait = numeric(crypto.mean_execution_wait_s);
+  el("execution-wait").textContent = wait === null ? "Sin medición de tiempo de ejecución" : `${wait.toFixed(1)} s por ejecución · ${crypto.liquidity_known_trades} libros medidos`;
+}
+
+async function refreshExecutionQuality() {
+  try {
+    renderExecutionQuality(await fetchJson("/api/execution-quality"));
+  } catch (_) {
+    el("execution-status").textContent = "No se pudo actualizar el diagnóstico. Los valores visibles pueden estar desactualizados.";
+  }
+}
+
 async function refresh() {
   if (refreshing) return;
   refreshing = true;
   el("refresh").disabled = true;
   const comparisonUpdate = comparison();
+  const executionUpdate = refreshExecutionQuality();
   try {
     const [operating, performance] = await Promise.allSettled([
       Promise.all([fetchJson("/api/status"), fetchJson("/api/orders"), fetchJson("/api/trades"), fetchJson("/api/events?limit=15")]),
@@ -471,6 +495,7 @@ async function refresh() {
     }
   } finally {
     await comparisonUpdate;
+    await executionUpdate;
     el("refresh").disabled = false;
     refreshing = false;
   }

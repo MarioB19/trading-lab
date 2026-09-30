@@ -63,6 +63,8 @@ def validate_config(cfg: dict) -> None:
     if not active:
         raise ValueError("No hay bloques habilitados")
     for sleeve in active:
+        if sleeve.get("params", {}).get("rotation_buffer", 0.0) != 0.0:
+            raise ValueError("La variante de menor rotación requiere validación y promoción; no está habilitada")
         if sleeve.get("paper_broker") not in {"sim", "bitso_book", "alpaca_paper"}:
             raise ValueError("Broker paper desconocido")
         for key in ("capital", "max_order_value", "min_order_value"):

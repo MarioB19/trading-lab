@@ -11,6 +11,7 @@ import argparse
 import copy
 import itertools
 import json
+import math
 import time
 from pathlib import Path
 
@@ -50,6 +51,7 @@ SLEEVES = {
         "cost": 0.0045, "band": 0.02, "base": {"mom_windows": (30, 90, 180), "max_weight": 0.40},
         "grid": {"top_k": [1, 3, 5], "vol_target": [None, 0.40, 0.60],
                  "regime_asset": ["BTC", None], "dd_brake": [True, False],
+                 "rotation_buffer": [0.0, 0.15],
                  # cada cuánto revisa: "1d" es el bot diario; las demás se prueban con velas por hora
                  # en lab.research_rt (reports/tiempo_real_preregistro.md) y cuentan como intentos aquí
                  "check": ["1d", "4h", "1h", "vigia"],
@@ -90,7 +92,8 @@ def key_of(d: dict) -> str:
         cash = " · efectivo en " + d["cash_asset"] if d["cash_asset"] else " · efectivo sin rendir"
     reb = {"monthly": " · mensual", "daily": ""}.get(d.get("rebalance", "daily"), "")
     cov = " · Ledoit-Wolf" if d.get("cov_estimator", "sample") == "ledoit_wolf" else ""
-    return f"top{d['top_k']} · vol {vt} · {rg} · {br}{cash}{reb}{cov}"
+    rotation = f" · margen de sustitución {d['rotation_buffer']:.0%}" if d.get("rotation_buffer", 0) else ""
+    return f"top{d['top_k']} · vol {vt} · {rg} · {br}{cash}{reb}{cov}{rotation}"
 
 
 def grid_variants(cfg: dict) -> tuple[list[dict], list[str]]:
@@ -102,7 +105,8 @@ def grid_variants(cfg: dict) -> tuple[list[dict], list[str]]:
 
 
 def research_plan(multi_market: bool = False, candidate: str = "multi", universe: str = "historical",
-                  cov_estimator: str = "sample", refresh: bool = False) -> tuple[dict, list[dict]]:
+                  cov_estimator: str = "sample", refresh: bool = False,
+                  rotation_buffer: float = 0.0) -> tuple[dict, list[dict]]:
     """Describe sin descargar ni simular. Esta salida se congela en el preregistro.
 
     Pedir Ledoit-Wolf añade sample y ledoit_wolf al grid para contar ambos intentos;
@@ -110,6 +114,8 @@ def research_plan(multi_market: bool = False, candidate: str = "multi", universe
     """
     if universe not in {"historical", "bitso"} or cov_estimator not in {"sample", "ledoit_wolf"}:
         raise ValueError("universo o estimador desconocido")
+    if rotation_buffer not in SLEEVES["crypto"]["grid"]["rotation_buffer"]:
+        raise ValueError("margen de sustitución no declarado en el grid")
     if multi_market and candidate not in {"multi", "multi_monthly"}:
         raise ValueError("candidata multi-mercado desconocida")
     config = {"protocol_version": 1, "engine_version": "causal-wf-v2", "refresh": refresh,
@@ -121,6 +127,8 @@ def research_plan(multi_market: bool = False, candidate: str = "multi", universe
                                                 if cov_estimator == "ledoit_wolf" else ["sample"])
         selected = copy.deepcopy(CANDIDATES[candidate if sleeve == "multi" else sleeve])
         selected["cov_estimator"] = cov_estimator
+        if sleeve == "crypto":
+            selected["rotation_buffer"] = rotation_buffer
         scope = universe if sleeve == "crypto" else "historical"
         config["sleeves"][sleeve] = {"config": cfg, "candidate": selected, "universe": scope}
         combos, historical = grid_variants(cfg)
@@ -201,6 +209,23 @@ def yearly(ret: pd.Series) -> dict:
     return {int(k): float(v) for k, v in ((1 + ret).groupby(ret.index.year).prod() - 1).items()}
 
 
+def rotation_checks(candidate, control, turns, candidate_years, control_years,
+                    complete_years, bootstrap, placebo_p, stress_candidate, stress_control):
+    """Fixed acceptance criteria; incomplete or weaker evidence cannot promote a variant."""
+    return {
+        'net_cagr': candidate['cagr'] >= control['cagr'] + .005,
+        'sharpe': candidate['sharpe'] >= control['sharpe'],
+        'drawdown': candidate['max_dd'] >= control['max_dd'] - .01,
+        'turnover': turns[1] > 0 and turns[0] <= .85 * turns[1],
+        'annual_consistency': bool(complete_years) and sum(candidate_years[y] > control_years[y]
+                                  for y in complete_years) >= math.ceil(len(complete_years) * .6),
+        'bootstrap': bootstrap['p_return_better'] >= .8 and bootstrap['p_sharpe_better'] >= .8,
+        'placebo': placebo_p < .05,
+        'cost_stress': stress_candidate['cagr'] >= stress_control['cagr']
+                       and stress_candidate['sharpe'] >= stress_control['sharpe'],
+    }
+
+
 def run_sleeve(sleeve: str, refresh: bool = False, candidate: str | None = None, *,
                execution: ExperimentRun | None = None) -> tuple[dict, dict]:
     if execution is None:
@@ -269,6 +294,10 @@ def run_sleeve(sleeve: str, refresh: bool = False, candidate: str | None = None,
         bench["60/40 (SPY/IEF)"] = simulate_portfolio(P, fixed_weights(P, {"SPY": 0.6, "IEF": 0.4}),
                                                       nobrake, cfg["cost"], 0.05)
     bkey = f"Comprar y aguantar {cfg['benchmark']}"
+    control_key = "Control sin margen de sustitución"
+    if pc.rotation_buffer:
+        control_params = {**cand_cfg, "rotation_buffer": 0.0}
+        bench[control_key] = runs[key_of(control_params)]["bt"]
 
     # 3) walk-forward ----------------------------------------------------------------------
     wf_bt, picks = walk_forward(P, runs, cfg["oos_year"], start, ann, cfg)
@@ -328,6 +357,32 @@ def run_sleeve(sleeve: str, refresh: bool = False, candidate: str | None = None,
                       "vol": round(float(sig["vol"].loc[last, a]), 3)})
     res["today"] = {"date": str(last.date()), "cash": round(1 - float(W.loc[last].sum()), 4),
                     "assets": sorted(today, key=lambda x: -x["weight"])}
+
+    if pc.rotation_buffer:
+        control = runs[key_of({**cand_cfg, "rotation_buffer": 0.0})]
+        candidate_ret = win(runs[cand]["bt"], oos)["ret"]
+        control_ret = win(control["bt"], oos)["ret"]
+        stress = 0.006
+        stress_candidate = perf(win(simulate_portfolio(P, runs[cand]['W'], pc, stress, cfg['band']), oos), ann)
+        stress_control = perf(win(simulate_portfolio(P, control['W'], control['params'], stress, cfg['band']), oos), ann)
+        complete_years = sorted(year for year in yearly(candidate_ret)
+                                if year < P.index[-1].year and year >= cfg['oos_year'])
+        candidate_years, control_years = yearly(candidate_ret), yearly(control_ret)
+        candidate_metrics, control_metrics = perf(win(runs[cand]['bt'], oos), ann), perf(win(control['bt'], oos), ann)
+        turns = [float(win(runs[cand]['bt'], oos)['turnover'].sum()),
+                 float(win(control['bt'], oos)['turnover'].sum())]
+        bootstrap = res['bootstrap'][control_key]
+        checks = rotation_checks(candidate_metrics, control_metrics, turns, candidate_years, control_years,
+                                 complete_years, bootstrap, res['placebo']['p_value'],
+                                 stress_candidate, stress_control)
+        res['rotation_comparison'] = {
+            'control': control_metrics, 'candidate': candidate_metrics, 'turnover': turns,
+            'complete_years': complete_years, 'yearly_control': control_years, 'yearly_candidate': candidate_years,
+            'cost_stress_per_side': stress, 'cost_stress_control': stress_control,
+            'cost_stress_candidate': stress_candidate, 'bootstrap_vs_control': bootstrap, 'checks': checks,
+            'retrospective_checks_pass': all(checks.values()), 'promoted': False,
+            'limitation': 'Comparación retrospectiva ya inspeccionada; no acredita holdout virgen, '
+                          'cuatro semanas prospectivas ni promoción automática.'}
 
     if sleeve == "crypto" and scope == "historical":
         # Lo que el bot puede operar HOY en Bitso (sesgo de supervivencia: estas sobrevivieron)
@@ -513,6 +568,8 @@ def main() -> None:
     ap.add_argument("--candidate", default="multi", help="multi (diario) o multi_monthly (mensual)")
     ap.add_argument("--universe", choices=("historical", "bitso"), default="historical")
     ap.add_argument("--cov-estimator", choices=("sample", "ledoit_wolf"), default="sample")
+    ap.add_argument("--rotation-buffer", type=float, choices=(0.0, 0.15), default=0.0,
+                    help="candidata de investigación: margen relativo para sustituir un activo")
     ap.add_argument("--describe", action="store_true", help="describe plan/IDs sin descargar ni simular")
     ap.add_argument("--experiment-id")
     ap.add_argument("--preregistration", type=Path)
@@ -521,7 +578,7 @@ def main() -> None:
     ap.add_argument("--ledger", type=Path, default=REPORTS / "experiments" / "ledger.jsonl")
     args = ap.parse_args()
     config, variants = research_plan(args.multi_market, args.candidate, args.universe,
-                                     args.cov_estimator, args.refresh)
+                                     args.cov_estimator, args.refresh, args.rotation_buffer)
     if args.describe:
         print(json.dumps({"config": config, "config_sha256": canonical_hash(config), "variants": variants},
                          indent=2, ensure_ascii=False))

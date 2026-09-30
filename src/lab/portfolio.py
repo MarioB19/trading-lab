@@ -44,6 +44,11 @@ class PortfolioParams:
     cash_asset: str | None = None   # p. ej. "BIL": el efectivo no usado se estaciona en bonos del Tesoro
     rebalance: str = "daily"        # "monthly": solo se rebalancea el primer día hábil de cada mes
     cov_estimator: str = "sample"  # alternativa de investigación, opt-in: "ledoit_wolf"
+    rotation_buffer: float = 0.0  # investigación: ventaja relativa necesaria para sustituir un activo
+
+    def __post_init__(self):
+        if not np.isfinite(self.rotation_buffer) or not 0 <= self.rotation_buffer < 1:
+            raise ValueError("rotation_buffer debe estar entre 0 y 1 (exclusivo)")
 
     @classmethod
     def from_dict(cls, d: dict | None) -> "PortfolioParams":
@@ -54,7 +59,11 @@ class PortfolioParams:
         return cls(**d)
 
     def to_dict(self) -> dict:
-        return asdict(self)
+        result = asdict(self)
+        # Preserve the identity of frozen control/archived plans. Missing means 0.
+        if self.rotation_buffer == 0:
+            result.pop("rotation_buffer")
+        return result
 
 
 # ------------------------------------------------------------------ señales por activo
@@ -95,12 +104,36 @@ def cap_weights(w: np.ndarray, cap: float) -> np.ndarray:
     return w
 
 
+def select_ranked(score, eligible, previous, top_k, buffer=0.0):
+    """Retain eligible incumbents unless a challenger exceeds their score by buffer.
+
+    Eligibility and regime filters are applied before this function. The buffer
+    never protects an asset that has lost its trend, positive momentum or listing.
+    """
+    ranked = np.flatnonzero(eligible)
+    ranked = ranked[np.argsort(-score[ranked], kind="stable")]
+    if buffer == 0:
+        return ranked[:top_k]
+    selected = [int(i) for i in previous if eligible[i]][:top_k]
+    for challenger in ranked:
+        if challenger in selected:
+            continue
+        if len(selected) < top_k:
+            selected.append(int(challenger))
+            continue
+        weakest = min(selected, key=lambda i: (score[i], -i))
+        if score[challenger] > score[weakest] * (1 + buffer):
+            selected[selected.index(weakest)] = int(challenger)
+    return np.array(sorted(selected, key=lambda i: (-score[i], i)), dtype=int)
+
+
 def target_weights(prices: pd.DataFrame, eligible: pd.DataFrame | None,
                    p: PortfolioParams, return_signals: bool = False, last_only: bool = False):
     """Pesos objetivo por fecha (antes del freno por caída, que depende del capital).
 
-    last_only=True calcula solo la última fila (las demás quedan en cero): es lo que necesita
-    una revisión en tiempo real y es mucho más rápido. No aplica al rebalanceo mensual.
+    last_only=True calcula solo la última fila para la regla sin memoria. Con margen de
+    sustitución reconstruye las decisiones previas; el último objetivo coincide con el
+    cálculo completo. Tampoco se abrevia el rebalanceo mensual.
     """
     prices = clean(prices)
     sig = signals(prices, p)
@@ -114,7 +147,9 @@ def target_weights(prices: pd.DataFrame, eligible: pd.DataFrame | None,
     cash_ok = np.isfinite(clean(prices).values[:, ci]) if ci >= 0 else None
     ri = cols.index(p.regime_asset) if has_regime else -1
     W = np.zeros(prices.shape)
-    only_last = last_only and p.rebalance != "monthly"
+    # A stateful selector must replay prior decisions even for a last-row query.
+    only_last = last_only and p.rebalance != "monthly" and p.rotation_buffer == 0
+    previous = np.array([], dtype=int)
     for t in (range(len(prices) - 1, len(prices)) if only_last else range(len(prices))):
         tr, vo, sc = trend[t], vol[t], score[t]
         ok = elig[t] & (tr >= p.min_trend) & (sc > 0) & np.isfinite(vo) & (vo > 0) & np.isfinite(sc)
@@ -124,10 +159,10 @@ def target_weights(prices: pd.DataFrame, eligible: pd.DataFrame | None,
             mask = np.zeros(len(cols), bool)
             mask[ri] = True
             ok &= mask
-        idx = np.flatnonzero(ok)
+        idx = select_ranked(sc, ok, previous, p.top_k, p.rotation_buffer)
+        previous = idx
         if not len(idx):
             continue
-        idx = idx[np.argsort(-sc[idx], kind="stable")][: p.top_k]
         raw = tr[idx] / vo[idx]
         w = cap_weights(raw / raw.sum(), p.max_weight)
         if p.vol_target:
