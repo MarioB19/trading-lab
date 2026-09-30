@@ -7,6 +7,7 @@ from __future__ import annotations
 
 import argparse
 import csv
+import hashlib
 import io
 import json
 from pathlib import Path
@@ -15,7 +16,7 @@ import pandas as pd
 import yaml
 
 from lab import data, research_multi
-from lab.experiments import ExperimentRun, ResearchGateError, file_hash
+from lab.experiments import ExperimentRun, ResearchGateError, canonical_hash, file_hash
 from lab.research_data import apply_availability_policy
 
 
@@ -33,13 +34,12 @@ def verified_sources(source: Path, expected: dict, evidence: Path, policy: dict)
             raise ResearchGateError(f"la entrada original cambió: {name}")
         raw[name] = path.read_bytes()
         # Verificar los bytes leídos, además del archivo: evita una lectura mixta.
-        import hashlib
         if hashlib.sha256(raw[name]).hexdigest() != digest:
             raise ResearchGateError(f"la entrada cambió durante la lectura: {name}")
     if file_hash(evidence) != policy["evidence_sha256"]:
         raise ResearchGateError("la evidencia de disponibilidad cambió")
     raw["availability_evidence.json"] = evidence.read_bytes()
-    if __import__("hashlib").sha256(raw["availability_evidence.json"]).hexdigest() != policy["evidence_sha256"]:
+    if hashlib.sha256(raw["availability_evidence.json"]).hexdigest() != policy["evidence_sha256"]:
         raise ResearchGateError("la evidencia cambió durante la lectura")
     return raw
 
@@ -101,6 +101,15 @@ def prepare_inputs(execution: ExperimentRun, source: Path) -> Path:
     return derived
 
 
+def verify_declared_plan(declared: dict, meta: dict, config: dict, variants: list):
+    # JSON representa las tuplas del motor como listas; comparar su identidad
+    # canónica, igual que el gate científico, sin rechazar un plan equivalente.
+    if (canonical_hash(declared["config"]) != canonical_hash(config)
+            or canonical_hash(declared["variants"]) != canonical_hash(variants)
+            or any(declared[key] != meta[key] for key in ("availability_policy", "source_sha256"))):
+        raise ResearchGateError("el plan y las entradas difieren del preregistro")
+
+
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--preregistration-commit", required=True)
@@ -110,9 +119,7 @@ def main(argv=None):
     declared = json.loads((ROOT / "reports/rotation_v2_plan.json").read_text())
     meta = yaml.safe_load(prereg.read_text().split("---", 2)[1])
     config, variants = research_multi.research_plan(universe="bitso", rotation_buffer=0.15)
-    if (declared["config"] != config or declared["variants"] != variants
-            or any(declared[key] != meta[key] for key in ("availability_policy", "source_sha256"))):
-        raise ResearchGateError("el plan y las entradas difieren del preregistro")
+    verify_declared_plan(declared, meta, config, variants)
     execution = ExperimentRun(ROOT, "rotation-v2", prereg, args.preregistration_commit,
                               config, variants, ROOT / "reports/experiments",
                               ROOT / "reports/experiments/ledger.jsonl")

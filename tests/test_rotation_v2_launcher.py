@@ -1,6 +1,7 @@
 """Checks offline de trazabilidad; no calculan rentabilidad de mercado."""
 import hashlib
 import importlib.util
+import json
 from pathlib import Path
 
 import pytest
@@ -41,3 +42,15 @@ def test_sources_refuse_changed_bytes_missing_files_and_changed_evidence(tmp_pat
         launcher.verified_sources(tmp_path, expected, evidence, policy)
     with pytest.raises(ResearchGateError, match="entradas"):
         launcher.verified_sources(tmp_path, {}, evidence, policy)
+
+
+def test_plan_uses_canonical_identity_and_still_rejects_changed_parameters():
+    config = {"windows": (30, 90, 180)}
+    variants = [{"id": "declared", "windows": (30, 90, 180)}]
+    meta = {"availability_policy": {"asset": "AVAX"}, "source_sha256": {"input": "hash"}}
+    declared = json.loads(json.dumps({"config": config, "variants": variants, **meta}))
+    launcher.verify_declared_plan(declared, meta, config, variants)
+    with pytest.raises(ResearchGateError, match="plan"):
+        launcher.verify_declared_plan(declared, meta, {"windows": (30, 90, 181)}, variants)
+    with pytest.raises(ResearchGateError, match="plan"):
+        launcher.verify_declared_plan(declared, meta, config, variants + [{"id": "extra"}])
