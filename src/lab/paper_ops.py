@@ -17,7 +17,7 @@ import shutil
 import sqlite3
 import tempfile
 
-from .aggressive_plan import EXPERIMENT_IDS, isolated_directory
+from .aggressive_plan import EXPERIMENT_IDS, isolated_directory, roles_for
 from .experiments import ResearchGateError, canonical_hash
 from .storage import execution_lock
 
@@ -91,7 +91,8 @@ def _identity(db):
             or not manifest.get("run_id")):
         raise ResearchGateError("identidad/plan/preregistro de comparación inválidos")
     state = _doc(db, "state", {})
-    if (state.get("mode") != "paper" or set(state.get("sleeves", {})) != SLEEVES
+    expected_sleeves = {f"{role}.{block}" for role in roles_for(manifest["plan"]) for block in BLOCKS}
+    if (state.get("mode") != "paper" or set(state.get("sleeves", {})) != expected_sleeves
             or any(sleeve.get("mode") != "paper" or "ledger" not in sleeve or "account_namespace" in sleeve
                    for sleeve in state["sleeves"].values())
             or _doc(db, "deployment") is not None

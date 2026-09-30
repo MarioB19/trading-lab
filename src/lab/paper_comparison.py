@@ -25,7 +25,7 @@ import numpy as np
 import pandas as pd
 
 from .aggressive_plan import (EXPERIMENT_ID, EXPERIMENT_IDS, PLAN_PATH, PREREGISTRATION, assert_current_control,
-                              comparison_plan, isolated_directory, preregistration_path)
+                              comparison_plan, isolated_directory, preregistration_path, roles_for)
 from .bot import equity_history, fetch_prices, latest_closed_candle, run_sleeve
 from .brokers import SimBroker
 from .data import ROOT
@@ -88,7 +88,7 @@ def _store(path: Path, plan: dict, variants: list[dict], proof: dict, now: pd.Ti
     state = {"mode": "paper", "sleeves": {f"{role}.{block}": {
         "mode": "paper", "capital_base": 500.0,
         "ledger": {"cash": 500.0, "positions": {}}}
-        for role in ROLES for block in BLOCKS}}
+        for role in roles_for(plan) for block in BLOCKS}}
     with store.transaction() as db:
         store._write(db, "comparison_manifest", manifest)
         store._write(db, "state", state)
@@ -247,7 +247,7 @@ def _metrics(snapshot: dict, trades: list[dict], name: str) -> dict:
 def _report(manifest, state, snapshots, trades, history, now, captures):
     plan = manifest["plan"]
     portfolios = {}
-    for role in ROLES:
+    for role in roles_for(plan):
         blocks = {block: _metrics(snapshots[f"{role}.{block}"], trades, f"{role}.{block}") for block in BLOCKS}
         for block, metrics in blocks.items():
             observed = [500.0] + [row["portfolios"][role]["blocks"][block]["equity_usd"] for row in history]
@@ -299,7 +299,7 @@ def _report(manifest, state, snapshots, trades, history, now, captures):
                             "El historial previo calienta señales; no cuenta como tiempo observado.",
                             "Sincronía entre carteras; cada mercado conserva la fecha de su propio cierre."],
             "datasets": captures, "portfolios": portfolios,
-            "paired_pnl_difference_usd": round(portfolios["aggressive"]["pnl_usd"] - portfolios["control"]["pnl_usd"], 2),
+            "paired_pnl_difference_usd": round(portfolios[roles_for(plan)[1]]["pnl_usd"] - portfolios["control"]["pnl_usd"], 2),
             "sleeves": snapshots}
 
 
@@ -439,7 +439,7 @@ def run_once(preregistration_commit: str, data_dir: Path, crypto_prices: Path | 
             manifest = store.read_document("comparison_manifest")
             all_equity = pd.DataFrame(store.rows("equity"))
             trades, equity_rows = [], []
-            for role in ROLES:
+            for role in roles_for(plan):
                 for block in BLOCKS:
                     name = f"{role}.{block}"
                     sc = copy.deepcopy(plan["portfolios"][role][block])
@@ -459,7 +459,7 @@ def run_once(preregistration_commit: str, data_dir: Path, crypto_prices: Path | 
                         trades.append(trade)
                     if broker.cash() < -1e-8 or any(q < 0 for q in broker.positions().values()):
                         raise ResearchGateError("el simulador produjo efectivo negativo o una posición corta")
-            if snapshots["control.stocks"] != snapshots["aggressive.stocks"]:
+            if snapshots["control.stocks"] != snapshots[f"{roles_for(plan)[1]}.stocks"]:
                 raise ResearchGateError("las carteras ETF idénticas divergieron")
             report = _report(manifest, state, snapshots, store.rows("trades") + trades, history, now, captures)
             entry = {"observed_at": now.isoformat(), "candles": candles, "hashes": hashes,

@@ -20,7 +20,7 @@ PLAN_PATH = ROOT / "configs/experiments/aggressive_v1.yaml"
 EXPERIMENT_ID = "aggressive-v1"
 PREREGISTRATION = ROOT / "reports/aggressive_v1_preregistro.md"
 PLAN_V1_HASH = "4d7d97add8f79e86d5dd942691cf99ad4d0bac030508c3cff427fb66ac86886e"
-EXPERIMENT_IDS = {EXPERIMENT_ID, "aggressive-v2"}
+EXPERIMENT_IDS = {EXPERIMENT_ID, "aggressive-v2", "rotation-paper-v1"}
 AVAILABILITY_EVIDENCE = ROOT / "reports/data_quality/avax_spot_availability.json"
 
 
@@ -29,11 +29,15 @@ def comparison_plan(plan_path: Path | None = None) -> tuple[dict, list[dict]]:
     plan = yaml.safe_load(Path(plan_path or PLAN_PATH).read_text())
     validate_plan(plan)
     variants = []
-    for role in ("control", "aggressive"):
+    for role in roles_for(plan):
         params = PortfolioParams.from_dict(plan["portfolios"][role]["crypto"]["params"]).to_dict()
         variants.append({"id": variant_id("crypto", params, "bitso"), "sleeve": "crypto",
                          "role": role, "params": params, "universe": "bitso", "status": "declared"})
     return copy.deepcopy(plan), variants
+
+
+def roles_for(plan: dict) -> tuple[str, str]:
+    return ("control", "candidate") if plan.get("experiment_id") == "rotation-paper-v1" else ("control", "aggressive")
 
 
 def preregistration_path(plan: dict) -> Path:
@@ -44,6 +48,10 @@ def preregistration_path(plan: dict) -> Path:
 
 
 def validate_plan(plan: dict) -> None:
+    if plan.get("experiment_id") == "rotation-paper-v1":
+        from .rotation_plan import validate_plan as validate_rotation
+        validate_rotation(plan)
+        return
     if plan.get("mode") != "paper" or plan.get("live_authorized") is not False:
         raise ResearchGateError("el experimento admite exclusivamente dinero simulado")
     if plan.get("experiment_id") not in EXPERIMENT_IDS or plan.get("protocol_version") != 1:
