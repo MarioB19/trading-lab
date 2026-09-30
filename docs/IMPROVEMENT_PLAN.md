@@ -2,7 +2,7 @@
 
 Solicitado por Brandon el 29-sep-2026. Objetivo: medir dónde se pierde rendimiento
 por ejecución y probar una reducción de rotación antes de cambiar el portafolio.
-No hay una mejora de rentabilidad demostrada todavía.
+La candidata mejora el diagnóstico retrospectivo, pero todavía no acredita ganancia futura ni promoción.
 
 ## 1. Medición operativa implementada
 
@@ -39,9 +39,9 @@ vigentes. No se modifica modo, `.env`, secretos ni estado a mano.
 El preregistro aprobado `reports/rotation_v1_preregistro.md` fija la hipótesis, ventana,
 90 variantes declaradas y criterios antes de medir nuevos resultados de mercado.
 La investigación requiere preregistro en commit propio anterior al código de la
-corrida y checkout limpio. No se ha ejecutado ese experimento ni iniciado sus 28 días.
+corrida y checkout limpio. El intento v1 falló al inicializar antes de evaluar; v2 corrigió sólo disponibilidad AVAX y la serialización del timestamp, conservando parámetros, muestra y criterios. Sus 90 variantes se completaron.
 
-## 3. Secuencia de validación pendiente
+## 3. Secuencia de validación
 
 1. Brandon autoriza los tres commits locales el 29-sep-2026: base preservada
    `5d6f5ff41b4afaa0e6aa2b5229311f01ff38418b`, preregistro propio
@@ -89,11 +89,45 @@ commit contiene el código ya publicado y su documentación, con la suite comple
 El SHA del código y la comprobación de ancestro/árbol limpio se guardan en
 `runtime-data/improvements-20260929/commit-verification.json` tras crear el commit.
 
-La comparación no se ha ejecutado. El permiso de commits y el gate de Git no
-resuelven la equivalencia pendiente de datos/universo/ejecución; los 28 días de
-candidata siguen sin comenzar. Railway conserva el paquete ya comprobado, sin
-otro redeploy por el solo registro de commits.
+La comparación registrada se completó; véase el resultado y la etapa prospectiva abajo. La equivalencia completa de datos/universo/ejecución todavía no está resuelta. Railway conserva el paquete comprobado, sin otro redeploy por la investigación.
 
 Evidencia local: `runtime-data/improvements-20260929/`. El paquete excluye secretos,
 estado, datasets e informes. La copia externa automática recurrente de Railway
 sigue pendiente; esta entrega conserva una copia descargada comprobada.
+
+## Comparación y elección del 29-sep
+
+Corrida rotation-v2 `20260930T020623Z-3142e39c`, preregistro `45c1290`, código
+`708b214`, 90 variantes y 16 artefactos íntegros. Cripto 2021-01-01 a 2026-09-26:
+CAGR neto control 34.06% / candidata 39.37%, caída máxima 39.48% / 37.82%,
+rotación 19.11% menor. Supera 4/5 años completos y los 8 criterios declarados;
+bootstrap retorno 83.95%/Sharpe 85.90%, placebo p=0.004975. No son pronósticos.
+Resultado: `reports/experiments/rotation-v2/rotation_v2_resultado.md`.
+
+Se elige 15% para la siguiente etapa; el control operacional sigue intacto.
+Plan prospectivo propio `configs/experiments/rotation_paper_v1.yaml`, preregistro
+`c55b5ac`, código congelado `26ec45e`. Mismos parámetros, dos carteras virtuales
+independientes, USD 1,000 cada una, sin cuentas o fábricas de broker. Primera
+observación 30-sep 02:28:24 UTC, sólo 1 fecha observada, 14 fills virtuales y cero
+órdenes externas/incidencias. Reintentos no duplican fills ni cuentan días.
+
+LaunchAgent `com.tradinglab.rotation-paper-v1` cada 900 segundos comprobado,
+última salida 0, errores vacíos. La ruta inicial externa falló con EX_CONFIG 78;
+se conserva ese log y se retiró ese registro antes de migrar mediante backup/
+restore a `~/Library/Application Support/Trading Lab/rotation-paper-v1-26ec45ef8778/`.
+Paquete, Python/dependencias idénticas, datos y backups ahora son locales;
+no dependen de Kingston. Se verificaron 43 archivos, siete documentos, tablas de
+trades/equity y restore desactivado. Necesita Mac y sesión disponibles;
+una interrupción puede causar huecos que no se reconstruyen.
+
+Faltan 28 días completos y la validación de ejecución operable. Ninguna
+promoción es automática. El plazo no puede cumplirse antes del 27-oct 20:28 CDMX;
+la revisión depende de nuevas observaciones continuas. `lab.rotation_observer`
+compara retorno neto, caída y volumen normalizado por capital inicial; su salida
+sigue `candidate_promoted=false`, `live_authorized=false`.
+
+Suite final 461 pruebas; replay control 0.458%. Configuración Railway verificada
+igual el 30-sep 02:32:38 UTC, paper/ready, cero errores/órdenes pendientes, 40 archivos
+instalados coincidentes. Original 225 hashes intactos. Sin push ni dinero real.
+Evidencia: `runtime-data/improvements-20260929/rotation-v2-verification.json`,
+`rotation-paper-verification.json`, `rotation-paper-local-runtime.json`.
