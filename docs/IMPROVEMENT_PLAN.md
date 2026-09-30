@@ -131,3 +131,18 @@ igual el 30-sep 02:32:38 UTC, paper/ready, cero errores/órdenes pendientes, 40 
 instalados coincidentes. Original 225 hashes intactos. Sin push ni dinero real.
 Evidencia: `runtime-data/improvements-20260929/rotation-v2-verification.json`,
 `rotation-paper-verification.json`, `rotation-paper-local-runtime.json`.
+
+## Validación técnica posterior del 29-sep
+
+Replay de 365 días de ambas variantes registradas: diferencia máxima bot/backtest
+0.448% en cada una, menor que 2%. Captura pública Bitso de 16 mercados y prueba
+taker con el ejecutor compartido: cinco compras completas por cartera, mínimos,
+redondeos y profundidad comprobados; costo puntual ponderado 41.36 bps. Una compra
+virtual ETH maker completó en 37.748 segundos por cruce del libro público, con
+comisión simulada 0.30% y efectivo conciliado. No certifica prioridad real de cola
+ni salida por timeout; no suma fechas al paper ni modifica sus costos constantes.
+
+Seguimiento local: cuatro ejecuciones, última salida 0, sigue una fecha observada
+y cero incidencias. Original 225 hashes intactos. La equivalencia operable completa
+y los 28 días futuros siguen pendientes; no se activa la candidata. Métodos,
+artefactos y límites en [ROTATION_EXECUTION_VALIDATION.md](ROTATION_EXECUTION_VALIDATION.md).
