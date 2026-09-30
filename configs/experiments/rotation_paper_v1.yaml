@@ -1,0 +1,321 @@
+protocol_version: 1
+mode: paper
+initial_capital_usd: 1000.0
+baseline_config_sha256: bad7256f2e61ab689f0d44b89b6ddfc0b2a0cedd1a927db541cae205f0ff1318
+costs:
+  crypto:
+    base: 0.0045
+    stress:
+    - 0.006
+    - 0.01
+  stocks:
+    base: 0.0005
+execution_model: daily_close_simulated_fee_and_slippage_no_orderbook
+live_authorized: false
+max_price_jump: 0.4
+experiment_id: rotation-paper-v1
+engine_version: paired-paper-v1
+portfolios:
+  control:
+    crypto:
+      enabled: true
+      label: Criptomonedas
+      strategy: tactical
+      params:
+        top_k: 5
+        vol_target: 0.4
+        regime_asset: BTC
+        dd_brake: true
+        max_weight: 0.4
+        lookbacks:
+        - 20
+        - 50
+        - 100
+        - 200
+        mom_windows:
+        - 30
+        - 90
+        - 180
+        vol_halflife: 20
+        cov_window: 90
+        min_trend: 0.5
+        ann: 365
+        dd_start: 0.1
+        dd_full: 0.3
+        dd_floor: 0.25
+        dd_peak_window: 180
+        cash_asset: null
+        rebalance: daily
+        cov_estimator: sample
+      universe:
+      - BTC
+      - ETH
+      - SOL
+      - XRP
+      - ADA
+      - DOGE
+      - LINK
+      - AVAX
+      - LTC
+      - BCH
+      - XLM
+      - TRX
+      - HBAR
+      - NEAR
+      - UNI
+      - ATOM
+      data:
+        source: ccxt
+        exchange: kraken
+        fallback_exchange: bitso
+      quote: USD
+      paper_broker: sim
+      capital: 500.0
+      compound: true
+      fee: 0.0036
+      slippage: 0.0009
+      band: 0.02
+      execution:
+        maker_first: false
+      kill_drawdown: 0.45
+      max_order_value: 500.0
+      min_order_value: 5
+      max_data_age_hours: 36
+      benchmark: BTC
+      min_history: 250
+    stocks:
+      enabled: true
+      label: Acciones y ETFs
+      strategy: passive
+      mix:
+        SPY: 0.6
+        IEF: 0.4
+      params:
+        top_k: 5
+        vol_target: 0.1
+        regime_asset: null
+        dd_brake: true
+        max_weight: 0.35
+        lookbacks:
+        - 20
+        - 50
+        - 100
+        - 200
+        mom_windows:
+        - 21
+        - 63
+        - 126
+        vol_halflife: 20
+        cov_window: 63
+        min_trend: 0.5
+        ann: 252
+        dd_start: 0.1
+        dd_full: 0.3
+        dd_floor: 0.25
+        dd_peak_window: 126
+        cash_asset: null
+        rebalance: daily
+        cov_estimator: sample
+      universe:
+      - SPY
+      - QQQ
+      - IWM
+      - EFA
+      - EEM
+      - EWW
+      - TLT
+      - IEF
+      - GLD
+      - DBC
+      - VNQ
+      - XLK
+      - XLF
+      - XLE
+      - XLV
+      - XLI
+      - XLP
+      - XLU
+      - XLY
+      - XLB
+      data:
+        source: yahoo
+      quote: USD
+      paper_broker: sim
+      capital: 500.0
+      compound: true
+      fee: 0.0
+      slippage: 0.0005
+      band: 0.05
+      kill_drawdown: 0.25
+      max_order_value: 500.0
+      min_order_value: 1
+      max_data_age_hours: 100
+      benchmark: SPY
+      min_history: 250
+      execution:
+        maker_first: false
+  candidate:
+    crypto:
+      enabled: true
+      label: Criptomonedas
+      strategy: tactical
+      params:
+        top_k: 5
+        vol_target: 0.4
+        regime_asset: BTC
+        dd_brake: true
+        max_weight: 0.4
+        lookbacks:
+        - 20
+        - 50
+        - 100
+        - 200
+        mom_windows:
+        - 30
+        - 90
+        - 180
+        vol_halflife: 20
+        cov_window: 90
+        min_trend: 0.5
+        ann: 365
+        dd_start: 0.1
+        dd_full: 0.3
+        dd_floor: 0.25
+        dd_peak_window: 180
+        cash_asset: null
+        rebalance: daily
+        cov_estimator: sample
+        rotation_buffer: 0.15
+      universe:
+      - BTC
+      - ETH
+      - SOL
+      - XRP
+      - ADA
+      - DOGE
+      - LINK
+      - AVAX
+      - LTC
+      - BCH
+      - XLM
+      - TRX
+      - HBAR
+      - NEAR
+      - UNI
+      - ATOM
+      data:
+        source: ccxt
+        exchange: kraken
+        fallback_exchange: bitso
+      quote: USD
+      paper_broker: sim
+      capital: 500.0
+      compound: true
+      fee: 0.0036
+      slippage: 0.0009
+      band: 0.02
+      execution:
+        maker_first: false
+      kill_drawdown: 0.45
+      max_order_value: 500.0
+      min_order_value: 5
+      max_data_age_hours: 36
+      benchmark: BTC
+      min_history: 250
+    stocks:
+      enabled: true
+      label: Acciones y ETFs
+      strategy: passive
+      mix:
+        SPY: 0.6
+        IEF: 0.4
+      params:
+        top_k: 5
+        vol_target: 0.1
+        regime_asset: null
+        dd_brake: true
+        max_weight: 0.35
+        lookbacks:
+        - 20
+        - 50
+        - 100
+        - 200
+        mom_windows:
+        - 21
+        - 63
+        - 126
+        vol_halflife: 20
+        cov_window: 63
+        min_trend: 0.5
+        ann: 252
+        dd_start: 0.1
+        dd_full: 0.3
+        dd_floor: 0.25
+        dd_peak_window: 126
+        cash_asset: null
+        rebalance: daily
+        cov_estimator: sample
+      universe:
+      - SPY
+      - QQQ
+      - IWM
+      - EFA
+      - EEM
+      - EWW
+      - TLT
+      - IEF
+      - GLD
+      - DBC
+      - VNQ
+      - XLK
+      - XLF
+      - XLE
+      - XLV
+      - XLI
+      - XLP
+      - XLU
+      - XLY
+      - XLB
+      data:
+        source: yahoo
+      quote: USD
+      paper_broker: sim
+      capital: 500.0
+      compound: true
+      fee: 0.0
+      slippage: 0.0005
+      band: 0.05
+      kill_drawdown: 0.25
+      max_order_value: 500.0
+      min_order_value: 1
+      max_data_age_hours: 100
+      benchmark: SPY
+      min_history: 250
+      execution:
+        maker_first: false
+evaluation:
+  forward_min_days: 28
+  min_history: 250
+  historical_holdout_unseen: false
+  selection_basis: rotation-v2 retrospective comparison; all eight preregistered checks
+    passed
+  earliest_observation_utc: '2026-09-30T02:15:33.133851+00:00'
+historical_evidence:
+  run_id: 20260930T020623Z-3142e39c
+  config_sha256: 6dffbd1a1f51ffdb440dd6a67c3cc3e0644cd3d29ee52d6a8cc20cccda73cca3
+  manifest:
+    path: reports/experiments/rotation-v2/20260930T020623Z-3142e39c/manifest.json
+    sha256: 3a7f42ca153909ad63a90f64713ec37e2d7231f81014223d3f6c299683a36f36
+  results:
+    path: reports/experiments/rotation-v2/20260930T020623Z-3142e39c/multi_results.json
+    sha256: 0198b19b03131a00fbcce31d29a8542cdcb3103d66d4529cb8a4981304fcb95c
+criteria:
+  prospective_days_min: 28
+  no_observation_gaps: true
+  no_unresolved_errors: true
+  net_return_noninferiority: true
+  drawdown_noninferiority_tolerance: 0.01
+  turnover_ratio_max: 0.85
+  historical_checks_required: 8
+  promotion_requires_human_review: true
+  live_authorized: false
