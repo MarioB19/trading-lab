@@ -1,0 +1,477 @@
+{
+  "config": {
+    "protocol_version": 1,
+    "profile": "cost-aware-v1",
+    "engine_version": "funded-audit-v1",
+    "capital": {
+      "crypto": 500.0,
+      "stocks": 500.0
+    },
+    "assets": [
+      "BTC",
+      "ETH",
+      "SOL",
+      "XRP",
+      "ADA",
+      "DOGE",
+      "LINK",
+      "AVAX",
+      "LTC",
+      "BCH",
+      "XLM",
+      "TRX",
+      "HBAR",
+      "NEAR",
+      "UNI",
+      "ATOM"
+    ],
+    "evaluation": {
+      "start": "2021-01-01",
+      "end": "2026-09-25",
+      "classification": "retrospective_inspected",
+      "folds": "complete_calendar_years",
+      "selection": "fixed_rules_no_optimizer",
+      "signal_warmup": "all_frozen_prior_rows"
+    },
+    "input_sha256": {
+      "crypto_prices.csv": "28d9b9e89e368162c36419acfd4c395cf34b447482b28476ac99ef6bcbdce016",
+      "crypto_eligible.csv": "cb079497938df91998f6f95b6b60073de7067aaa4d306b512165911a656bca6b",
+      "stocks_prices.csv": "7343358427f3cb3dca8df225058b260f8a032df5068b8de2b2b59a2401fcaa37",
+      "stocks_eligible.csv": "82c125d1ff26525fcb9ab860c9bf4234f8d8cca0ba5f0408ff33d05f05aed2d0"
+    },
+    "specs": [
+      {
+        "name": "control",
+        "kind": "tactical",
+        "band": 0.02,
+        "params": {
+          "top_k": 5,
+          "vol_target": 0.4,
+          "regime_asset": "BTC",
+          "dd_brake": true,
+          "max_weight": 0.4,
+          "lookbacks": [
+            20,
+            50,
+            100,
+            200
+          ],
+          "mom_windows": [
+            30,
+            90,
+            180
+          ],
+          "vol_halflife": 20,
+          "cov_window": 90,
+          "min_trend": 0.5,
+          "ann": 365,
+          "dd_start": 0.1,
+          "dd_full": 0.3,
+          "dd_floor": 0.25,
+          "dd_peak_window": 180,
+          "cash_asset": null,
+          "rebalance": "daily",
+          "cov_estimator": "sample"
+        }
+      },
+      {
+        "name": "r0_b4",
+        "kind": "tactical",
+        "band": 0.04,
+        "params": {
+          "top_k": 5,
+          "vol_target": 0.4,
+          "regime_asset": "BTC",
+          "dd_brake": true,
+          "max_weight": 0.4,
+          "lookbacks": [
+            20,
+            50,
+            100,
+            200
+          ],
+          "mom_windows": [
+            30,
+            90,
+            180
+          ],
+          "vol_halflife": 20,
+          "cov_window": 90,
+          "min_trend": 0.5,
+          "ann": 365,
+          "dd_start": 0.1,
+          "dd_full": 0.3,
+          "dd_floor": 0.25,
+          "dd_peak_window": 180,
+          "cash_asset": null,
+          "rebalance": "daily",
+          "cov_estimator": "sample"
+        }
+      },
+      {
+        "name": "r15_b2",
+        "kind": "tactical",
+        "band": 0.02,
+        "params": {
+          "top_k": 5,
+          "vol_target": 0.4,
+          "regime_asset": "BTC",
+          "dd_brake": true,
+          "max_weight": 0.4,
+          "lookbacks": [
+            20,
+            50,
+            100,
+            200
+          ],
+          "mom_windows": [
+            30,
+            90,
+            180
+          ],
+          "vol_halflife": 20,
+          "cov_window": 90,
+          "min_trend": 0.5,
+          "ann": 365,
+          "dd_start": 0.1,
+          "dd_full": 0.3,
+          "dd_floor": 0.25,
+          "dd_peak_window": 180,
+          "cash_asset": null,
+          "rebalance": "daily",
+          "cov_estimator": "sample",
+          "rotation_buffer": 0.15
+        }
+      },
+      {
+        "name": "r15_b4",
+        "kind": "tactical",
+        "band": 0.04,
+        "params": {
+          "top_k": 5,
+          "vol_target": 0.4,
+          "regime_asset": "BTC",
+          "dd_brake": true,
+          "max_weight": 0.4,
+          "lookbacks": [
+            20,
+            50,
+            100,
+            200
+          ],
+          "mom_windows": [
+            30,
+            90,
+            180
+          ],
+          "vol_halflife": 20,
+          "cov_window": 90,
+          "min_trend": 0.5,
+          "ann": 365,
+          "dd_start": 0.1,
+          "dd_full": 0.3,
+          "dd_floor": 0.25,
+          "dd_peak_window": 180,
+          "cash_asset": null,
+          "rebalance": "daily",
+          "cov_estimator": "sample",
+          "rotation_buffer": 0.15
+        }
+      },
+      {
+        "name": "passive_btc_etf",
+        "kind": "passive_reference",
+        "crypto": {
+          "BTC": 1.0
+        },
+        "stocks": {
+          "SPY": 0.6,
+          "IEF": 0.4
+        },
+        "kill_dd": null
+      },
+      {
+        "name": "cash",
+        "kind": "cash_reference",
+        "annual_interest": 0.0
+      }
+    ],
+    "execution": {
+      "crypto_cost": 0.0045,
+      "stocks_cost": 0.0005,
+      "crypto_min_order_usd": 5.0,
+      "stocks_min_order_usd": 1.0,
+      "stocks_mix": {
+        "SPY": 0.6,
+        "IEF": 0.4
+      },
+      "stocks_band": 0.05,
+      "crypto_kill_dd": 0.45,
+      "stocks_kill_dd": 0.25,
+      "price_model": "previous_close_proxy_after_previous_signal",
+      "cash_model": "sell_first_scale_buys_to_cash_including_cost",
+      "missing_mark": "forward_fill_at_most_5_rows_then_fail_if_held",
+      "missing_execution_price": "no_order",
+      "lot_precision": "fractional_float_proxy",
+      "cross_sleeve_transfers": false
+    },
+    "economics": {
+      "monthly_costs_usd": [
+        0.0,
+        5.0,
+        10.0,
+        20.0
+      ],
+      "primary_monthly_cost": 5.0,
+      "expense_model": "daily_calendar_accrual_paid_externally_no_portfolio_withdrawal",
+      "nonpositive_economic_equity": "retain_pnl_compounded_metrics_unavailable",
+      "passive_primary_monthly_cost": 0.0,
+      "taxes_included": false
+    },
+    "inference": {
+      "bootstrap_n": 2000,
+      "block_days": 30,
+      "sensitivity_blocks": [
+        14,
+        90
+      ],
+      "paired_seed": 11,
+      "family_seed": 17,
+      "placebo_n": 199,
+      "placebo_seed": 23,
+      "placebo_min_shift": 60,
+      "placebo_family_adjustment": "holm",
+      "placebo_max_shift_inclusive": "evaluation_rows_minus_min_shift",
+      "placebo_shifted_rows": "decisions_immediately_before_evaluated_returns",
+      "bootstrap_method": "noncircular_moving_blocks_joint_indices_inclusive_last_start",
+      "familywise_method": "centered_max_mean_excess_log_return_including_zero",
+      "undefined_sharpe_policy": "null_metric_failed_comparison_placebo_p_one",
+      "legacy_trials_lower_bound": 97
+    },
+    "criteria": {
+      "cagr_improvement_pp": 0.5,
+      "sharpe_no_worse": true,
+      "drawdown_worse_max_pp": 1.0,
+      "turnover_reduction_pct": 15.0,
+      "complete_years_win_fraction": 0.6,
+      "bootstrap_superiority_fraction": 0.8,
+      "familywise_p_lt": 0.05,
+      "placebo_holm_p_lt": 0.05,
+      "economic_profit_after_5_positive": true,
+      "stress_costs_per_side": [
+        0.006,
+        0.01
+      ],
+      "stress_primary": 0.006,
+      "stress_cagr_and_sharpe_no_worse": true,
+      "vs_passive_sharpe_no_worse_after_respective_costs": true
+    },
+    "execution_equivalence_diagnostic": {
+      "window_rows": 720,
+      "sample_dates": 24,
+      "max_abs_weight_difference": 0.0001,
+      "reconstruct_window_eligibility_min_history": 250,
+      "same_positive_members_required": true
+    },
+    "data_quality": {
+      "bitso_point_in_time_listing_history": false,
+      "execution_price_and_queue_equivalence": false,
+      "etf_corporate_action_ledger": false,
+      "unseen_holdout": false
+    },
+    "promotion": {
+      "automatic": false,
+      "live_authorized": false,
+      "minimum_new_forward_days": 28,
+      "minimum_days_proves_edge": false
+    }
+  },
+  "config_sha256": "f2e42cd223c0f39c316b2cd709c577dd3ba3d7f49bba7289aa6d2a765c4bc545",
+  "variants": [
+    {
+      "id": "deep_total:4fa836ccf7e64aa09cb7",
+      "name": "control",
+      "params": {
+        "name": "control",
+        "kind": "tactical",
+        "band": 0.02,
+        "params": {
+          "top_k": 5,
+          "vol_target": 0.4,
+          "regime_asset": "BTC",
+          "dd_brake": true,
+          "max_weight": 0.4,
+          "lookbacks": [
+            20,
+            50,
+            100,
+            200
+          ],
+          "mom_windows": [
+            30,
+            90,
+            180
+          ],
+          "vol_halflife": 20,
+          "cov_window": 90,
+          "min_trend": 0.5,
+          "ann": 365,
+          "dd_start": 0.1,
+          "dd_full": 0.3,
+          "dd_floor": 0.25,
+          "dd_peak_window": 180,
+          "cash_asset": null,
+          "rebalance": "daily",
+          "cov_estimator": "sample"
+        }
+      },
+      "status": "declared"
+    },
+    {
+      "id": "deep_total:3bb5c5b991bd66b7720f",
+      "name": "r0_b4",
+      "params": {
+        "name": "r0_b4",
+        "kind": "tactical",
+        "band": 0.04,
+        "params": {
+          "top_k": 5,
+          "vol_target": 0.4,
+          "regime_asset": "BTC",
+          "dd_brake": true,
+          "max_weight": 0.4,
+          "lookbacks": [
+            20,
+            50,
+            100,
+            200
+          ],
+          "mom_windows": [
+            30,
+            90,
+            180
+          ],
+          "vol_halflife": 20,
+          "cov_window": 90,
+          "min_trend": 0.5,
+          "ann": 365,
+          "dd_start": 0.1,
+          "dd_full": 0.3,
+          "dd_floor": 0.25,
+          "dd_peak_window": 180,
+          "cash_asset": null,
+          "rebalance": "daily",
+          "cov_estimator": "sample"
+        }
+      },
+      "status": "declared"
+    },
+    {
+      "id": "deep_total:d017d55c421f08525d6c",
+      "name": "r15_b2",
+      "params": {
+        "name": "r15_b2",
+        "kind": "tactical",
+        "band": 0.02,
+        "params": {
+          "top_k": 5,
+          "vol_target": 0.4,
+          "regime_asset": "BTC",
+          "dd_brake": true,
+          "max_weight": 0.4,
+          "lookbacks": [
+            20,
+            50,
+            100,
+            200
+          ],
+          "mom_windows": [
+            30,
+            90,
+            180
+          ],
+          "vol_halflife": 20,
+          "cov_window": 90,
+          "min_trend": 0.5,
+          "ann": 365,
+          "dd_start": 0.1,
+          "dd_full": 0.3,
+          "dd_floor": 0.25,
+          "dd_peak_window": 180,
+          "cash_asset": null,
+          "rebalance": "daily",
+          "cov_estimator": "sample",
+          "rotation_buffer": 0.15
+        }
+      },
+      "status": "declared"
+    },
+    {
+      "id": "deep_total:d87abf1e75c18bbf11d8",
+      "name": "r15_b4",
+      "params": {
+        "name": "r15_b4",
+        "kind": "tactical",
+        "band": 0.04,
+        "params": {
+          "top_k": 5,
+          "vol_target": 0.4,
+          "regime_asset": "BTC",
+          "dd_brake": true,
+          "max_weight": 0.4,
+          "lookbacks": [
+            20,
+            50,
+            100,
+            200
+          ],
+          "mom_windows": [
+            30,
+            90,
+            180
+          ],
+          "vol_halflife": 20,
+          "cov_window": 90,
+          "min_trend": 0.5,
+          "ann": 365,
+          "dd_start": 0.1,
+          "dd_full": 0.3,
+          "dd_floor": 0.25,
+          "dd_peak_window": 180,
+          "cash_asset": null,
+          "rebalance": "daily",
+          "cov_estimator": "sample",
+          "rotation_buffer": 0.15
+        }
+      },
+      "status": "declared"
+    },
+    {
+      "id": "deep_total:6940401895846706dab4",
+      "name": "passive_btc_etf",
+      "params": {
+        "name": "passive_btc_etf",
+        "kind": "passive_reference",
+        "crypto": {
+          "BTC": 1.0
+        },
+        "stocks": {
+          "SPY": 0.6,
+          "IEF": 0.4
+        },
+        "kill_dd": null
+      },
+      "status": "declared"
+    },
+    {
+      "id": "deep_total:e0794733abc8990d5059",
+      "name": "cash",
+      "params": {
+        "name": "cash",
+        "kind": "cash_reference",
+        "annual_interest": 0.0
+      },
+      "status": "declared"
+    }
+  ]
+}
