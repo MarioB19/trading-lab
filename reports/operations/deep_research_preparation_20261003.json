@@ -1,0 +1,40 @@
+{
+  "date_local": "2026-10-03",
+  "timezone": "America/Mexico_City",
+  "branch": "codex/investigacion-profunda-20261003",
+  "head_base": "9190176d314656b74f799fcc37bffd0644717546",
+  "scope": "local_preparation_synthetic_validation_only",
+  "profile": "cost-aware-v1",
+  "plan_sha256": "f2e42cd223c0f39c316b2cd709c577dd3ba3d7f49bba7289aa6d2a765c4bc545",
+  "variant_count": 6,
+  "capital_usd": {
+    "crypto": 500.0,
+    "stocks": 500.0
+  },
+  "validation": {
+    "command": "PYTHONPATH=src ../trading-lab/.venv/bin/python -m pytest -q -W ignore",
+    "passed": 589,
+    "duration_seconds": 30.2,
+    "new_tests": 81,
+    "end_to_end_data": "artificial_prices_only"
+  },
+  "files_sha256": {
+    "src/lab/deep_research.py": "c478fd8063a7187a38e6180629e65e5d55efbd0e8ec45058d66cca7b2733a563",
+    "src/lab/research_statistics.py": "6c70fbfa08bcaf3cf6c180463c083946bdf26f2aab2612ba2f8825eafced41c8",
+    "src/lab/portfolio.py": "66986e0c75ff996e5b850df5366561443d4775f7fb5a5f1c09f7dc3e267ae892",
+    "src/lab/research_multi.py": "7fdeba0d3e2349036c0c9f94c13cf134ad7d99dd8e0ec03f2c7000b692c156af",
+    "tests/test_deep_research.py": "e32c3c02f61f9dc471911c9846fc3bb3dbb9b792a9a75bbb47a12b024ab538ec",
+    "tests/test_research_statistics.py": "60e7d75f5467be67f439ce9148c7a34cfeefee79c5d99fa99baebe97f4e2e24c",
+    "tests/test_funded_portfolio.py": "b04b6eaa33b01409f1ca5bae0e821a48a5dc2b2d7c922ee10e11366823ed923b",
+    "reports/cost_aware_v1_plan.json": "a26f7a93ecef41104977e95f82678e398736b22a3674c1451f7570524033a0d5",
+    "reports/cost_aware_v1_preregistro.md": "17050a7e7b91d00ce9344b9a136fae76d4d8d6ee71b32b0e1083922a4faf37a2"
+  },
+  "market_experiment_executed": false,
+  "preregistration_status": "draft",
+  "approval_pending": true,
+  "new_commits": [],
+  "push": false,
+  "deployment": false,
+  "operational_strategy_changed": false,
+  "live_authorized": false
+}

@@ -44,6 +44,12 @@ CANDIDATES = {
 }
 
 SLEEVES = {
+    # Separate, explicitly counted profile. Legacy experiments keep their grids.
+    "deep_crypto": {
+        "grid": {"rotation_buffer": [0.0, 0.15], "band": [0.02, 0.04]},
+        "fixed": {"top_k": 5, "vol_target": 0.40, "regime_asset": "BTC",
+                  "dd_brake": True, "max_weight": 0.40},
+    },
     "crypto": {
         "label": "Criptomonedas", "ann": 365, "eval_start": "2019-01-01", "oos_year": 2021,
         # 0.45% por lado = comisión real de Bitso contra USD (0.36% taker, nivel más bajo)
@@ -576,9 +582,20 @@ def main() -> None:
     ap.add_argument("--preregistration-commit", help="SHA completo anterior a HEAD")
     ap.add_argument("--output-root", type=Path, default=REPORTS / "experiments")
     ap.add_argument("--ledger", type=Path, default=REPORTS / "experiments" / "ledger.jsonl")
+    ap.add_argument("--deep-profile", choices=("cost-aware-v1",))
+    ap.add_argument("--input-dir", type=Path, help="entradas congeladas del perfil profundo; no descarga")
     args = ap.parse_args()
-    config, variants = research_plan(args.multi_market, args.candidate, args.universe,
-                                     args.cov_estimator, args.refresh, args.rotation_buffer)
+    if args.deep_profile:
+        if (args.refresh or args.multi_market or args.cov_estimator != "sample"
+                or args.rotation_buffer != 0 or args.candidate != "multi" or args.universe != "historical"):
+            ap.error("el perfil profundo fija sus opciones; no se mezcla con opciones legacy")
+        from .deep_research import deep_plan
+        config, variants = deep_plan()
+    else:
+        if args.input_dir:
+            ap.error("--input-dir requiere --deep-profile")
+        config, variants = research_plan(args.multi_market, args.candidate, args.universe,
+                                         args.cov_estimator, args.refresh, args.rotation_buffer)
     if args.describe:
         print(json.dumps({"config": config, "config_sha256": canonical_hash(config), "variants": variants},
                          indent=2, ensure_ascii=False))
@@ -593,12 +610,22 @@ def main() -> None:
     except ResearchGateError as exc:
         ap.error(str(exc))
     try:
-        res = (run_multi_market(args.refresh, args.candidate, execution=execution) if args.multi_market
-               else run(args.refresh, execution=execution))
+        if args.deep_profile:
+            from .deep_research import run_deep
+            if args.input_dir is None:
+                raise ResearchGateError("el perfil profundo necesita --input-dir congelado")
+            res = run_deep(execution, args.input_dir)
+        else:
+            res = (run_multi_market(args.refresh, args.candidate, execution=execution) if args.multi_market
+                   else run(args.refresh, execution=execution))
     except BaseException:
         execution.finish("failed")
         raise
     execution.finish("completed")
+    if args.deep_profile:
+        print(json.dumps({"result": str(execution.directory / "deep_results.json"),
+                          "verdict": res["verdict"], "live_authorized": False}, ensure_ascii=False))
+        return
     if args.multi_market:
         r = res
         print(pd.DataFrame(r["oos"]).T[["cagr", "sharpe", "max_dd", "exposure"]].round(3).to_string())

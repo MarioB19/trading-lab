@@ -301,6 +301,133 @@ def simulate_portfolio(prices: pd.DataFrame, weights: pd.DataFrame, p: Portfolio
     return df
 
 
+def simulate_funded_portfolio(prices: pd.DataFrame, weights: pd.DataFrame, p: PortfolioParams,
+                              cost: float = 0.0045, band: float = 0.02,
+                              kill_dd: float | None = 0.45, initial_capital: float = 500.0,
+                              min_order_value: float = 5.0, start=None) -> pd.DataFrame:
+    """Opt-in research ledger with USD cash, funded purchases and minimum orders.
+
+    The t-1 signal trades at the t-1 close proxy; one-way ``cost`` is charged in
+    cash on each fill, then quantities receive the price move ending at t. Buys
+    share available cash proportionally after sales and their costs. There are
+    no book fills, interest, dividends, splits, lot sizes or execution forecasts.
+
+    ``start`` is the first evaluated return, not a signal warmup boundary. A new
+    flat ledger begins there, using the preceding close when one is supplied.
+    Missing raw prices prohibit trading. Existing positions can be marked using
+    at most five forward-filled rows; beyond that the simulation fails closed.
+    ``held`` and ``position`` describe exposure after fees, before the t return.
+    This leaves the frozen legacy simulator and operational execution unchanged.
+    """
+    if (prices.empty or not prices.index.is_unique or not prices.index.is_monotonic_increasing
+            or not isinstance(prices.index, pd.DatetimeIndex) or prices.index.hasnans
+            or not prices.columns.is_unique):
+        raise ValueError("precios vacíos o índice/activos inválidos")
+    if not weights.index.equals(prices.index) or set(weights.columns) != set(prices.columns) or not weights.columns.is_unique:
+        raise ValueError("pesos y precios deben tener las mismas fechas y activos")
+    for name, value in (("cost", cost), ("band", band), ("initial_capital", initial_capital),
+                        ("min_order_value", min_order_value)):
+        if not np.isfinite(value) or value < 0:
+            raise ValueError(f"{name} debe ser finito y no negativo")
+    if initial_capital <= 0 or cost >= 1 or band > 1:
+        raise ValueError("capital positivo, costo menor a 1 y banda no mayor a 1 requeridos")
+    if kill_dd is not None and (not np.isfinite(kill_dd) or not 0 < kill_dd <= 1):
+        raise ValueError("kill_dd debe estar entre 0 y 1")
+    if p.dd_peak_window < 1:
+        raise ValueError("dd_peak_window debe ser positivo")
+    raw = prices.astype(float).where(lambda frame: np.isfinite(frame) & (frame > 0))
+    marks = clean(raw).to_numpy()  # Exactly one application of the five-row fill policy.
+    fresh = raw.notna().to_numpy()
+    targets = weights.reindex(columns=prices.columns).to_numpy(dtype=float)
+    if (not np.isfinite(targets).all() or (targets < 0).any()
+            or (targets.sum(axis=1) > 1 + 1e-12).any()):
+        raise ValueError("pesos deben ser finitos, largos y sumar como máximo 1")
+    first = 0 if start is None else int(prices.index.searchsorted(pd.Timestamp(start)))
+    if first >= len(prices):
+        raise ValueError("start no contiene retornos de evaluación")
+    cash = float(initial_capital)
+    quantities = np.zeros(len(prices.columns))
+    equity, peak, killed = cash, cash, False
+    observed = [equity]
+    previous_brake = 1.0
+    month_days = rebalance_days(prices.index)
+    cash_index = prices.columns.get_loc(p.cash_asset) if p.cash_asset in prices.columns else None
+    rows, held = [], []
+
+    def values(at):
+        owned = quantities > 0
+        if (owned & ~np.isfinite(marks[at])).any():
+            assets = ", ".join(str(asset) for asset in prices.columns[owned & ~np.isfinite(marks[at])])
+            raise ValueError(f"sin precio para posición abierta en {prices.index[at]}: {assets}")
+        return quantities * np.where(owned, marks[at], 0.0)
+
+    for t in range(first, len(prices)):
+        before = equity
+        fees, notional, brake = 0.0, 0.0, previous_brake
+        exposure = np.zeros(len(quantities))
+        if t > 0:
+            decision = t - 1
+            market_values = values(decision)
+            decision_equity = cash + float(market_values.sum())
+            peak = max(peak, decision_equity)
+            rolling_peak = max(observed[-p.dd_peak_window:])
+            if kill_dd is not None and decision_equity / peak - 1 <= -kill_dd:
+                killed = True
+            brake = 0.0 if killed else drawdown_multiplier(decision_equity / rolling_peak - 1, p)
+            desired = targets[decision].copy() * brake
+            if cash_index is not None and not killed and np.isfinite(marks[decision, cash_index]):
+                desired[cash_index] = max(0.0, 1.0 - (desired.sum() - desired[cash_index]))
+            current = market_values / decision_equity if decision_equity > 0 else np.zeros(len(quantities))
+            diff = desired - current
+            trade = fresh[decision] & ((np.abs(diff) > band) | ((desired == 0) & (quantities > 0)))
+            if p.rebalance == "monthly" and not (
+                    month_days[decision] or killed or brake != previous_brake or quantities.sum() == 0):
+                trade[:] = False
+            previous_brake = brake
+            for asset in np.flatnonzero(trade & (diff < 0)):
+                px = marks[decision, asset]
+                qty = quantities[asset] if desired[asset] == 0 else min(
+                    quantities[asset], -diff[asset] * decision_equity / px)
+                amount = qty * px
+                if amount < min_order_value:
+                    continue
+                quantities[asset] -= qty
+                cash += amount * (1 - cost)
+                fees += amount * cost
+                notional += amount
+            purchases = np.where(trade & (diff > 0), diff * decision_equity, 0.0)
+            purchases[purchases < min_order_value] = 0.0
+            need = float(purchases.sum()) * (1 + cost)
+            if need > 0:
+                purchases *= min(1.0, cash / need)
+            for asset in np.flatnonzero(purchases > 0):
+                amount = purchases[asset]
+                if amount < min_order_value:
+                    continue
+                quantities[asset] += amount / marks[decision, asset]
+                cash -= amount * (1 + cost)
+                fees += amount * cost
+                notional += amount
+            if cash < -1e-10 or (quantities < 0).any():
+                raise ValueError("la ejecución excedió el efectivo o inventario disponible")
+            cash = max(0.0, cash)  # Absorb floating-point residuals only (bound checked above).
+            invested = values(decision)
+            after_fees = cash + float(invested.sum())
+            exposure = invested / after_fees if after_fees > 0 else np.zeros(len(quantities))
+            equity = cash + float(values(t).sum())
+            observed.append(equity)
+        rows.append({"ret": equity / before - 1, "equity": equity, "cash": cash,
+                     "position": float(exposure.sum()), "turnover": notional / before,
+                     "cost_usd": fees, "brake": brake, "killed": killed})
+        held.append(exposure)
+    result = pd.DataFrame(rows, index=prices.index[first:])
+    result.attrs["held"] = pd.DataFrame(held, index=result.index, columns=prices.columns)
+    result.attrs["execution_model"] = "funded_prior_close_proxy_v1"
+    result.attrs["valuation_ffill_rows"] = 5
+    result.attrs["initial_capital_usd"] = float(initial_capital)
+    return result
+
+
 def with_provisional_close(daily: pd.DataFrame, prices_now: pd.Series, day: pd.Timestamp,
                            window_days: int | None = None) -> pd.DataFrame:
     """Cierres diarios COMPLETOS antes de `day` + una fila para `day` con los precios de este momento.
