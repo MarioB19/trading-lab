@@ -25,6 +25,14 @@ class ResearchGateError(ValueError):
     pass
 
 
+class _PreregistrationLoader(yaml.SafeLoader):
+    """Keep date metadata as its source text so the verified proof remains JSON-safe."""
+
+
+_PreregistrationLoader.add_constructor(
+    "tag:yaml.org,2002:timestamp", yaml.SafeLoader.construct_scalar)
+
+
 def runtime_versions() -> dict:
     packages = {}
     for name in ("numpy", "pandas", "scipy", "scikit-learn", "ccxt", "PyYAML", "requests"):
@@ -84,7 +92,7 @@ def verify_preregistration(root: Path, path: Path, commit: str, experiment_id: s
     text = blob.decode("utf-8")
     if not text.startswith("---\n") or "\n---" not in text[4:]:
         raise ResearchGateError("falta frontmatter del preregistro")
-    meta = yaml.safe_load(text.split("---", 2)[1])
+    meta = yaml.load(text.split("---", 2)[1], Loader=_PreregistrationLoader)
     if not isinstance(meta, dict) or meta.get("status") != "approved":
         raise ResearchGateError("preregistro en borrador o sin aprobar")
     if meta.get("experiment_id") != experiment_id or meta.get("protocol_version") != 1:

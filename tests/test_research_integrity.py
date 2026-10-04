@@ -1,7 +1,7 @@
 """Integridad con datos sintéticos offline; no mide nuevas estrategias de mercado."""
 from __future__ import annotations
 
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 import json
 from pathlib import Path
 import subprocess
@@ -197,6 +197,66 @@ def test_manifest_freezes_inputs_and_ledger_separates_declared_from_executed(pre
     ledger.write_text(ledger.read_text().replace("run_started", "run_changed", 1))
     with pytest.raises(ResearchGateError, match="integridad"):
         append_event(ledger, {"kind": "attempt"})
+
+
+def test_real_experiment_preserves_unquoted_prereg_dates_as_json_strings_without_global_yaml_change(prereg_repo, tmp_path):
+    root, path, _, config, variants = prereg_repo
+    fields = ("approved_on: 2026-10-04\n"
+              "approved_at: 2026-10-04T10:20:30Z\n"
+              "approval_context:\n"
+              "  nested_date: 2026-10-03\n"
+              "  nested_timestamp: 2026-10-03T20:00:00-06:00\n")
+    path.write_text(path.read_text().replace("---\n", "---\n" + fields, 1))
+    original = path.read_bytes()
+    raw_metadata = original.decode().split("---", 2)[1]
+    global_before = yaml.safe_load(raw_metadata)
+    assert type(global_before["approved_on"]) is date
+    assert type(global_before["approved_at"]) is datetime
+    assert type(global_before["approval_context"]["nested_date"]) is date
+    _git(root, "add", "prereg.md")
+    _git(root, "commit", "-m", "fechas YAML sintéticas sin comillas")
+    prereg_commit = _git(root, "rev-parse", "HEAD")
+    _add_code(root)
+    code_commit = _git(root, "rev-parse", "HEAD")
+    ledger = tmp_path / "dates-ledger.jsonl"
+    run = ExperimentRun(root, "synthetic", path, prereg_commit, config, variants,
+                        tmp_path / "dates-output", ledger)
+    run.variant("synthetic-one", "started")
+    run.variant("synthetic-one", "completed")
+    run.finish("completed")
+
+    manifest_path = run.directory / "manifest.json"
+    manifest = json.loads(manifest_path.read_text())
+    metadata = manifest["preregistration"]["metadata"]
+    assert metadata["approved_on"] == "2026-10-04"
+    assert metadata["approved_at"] == "2026-10-04T10:20:30Z"
+    assert metadata["approval_context"] == {"nested_date": "2026-10-03",
+                                            "nested_timestamp": "2026-10-03T20:00:00-06:00"}
+    assert manifest["preregistration"]["commit"] == prereg_commit
+    assert manifest["preregistration"]["code_commit"] == code_commit
+    assert manifest["preregistration"]["sha256"] == file_hash(path)
+    assert manifest["status"] == "completed" and manifest["live_authorized"] is False
+    assert manifest["variant_states"] == {"synthetic-one": "completed"}
+    json.dumps(manifest, allow_nan=False)
+
+    events = [json.loads(line) for line in ledger.read_text().splitlines()]
+    assert [event["kind"] for event in events] == ["run_started", "variant_started",
+                                                   "variant_completed", "run_completed"]
+    assert events[-1]["manifest_sha256"] == file_hash(manifest_path)
+    previous = None
+    for event in events:
+        digest = event.pop("event_sha256")
+        assert event["previous_sha256"] == previous
+        assert canonical_hash(event) == digest
+        previous = digest
+    assert path.read_bytes() == original
+    assert subprocess.check_output(["git", "-C", str(root), "show", f"{prereg_commit}:prereg.md"]) == original
+    assert _git(root, "status", "--porcelain") == ""
+    global_after = yaml.safe_load(raw_metadata)
+    assert global_after == global_before
+    assert type(global_after["approved_on"]) is date
+    assert type(global_after["approved_at"]) is datetime
+    assert type(global_after["approval_context"]["nested_date"]) is date
 
 
 def test_promotion_requires_matching_evidence_and_four_complete_weeks():

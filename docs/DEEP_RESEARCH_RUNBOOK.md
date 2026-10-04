@@ -62,3 +62,9 @@ Bootstrap y placebo incluyen resultados degenerados: un Sharpe indefinido no apr
 Se revisaron conectores disponibles para datos históricos especializados y no apareció uno que resolviera estos requisitos. No se instaló un plugin genérico: documentación, datos congelados y herramientas locales bastan para esta fase. Un proveedor nuevo requiere verificar cobertura histórica real antes de incorporarlo o pagar una suscripción.
 
 Las familias de momentum mensual BTC/ETH y tendencia mensual ETF quedan documentadas como hipótesis posteriores. No se combinan con este estudio ni se prueban hasta revisar antecedentes y registrar un protocolo separado. Si ninguna variante supera sus criterios, el resultado válido es que no hay mejora demostrada.
+
+## Corrección técnica del primer arranque — 4-oct
+
+El primer intento, código `13427fb`, se detuvo al serializar `approved_on` como objeto fecha YAML, antes de crear el manifiesto o leer precios. Se conserva el directorio `20261004T174535Z-2493193d`, su traceback y el evento `run_initialization_failed`. No se iniciaron variantes.
+
+La corrección preserva fechas y timestamps de metadatos como texto al cargar el frontmatter, usando un SafeLoader local. No modifica el archivo aprobado, plan, parámetros, precios ni criterios. Se registra como commit técnico posterior para conservar los tres SHA previos, sin reescribir la evidencia. La comparación se reintenta con el mismo preregistro aprobado y un nuevo identificador de corrida.
