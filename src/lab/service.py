@@ -17,6 +17,7 @@ from urllib.parse import parse_qs, urlparse
 
 import yaml
 
+from .analyze import build_analysis
 from .performance import build_performance
 from .execution_quality import build_execution_quality
 from .runtime import DATABASE_NAME, readiness
@@ -56,7 +57,8 @@ class Reader:
     def status(self):
         if not self.path.exists():
             return {"ready": False, "reason": "Pendiente de importar el estado", "mode": "unverified",
-                    "snapshot": {}, "live": {}, "runtime": {}, "storage": {}, "last_backup": {}, "hosted": {}}
+                    "snapshot": {}, "live": {}, "runtime": {}, "storage": {}, "last_backup": {}, "hosted": {},
+                    "analysis": build_analysis([], {}, {})}
         with closing(self.connect()) as db:
             db.execute("BEGIN")
             runtime = self.document(db, "runtime_health", {})
@@ -69,6 +71,11 @@ class Reader:
             state = self.document(db, "state", {}) or {}
             snapshot = self.document(db, "snapshot", {}) or {}
             live = self.document(db, "live", {}) or {}
+            # All documents and fills share this read transaction. The imported
+            # snapshot.analysis is historical; replace it in the response only.
+            trades = [json.loads(row[0]) for row in db.execute("SELECT payload FROM trades ORDER BY rowid")]
+            analysis = build_analysis(trades, snapshot, state)
+            snapshot["analysis"] = analysis["summary"]
             schema_version = db.execute("PRAGMA user_version").fetchone()[0]
             paper = (deployment.get("mode") == "paper" and bool(deployment.get("imported_at_utc"))
                      and bool(state.get("sleeves"))
@@ -99,7 +106,7 @@ class Reader:
             if not paper or schema_version != 1:
                 okay, reason = False, "Modo paper o versión de datos no verificados; ejecución bloqueada"
             return {"ready": okay, "reason": reason, "mode": "paper" if paper else "unverified", "runtime": runtime,
-                    "snapshot": snapshot, "live": live, "hosted": hosted if has_hosted else {},
+                    "snapshot": snapshot, "live": live, "hosted": hosted if has_hosted else {}, "analysis": analysis,
                     "storage": {"pending_orders": pending, "unknown_orders": unknown,
                                 "schema_version": schema_version},
                     "last_backup": self.document(db, "last_backup", {}),

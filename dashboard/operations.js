@@ -411,6 +411,50 @@ function renderPerformance(data) {
   notes.replaceChildren();
   for (const note of data?.notes || []) notes.append(text("li", note));
   notes.hidden = !notes.children.length;
+  renderEconomics();
+}
+
+function renderEconomics() {
+  const base = numeric(lastPerformance?.capital?.applied_usd);
+  const cost = numeric(el("monthly-cost").value);
+  const income = numeric(el("monthly-income").value);
+  const output = el("economics-result");
+  if (base === null || base <= 0) {
+    output.textContent = "Sin base aplicada verificada; no se calcula un rendimiento necesario.";
+    return;
+  }
+  if (cost === null || income === null || cost < 0 || income < 0 || !Number.isFinite(cost + income)) {
+    output.textContent = "Introduce importes válidos de cero o más dólares.";
+    return;
+  }
+  const required = cost + income;
+  output.textContent = `Sobre una base de ${formatMoney(base)}, cubrir ${formatMoney(cost)} de gastos y obtener ${formatMoney(income)} requiere ${formatMoney(required)} al mes después del trading: ${(required / base * 100).toFixed(2)}% de la base cada mes. Sólo el gasto suma ${formatMoney(cost * 12)} al año (${(cost * 12 / base * 100).toFixed(2)}% de la base). Es una necesidad aritmética, no una rentabilidad esperada.`;
+}
+
+function renderAnalysis(status) {
+  const analysis = status?.analysis;
+  const summary = analysis?.summary || {};
+  const valid = analysis?.valid === true;
+  paintMetric("analysis-realized", money(valid ? summary.realized_pnl : null, true), valid ? summary.realized_pnl : null);
+  paintMetric("analysis-unrealized", money(valid ? summary.unrealized_pnl : null, true), valid ? summary.unrealized_pnl : null);
+  paintMetric("analysis-fees", money(summary.fees));
+  el("analysis-count").textContent = summary.n_trades ?? "—";
+  el("analysis-status").textContent = !analysis ? "Análisis no disponible para esta versión."
+    : valid ? "Resultado recalculado con las operaciones registradas y los precios de cierre indicados. Puede diferir del patrimonio actual por los movimientos posteriores al cierre."
+      : `Análisis incompleto: ${(analysis.issues || []).map(item => item.message).join("; ") || "faltan datos para conciliar"}. No se presenta una ganancia total verificada.`;
+  const labels = {crypto: "Cripto", stocks: "ETF"};
+  el("analysis-cutoff").textContent = Object.entries(analysis?.prices_as_of || {})
+    .map(([name, value]) => `${labels[name] || name}: ${value || "sin cierre"}`).join(" · ") || "Sin cortes verificados.";
+  if (selectedCurrency === "MXN") el("analysis-cutoff").textContent += " MXN convertido con la tasa actual disponible.";
+  const alerts = el("accounting-alerts");
+  alerts.replaceChildren();
+  for (const [name, sleeve] of Object.entries(status?.live?.sleeves || {})) {
+    const cash = numeric(sleeve.cash);
+    if (cash !== null && cash < -.00000001) {
+      alerts.append(text("li", `${labels[name] || name}: efectivo negativo ${moneyWithReference(cash)}. Pendiente de recuperación mediante ventas simuladas registradas en el próximo cierre elegible; no se añade capital para ocultarlo.`));
+    }
+  }
+  alerts.hidden = !alerts.children.length;
 }
 
 function renderOperating(values) {
@@ -424,6 +468,7 @@ function renderOperating(values) {
   el("build").textContent = status.runtime?.build_id ? `Versión ${status.runtime.build_id.slice(0, 16)}` : "Sin ejecución verificada";
   el("backup").textContent = date(status.last_backup?.created_at_utc);
   sleeves(status);
+  renderAnalysis(status);
   rows("orders", orders.items, [o => o.asset, o => o.side, o => o.status,
     o => o.filled_qty ?? o.applied_qty ?? 0, o => date(o.updated_at || o.created_at)]);
   rows("trades", trades.items, [t => date(t.run_at_utc), t => t.sleeve, t => t.asset,
@@ -508,6 +553,7 @@ el("currency").addEventListener("change", () => {
   if (lastOperating) {
     // Reformat only currency-sensitive content; preserve any stale-data status warning.
     sleeves(lastOperating[0]);
+    renderAnalysis(lastOperating[0]);
     rows("trades", lastOperating[2].items, [t => date(t.run_at_utc), t => t.sleeve, t => t.asset,
       t => t.side, t => moneyWithReference(t.value), t => t.cost_bps ?? "—"]);
     el("trade-value-title").textContent = `Valor ${selectedCurrency}`;
@@ -517,6 +563,8 @@ el("currency").addEventListener("change", () => {
   }
 });
 el("refresh").addEventListener("click", refresh);
+el("monthly-cost").addEventListener("input", renderEconomics);
+el("monthly-income").addEventListener("input", renderEconomics);
 el("balance-sleeve").addEventListener("change", () => renderBalance(lastPerformance));
 el("balance-period").addEventListener("change", () => renderBalance(lastPerformance));
 el("balance-day").addEventListener("input", () => selectBalanceDay(Number(el("balance-day").value)));

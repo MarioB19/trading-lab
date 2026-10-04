@@ -15,7 +15,11 @@ La estrategia, los movimientos de capital y el historial se conservan.
 
 ## Configuración
 
-**Versión vigente:** `railway-1ae90503c3b9007d`, deployment
+**Versión vigente:** `railway-fe50d0ea8a3e5a3d`, deployment `dd5e35e1-3a7c-4bd3-b41b-797d0d2559ca` (`SUCCESS`, 4-oct UTC / 3-oct CDMX). FIFO desde SQLite en lectura coherente, conciliación de cantidades/P&L, recuperación paper de efectivo negativo, flujo diario conservado en reintentos y escenarios económicos del panel. 508 pruebas, replay 0.458%; configuración idéntica, 42 archivos instalados verificables por SHA256. Primer ciclo sano 4-oct 01:02:47 UTC, un worker, paper/ready, cero órdenes pendientes/desconocidas. Backups antes/después restaurados con datos idénticos y worker desactivado. Base US$1,000 aplicada 500/500; déficit ETF −US$0.10 pendiente del próximo cierre fresco, sin operación forzada.
+
+Origen HEAD `9190176` con cambios sin commit en rama `codex/rentabilidad-20261003`; identidad por manifiesto de contenido. Evidencia: `reports/operations/profitability-20261003.json` y `runtime-data/profitability-20261003/`. Investigación: `docs/PROFITABILITY_RESEARCH_20261003.md`. La corrección del bootstrap no vuelve a ejecutar ni altera ensayos congelados; ninguna candidata se promueve.
+
+**Versión anterior (30-sep):** `railway-1ae90503c3b9007d`, deployment
 `035ebf32-cf75-4eaa-8143-9b1730db4798` (`SUCCESS`, 30-sep 00:59 UTC).
 Añade diagnóstico autenticado de costos/rotación y telemetría futura de ejecución;
 mantiene configuración e historial. 454 pruebas y replay 0.458%; 40 archivos

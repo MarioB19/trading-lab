@@ -118,7 +118,8 @@ def placebo_shift_test(asset_ret: pd.Series, position: pd.Series, cost: float,
 
 # ------------------------------------------------ bootstrap por bloques
 def _block_indices(n: int, length: int, block: int, rng) -> np.ndarray:
-    starts = rng.integers(0, n - block, size=int(np.ceil(length / block)))
+    # integers excluye el límite superior: n - block también es un inicio válido.
+    starts = rng.integers(0, n - block + 1, size=int(np.ceil(length / block)))
     return np.concatenate([np.arange(s, s + block) for s in starts])[:length]
 
 

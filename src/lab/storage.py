@@ -121,6 +121,24 @@ class SQLiteStore:
         if table not in ('trades', 'equity', 'live_equity'):
             raise ValueError('tabla no permitida')
         for row in rows:
+            if table == 'equity':
+                # A same-candle retry updates the valuation after pending fills.
+                # Its capital change was already applied to state, so it emits
+                # no new flow. Keep the previously committed contribution or
+                # withdrawal rather than turning it into a trading gain/loss.
+                # Do not add incoming flows: replaying a commit is idempotent.
+                flow = row.get('flow')
+                try:
+                    no_new_flow = flow in (None, '') or float(flow) == 0
+                except (TypeError, ValueError):
+                    no_new_flow = False  # Invalid evidence stays visibly invalid.
+                if no_new_flow:
+                    previous = db.execute('SELECT payload FROM equity WHERE id=?',
+                                          (self._row_id(table, row),)).fetchone()
+                    if previous:
+                        payload = json.loads(previous[0])
+                        if 'flow' in payload:
+                            row = {**row, 'flow': payload['flow']}
             conflict = 'DO NOTHING' if table == 'trades' else 'DO UPDATE SET payload=excluded.payload'
             db.execute(f'INSERT INTO {table} VALUES(?,?,?) ON CONFLICT(id) {conflict}',
                        (self._row_id(table, row), dumps(row), utcnow()))

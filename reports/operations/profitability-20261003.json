@@ -1,0 +1,506 @@
+{
+  "date": "2026-10-03",
+  "build_id": "railway-fe50d0ea8a3e5a3d",
+  "deployment_id": "dd5e35e1-3a7c-4bd3-b41b-797d0d2559ca",
+  "deployment_status": "SUCCESS",
+  "source_head": "9190176d314656b74f799fcc37bffd0644717546",
+  "source_has_uncommitted_changes": true,
+  "mode": "paper",
+  "capital": {
+    "target_usd": 1000.0,
+    "applied_usd": 1000.0,
+    "pending_flow_usd": 0.0,
+    "by_sleeve": {
+      "crypto": {
+        "target_usd": 500.0,
+        "applied_usd": 500.0,
+        "pending_flow_usd": 0.0,
+        "initial_usd": 300.0,
+        "initial_inferred": true
+      },
+      "stocks": {
+        "target_usd": 500.0,
+        "applied_usd": 500.0,
+        "pending_flow_usd": 0.0,
+        "initial_usd": 700.0,
+        "initial_inferred": true
+      }
+    }
+  },
+  "current": {
+    "equity_usd": 989.04,
+    "pnl_usd": -10.96,
+    "pnl_mxn": -199.0,
+    "as_of_utc": "2026-10-04 01:02",
+    "by_sleeve": {
+      "crypto": {
+        "equity_usd": 490.34,
+        "pnl_usd": -9.66,
+        "pnl_mxn": -175.39,
+        "as_of_utc": "2026-10-04 01:02",
+        "source": "live",
+        "close_date": null
+      },
+      "stocks": {
+        "equity_usd": 498.7,
+        "pnl_usd": -1.3,
+        "pnl_mxn": -23.6,
+        "as_of_utc": "2026-10-02 20:00",
+        "source": "live",
+        "close_date": null
+      }
+    }
+  },
+  "analysis": {
+    "source": "sqlite_ledger",
+    "price_source": "snapshot_close",
+    "mode": "paper",
+    "prices_as_of": {
+      "crypto": "2026-10-03",
+      "stocks": "2026-10-02"
+    },
+    "issues": [],
+    "reconciliation": {
+      "by_sleeve": {
+        "crypto": {
+          "valid": true,
+          "quantities": {
+            "LINK": {
+              "fifo_qty": 4.9665988599999995,
+              "ledger_qty": 4.9665988560316165,
+              "difference": 3.968382955576999e-09,
+              "tolerance": 1.5001000000000003e-08,
+              "matches": true
+            },
+            "LTC": {
+              "fifo_qty": 1.23310029,
+              "ledger_qty": 1.2331002899999999,
+              "difference": 2.220446049250313e-16,
+              "tolerance": 2.0001e-08,
+              "matches": true
+            },
+            "NEAR": {
+              "fifo_qty": 9.19191127,
+              "ledger_qty": 9.191911268757252,
+              "difference": 1.2427481266286122e-09,
+              "tolerance": 1.0001e-08,
+              "matches": true
+            },
+            "SOL": {
+              "fifo_qty": 0.81480303,
+              "ledger_qty": 0.8148030199999999,
+              "difference": 1.0000000050247593e-08,
+              "tolerance": 3.0001000000000005e-08,
+              "matches": true
+            },
+            "UNI": {
+              "fifo_qty": 5.36807421,
+              "ledger_qty": 5.368074208662926,
+              "difference": 1.3370735629791852e-09,
+              "tolerance": 1.0001e-08,
+              "matches": true
+            }
+          },
+          "fifo_pnl": -10.751931844558685,
+          "ledger_pnl": -10.75218571636782,
+          "difference": 0.00025387180913405416,
+          "tolerance_usd": 0.011169526664670101
+        },
+        "stocks": {
+          "valid": true,
+          "quantities": {
+            "IEF": {
+              "fifo_qty": 2.22628043,
+              "ledger_qty": 2.2262804356406245,
+              "difference": -5.640624411995532e-09,
+              "tolerance": 1.0001e-08,
+              "matches": true
+            },
+            "SPY": {
+              "fifo_qty": 0.39050996000000004,
+              "ledger_qty": 0.39050996296845275,
+              "difference": -2.968452705864877e-09,
+              "tolerance": 1.0001e-08,
+              "matches": true
+            }
+          },
+          "fifo_pnl": -1.2965752029112423,
+          "ledger_pnl": -1.2965765433642673,
+          "difference": 1.3404530250227253e-06,
+          "tolerance_usd": 0.010210945494805019
+        }
+      }
+    },
+    "open": [
+      {
+        "sleeve": "crypto",
+        "asset": "NEAR",
+        "qty": 9.19191127,
+        "cost": 44.44174762653085,
+        "price": 4.8319,
+        "value": 44.414396065513,
+        "pnl": -0.027351561017844972,
+        "ret": -0.0006154474672709354,
+        "since": "2026-09-24"
+      },
+      {
+        "sleeve": "crypto",
+        "asset": "UNI",
+        "qty": 5.36807421,
+        "cost": 50.248210802289705,
+        "price": 9.0579,
+        "value": 48.623479386758994,
+        "pnl": -1.6247314155307109,
+        "ret": -0.032334114779200784,
+        "since": "2026-09-24"
+      },
+      {
+        "sleeve": "crypto",
+        "asset": "LINK",
+        "qty": 4.9665988599999995,
+        "cost": 67.63970895124703,
+        "price": 14.1103,
+        "value": 70.080199894258,
+        "pnl": 2.440490943010971,
+        "ret": 0.03608074281883766,
+        "since": "2026-09-24"
+      },
+      {
+        "sleeve": "crypto",
+        "asset": "LTC",
+        "qty": 1.23310029,
+        "cost": 87.0402578201969,
+        "price": 70.28,
+        "value": 86.66228838120001,
+        "pnl": -0.3779694389968853,
+        "ret": -0.004342466905115083,
+        "since": "2026-10-02"
+      },
+      {
+        "sleeve": "stocks",
+        "asset": "IEF",
+        "qty": 2.22628043,
+        "cost": 199.77493376514423,
+        "price": 89.050003,
+        "value": 198.2502789703413,
+        "pnl": -1.5246547948029274,
+        "ret": -0.0076318623466311575,
+        "since": "2026-09-24"
+      },
+      {
+        "sleeve": "stocks",
+        "asset": "SPY",
+        "qty": 0.39050996000000004,
+        "cost": 299.74122409478673,
+        "price": 769.640015,
+        "value": 300.5520914720494,
+        "pnl": 0.8108673772626958,
+        "ret": 0.0027052247474850244,
+        "since": "2026-09-24"
+      },
+      {
+        "sleeve": "crypto",
+        "asset": "SOL",
+        "qty": 0.81480303,
+        "cost": 97.38902902555918,
+        "price": 119.58,
+        "value": 97.4341463274,
+        "pnl": 0.04511730184081841,
+        "ret": 0.00046326883317604484,
+        "since": "2026-09-27"
+      }
+    ],
+    "closed": [
+      {
+        "sleeve": "crypto",
+        "asset": "ETH",
+        "qty": 0.02363862,
+        "opened": "2026-09-24",
+        "closed": "2026-09-25",
+        "buy_price": 2692.61448,
+        "sell_price": 2685.9673,
+        "pnl": -0.28423016209160323,
+        "ret": -0.004461081194591432
+      },
+      {
+        "sleeve": "crypto",
+        "asset": "SOL",
+        "qty": 0.45551895,
+        "opened": "2026-09-25",
+        "closed": "2026-09-26",
+        "buy_price": 122.38428,
+        "sell_price": 120.846049,
+        "pnl": -0.9545933687546722,
+        "ret": -0.01710616379230212
+      },
+      {
+        "sleeve": "crypto",
+        "asset": "ETH",
+        "qty": 0.02428053,
+        "opened": "2026-09-26",
+        "closed": "2026-09-27",
+        "buy_price": 2692.0,
+        "sell_price": 2675.2,
+        "pnl": -0.8381129040000133,
+        "ret": -0.012776406063547685
+      },
+      {
+        "sleeve": "stocks",
+        "asset": "SPY",
+        "qty": 0.15375706,
+        "opened": "2026-09-24",
+        "closed": "2026-09-28",
+        "buy_price": 767.563583,
+        "sell_price": 765.22718,
+        "pnl": -0.35923845625518425,
+        "ret": -0.003043921118389026
+      },
+      {
+        "sleeve": "stocks",
+        "asset": "IEF",
+        "qty": 0.89558368,
+        "opened": "2026-09-24",
+        "closed": "2026-09-28",
+        "buy_price": 89.734847,
+        "sell_price": 89.485234,
+        "pnl": -0.22354932911582637,
+        "ret": -0.0027816729881980917
+      },
+      {
+        "sleeve": "crypto",
+        "asset": "SOL",
+        "qty": 9.999999994736442e-09,
+        "opened": "2026-09-25",
+        "closed": "2026-09-28",
+        "buy_price": 122.38428,
+        "sell_price": 116.558,
+        "pnl": -6.298190382808733e-08,
+        "ret": -0.05141104674727881
+      },
+      {
+        "sleeve": "crypto",
+        "asset": "SOL",
+        "qty": 0.7579391799999999,
+        "opened": "2026-09-27",
+        "closed": "2026-09-28",
+        "buy_price": 121.742039,
+        "sell_price": 116.558,
+        "pnl": -4.526386260868762,
+        "ret": -0.048878284040044795
+      },
+      {
+        "sleeve": "crypto",
+        "asset": "LINK",
+        "qty": 0.90393177,
+        "opened": "2026-09-24",
+        "closed": "2026-09-28",
+        "buy_price": 13.244526,
+        "sell_price": 15.2809,
+        "pnl": 1.787381163547904,
+        "ret": 0.1491459265892885
+      },
+      {
+        "sleeve": "crypto",
+        "asset": "LTC",
+        "qty": 0.6808246,
+        "opened": "2026-09-24",
+        "closed": "2026-09-29",
+        "buy_price": 72.07386,
+        "sell_price": 66.762,
+        "pnl": -3.829165706963913,
+        "ret": -0.07795730080004437
+      },
+      {
+        "sleeve": "crypto",
+        "asset": "LTC",
+        "qty": 0.5075546799999999,
+        "opened": "2026-09-27",
+        "closed": "2026-09-29",
+        "buy_price": 70.334,
+        "sell_price": 66.762,
+        "pnl": -2.0634645697520853,
+        "ret": -0.05759547713628965
+      },
+      {
+        "sleeve": "crypto",
+        "asset": "ETH",
+        "qty": 0.04196214,
+        "opened": "2026-09-28",
+        "closed": "2026-10-02",
+        "buy_price": 2662.2,
+        "sell_price": 2667.9,
+        "pnl": -0.49891580199998486,
+        "ret": -0.004452748375849969
+      }
+    ],
+    "valid": true,
+    "summary": {
+      "n_trades": 27,
+      "n_buys": 18,
+      "n_sells": 9,
+      "fees": 3.6462,
+      "closed_lots": 11,
+      "wins": 1,
+      "losses": 10,
+      "win_rate": 0.0909,
+      "realized_pnl": -11.79,
+      "avg_win": 1.79,
+      "avg_loss": -1.36,
+      "profit_factor": 0.13,
+      "open_positions": 7,
+      "open_winning": 3,
+      "open_losing": 4,
+      "unpriced_positions": 0,
+      "unrealized_pnl": -0.26,
+      "total_pnl": -12.05,
+      "avg_cost_bps": 31.8,
+      "cost_bps_by_sleeve": {
+        "crypto": 37.3,
+        "stocks": 5.0
+      },
+      "n_cost_measured": 18,
+      "by_sleeve": {
+        "crypto": {
+          "closed_lots": 9,
+          "wins": 1,
+          "realized_pnl": -11.21,
+          "unrealized_pnl": 0.46
+        },
+        "stocks": {
+          "closed_lots": 2,
+          "wins": 0,
+          "realized_pnl": -0.58,
+          "unrealized_pnl": -0.71
+        }
+      }
+    }
+  },
+  "runtime": {
+    "status": "ok",
+    "last_attempt_utc": "2026-10-04T01:01:43.327693+00:00",
+    "last_success_utc": "2026-10-04T01:02:47.706229+00:00",
+    "interval_seconds": 300,
+    "build_id": "railway-fe50d0ea8a3e5a3d",
+    "config_sha256": "46f218ef56eed818b41b1c36b3e2bcbb0bcd875e9da88a1b55dccd7efa23327a",
+    "last_completed_utc": "2026-10-04T01:02:47.706229+00:00",
+    "duration_seconds": 59.017,
+    "errors": []
+  },
+  "ready": true,
+  "processes": [
+    {
+      "pid": 2,
+      "command": "/usr/local/bin/python -m lab.hosted --config /app/config.yaml --data-dir /data/runtime --backup-dir /data/backups "
+    },
+    {
+      "pid": 52,
+      "command": "/usr/local/bin/python -m lab.runtime --config /app/config.yaml --data-dir /data/runtime --interval 300 "
+    }
+  ],
+  "storage": {
+    "pending_orders": 0,
+    "unknown_orders": 0,
+    "schema_version": 1
+  },
+  "config_unchanged": true,
+  "files_verified": 42,
+  "tests": {
+    "passed": 508,
+    "replay_max_difference_pct": 0.458,
+    "js_syntax": "passed",
+    "ui_scenarios": "5+0 => 0.5% monthly, 6% annual cost; 10+100 => 11% monthly, 12% annual cost; no console errors"
+  },
+  "backups": {
+    "before": {
+      "format": "trading-lab-sqlite-backup-v1",
+      "created_at_utc": "2026-10-04T00:48:02.348753+00:00",
+      "file": "improvement-profitability-before-20261004T004750Z.sqlite3",
+      "sha256": "49c3bafdf088f8683e0d5f1d42d44c4dd51d79903c24bc031e5dc9167d5cee35",
+      "bytes": 1454080,
+      "schema_version": 1,
+      "build_id": "railway-1ae90503c3b9007d"
+    },
+    "after": {
+      "format": "trading-lab-sqlite-backup-v1",
+      "created_at_utc": "2026-10-04T01:02:16.900418+00:00",
+      "file": "improvement-profitability-after-20261004T010156Z.sqlite3",
+      "sha256": "94ea4581856e7acf867ec802132ec5ecd50155e043b88be4355d0bcefecdf5b6",
+      "bytes": 1458176,
+      "schema_version": 1,
+      "build_id": "railway-fe50d0ea8a3e5a3d"
+    }
+  },
+  "restore_checks": {
+    "before": {
+      "worker_enabled": false,
+      "integrity": "ok",
+      "trades": {
+        "identical": true,
+        "rows": 27
+      },
+      "equity": {
+        "identical": true,
+        "rows": 17
+      },
+      "live_equity": {
+        "identical": true,
+        "rows": 2522
+      },
+      "orders": {
+        "identical": true,
+        "rows": 0
+      },
+      "documents": {
+        "state": true,
+        "snapshot": true,
+        "live": true,
+        "legacy_import": true,
+        "deployment": true,
+        "last_backup": true,
+        "hosted_health": true
+      }
+    },
+    "after": {
+      "worker_enabled": false,
+      "integrity": "ok",
+      "trades": {
+        "identical": true,
+        "rows": 27
+      },
+      "equity": {
+        "identical": true,
+        "rows": 17
+      },
+      "live_equity": {
+        "identical": true,
+        "rows": 2526
+      },
+      "orders": {
+        "identical": true,
+        "rows": 0
+      },
+      "documents": {
+        "state": true,
+        "snapshot": true,
+        "live": true,
+        "legacy_import": true,
+        "deployment": true,
+        "last_backup": true,
+        "hosted_health": true
+      },
+      "pre_deployment_state_preserved": true,
+      "pre_deployment_trades_preserved": true,
+      "pre_deployment_equity_preserved": true,
+      "pre_deployment_orders_preserved": true
+    }
+  },
+  "pending": {
+    "stocks_cash_usd": -0.1,
+    "cash_recovery": "next eligible fresh stocks close; not yet executed",
+    "strategy_profitability": "unproven; no candidate promoted",
+    "scientific_revalidation": "bootstrap corrected in this worktree; new preregistration and execution-equivalence validation required",
+    "external_automatic_backup": "pending"
+  },
+  "evidence_directory": "runtime-data/profitability-20261003",
+  "verified_at_utc": "2026-10-04T01:03:32.439505+00:00"
+}

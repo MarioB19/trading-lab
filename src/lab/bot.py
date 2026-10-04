@@ -266,6 +266,44 @@ def is_capped(broker, mode: str) -> bool:
     return mode == "live" or not isinstance(broker, SimBroker)
 
 
+def cover_paper_cash_deficit(orders, positions, prices, fresh, equity, cash, sc, min_value):
+    """Cover an internal paper deficit through recorded sells, never a ledger credit.
+
+    Ordinary sells are counted first. A minimum-sized additional sale may bypass
+    the rebalance band only to restore the existing no-borrowing invariant. This
+    is not a signal change and is called only for internal paper brokers.
+    """
+    if cash >= -1e-8:
+        return orders
+    net_factor = 1.0 - float(sc["fee"]) - float(sc["slippage"]) - .005
+    if not 0 < net_factor <= 1 or equity <= 0:
+        raise ValueError("no se puede calcular una recuperación de efectivo válida")
+    planned = dict(orders)
+    sale_values = {asset: min(-diff * equity, positions.get(asset, 0) * float(prices[asset]))
+                   for asset, diff in planned.items() if diff < 0}
+    covered = sum(value * net_factor for value in sale_values.values() if value >= min_value)
+    remaining = max(0.0, -cash + .01 - covered)
+    # Largest position first; alphabetical tie-break makes the plan reproducible.
+    eligible = sorted((asset for asset in positions if fresh.get(asset, False)
+                       and np.isfinite(prices.get(asset, np.nan)) and prices[asset] > 0),
+                      key=lambda asset: (-positions[asset] * float(prices[asset]), asset))
+    for asset in eligible:
+        if remaining <= 1e-8:
+            break
+        held = positions[asset] * float(prices[asset])
+        previous = sale_values.get(asset, 0.0)
+        # Leave numerical room above the minimum through value -> weight -> qty.
+        # An exact minimum can round below the execution filter and stall retries.
+        executable_minimum = min_value + max(1e-8, min_value * 1e-8)
+        new_value = min(held, max(executable_minimum, previous + remaining / net_factor))
+        if new_value < min_value or new_value <= previous:
+            continue
+        planned[asset] = -new_value / equity
+        remaining -= (new_value - previous) * net_factor
+    # No purchases during deficit recovery; subsequent normal closes rebalance.
+    return [(asset, diff) for asset, diff in planned.items() if diff < 0]
+
+
 # ------------------------------------------------------------------ lógica diaria de un bloque
 def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now: pd.Timestamp,
                mode: str, eq_hist: pd.Series, max_jump: float) -> dict:
@@ -394,6 +432,15 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
             notes.append(f"{a}: salto de {j:.0%}; solo se permite reducir")
 
     band, minv = sc["band"], broker.min_order_value
+    own_now = broker.cash() if not capped else min(float(st["sleeve_cash"]), broker.cash())
+    internal_paper = mode == "paper" and isinstance(broker, SimBroker)
+    cash_recovery = own_now < -1e-8 and internal_paper
+    # A just-recorded capital flow retains the existing external rebalance path.
+    # An inherited unexplained external deficit requires reconciliation instead.
+    if own_now < -1e-8 and not internal_paper and not flow:
+        res["status"] = "blocked"
+        notes.append("efectivo externo negativo: conciliación manual requerida; no se envían órdenes")
+        return res
     orders = []
     for a in sorted(set(desired) | set(w_now)):
         if a not in px.index or not np.isfinite(px[a]):
@@ -407,6 +454,10 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
         exit_all = d == 0 and w > 0 and value.get(a, 0) >= minv
         if abs(diff) > band or exit_all:
             orders.append((a, diff))
+    if cash_recovery:
+        orders = cover_paper_cash_deficit(orders, positions, px, fresh, equity,
+                                         own_now, sc, minv)
+        notes.append("recuperación de efectivo simulado: sólo ventas registradas para cubrir el déficit y sus costos")
     run_at = (now.tz_localize(None) if now.tzinfo else now).strftime("%Y-%m-%d %H:%M")
     buffer = sc["fee"] + sc["slippage"] + 0.005
     fills: list[Fill] = []
@@ -468,10 +519,15 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
     unfinished = any(not f.terminal or f.status in ("failed", "partial", "unknown") for f in fills)
     liquidation_pending = bool(st.get("kill_switch")) and any(
         q * float(px.get(a, 0)) >= minv for a, q in positions.items())
-    st["execution_pending"] = unfinished or liquidation_pending
+    # Do not mark a candle complete while a failed/minimum-constrained recovery
+    # leaves an actual negative balance. A retry reconciles before any new sale.
+    cash_pending = (broker.cash() if not capped else min(float(st["sleeve_cash"]), broker.cash())) < -1e-8
+    st["execution_pending"] = unfinished or liquidation_pending or cash_pending
     if st["execution_pending"]:
-        res["status"] = "error" if any(f.status in ("failed", "unknown") for f in fills) else "pending"
+        res["status"] = "error" if cash_pending or any(f.status in ("failed", "unknown") for f in fills) else "pending"
         notes.append("ejecución incompleta: se reintenta después de conciliar")
+        if cash_pending:
+            notes.append("déficit de efectivo pendiente: no se completó la recuperación")
     else:
         st["last_candle"] = cstr
     exposure = sum(value.values()) / eq_after if eq_after > 0 else 0.0
