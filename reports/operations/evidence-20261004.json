@@ -1,0 +1,956 @@
+{
+  "date_local": "2026-10-04",
+  "verified_at_utc": "2026-10-05T00:19:20.557790+00:00",
+  "status": "published_and_verified_paper",
+  "source_commit": "bd53c1cb3e14e7ecc7fa79abb037327b3c9be6b2",
+  "branch": "codex/datos-ejecucion-20261004",
+  "deployment_id": "f9f06360-fbd4-42f4-9c2b-f64aadc3dd41",
+  "deployment_status": "SUCCESS",
+  "image_digest": "sha256:a1b25410f44ada7fdbb39d5a63dc3f08f403aff4b88ba47e8ac1dd59d0938a0c",
+  "release": {
+    "build_id": "railway-c5b4442986a16922",
+    "source_head": "bd53c1cb3e14e7ecc7fa79abb037327b3c9be6b2",
+    "source_has_uncommitted_changes": false,
+    "payload_sha256": "c5b4442986a1692254bc00f884d4cea75a7560ff3f048d7d21e13391d214e5d9",
+    "files": {
+      "Dockerfile": "cb4a9f410ce89c952fffbb8f1611e62856c51c488e8f4eeb6b68ae9149502263",
+      "requirements-runtime.txt": "8d0df5fb15c2d307fc370610ca42521df7b6751f43366fb04dc82414db49cc05",
+      "config.yaml": "bad7256f2e61ab689f0d44b89b6ddfc0b2a0cedd1a927db541cae205f0ff1318",
+      "src/lab/__init__.py": "566db2c86d31c4bfcbcbd5b1d16ac8940be744c3cfcd374bdc40b6d06432b1eb",
+      "src/lab/account_readiness.py": "84e9c710f2a0cd6586b5096daee2307270b8ebe6b0bb792a5d493ff66902a29b",
+      "src/lab/aggressive_plan.py": "6b6c7d1c928a17cf752d3090ab6b6ac159a54c7f5d6a3b6f993bb3bb2a63f7af",
+      "src/lab/aggressive_research.py": "b5757441b7e987ca91bd655717475e57f03d0905fcc47ecb77528c1e88c04cab",
+      "src/lab/analyze.py": "330a53c87b4f0b47d5f3282851809e8de95bdabb2cd09cdcafd879ce781965a8",
+      "src/lab/backtest.py": "b301f07e587bf3dd2f336aeabf7f197f9d285a13f28a5ab9b05ecedb7fe5f76f",
+      "src/lab/bot.py": "b4b66c284e63f8990e27cc40ffde026e7e00d12da63d608b4d57d940c4985129",
+      "src/lab/broker_tape.py": "50d7e27b1fa14905b72d80d6a54b0c64048cf441644e7a24a98c532d0694e66a",
+      "src/lab/brokers.py": "7b0bcde41b31127101f4b13f6177baf8eab6a08d41fe09ba71e02066a1644213",
+      "src/lab/btc_bot.py": "4be7b8d1ae23226af55a346f755c54e95d17ea89f79d81ffac4e7e41ebe57370",
+      "src/lab/dashboard.py": "15a954a72cdd07ea6b280a8e945e0e27a176aeb7d3ca28c15d2d6b5f79bd6e7c",
+      "src/lab/data.py": "a89bb03f9e70060e3aacdc7c0129276476111d9f09378a0cc754c16ffa44b72d",
+      "src/lab/data_evidence.py": "fbce50ce6c147e781777cd880d85e0264cd18e291e225b0acc4cb0e1c31ffb5c",
+      "src/lab/deep_research.py": "c478fd8063a7187a38e6180629e65e5d55efbd0e8ec45058d66cca7b2733a563",
+      "src/lab/evidence.py": "c0a34194811f60c521d33cf766d06b5121ff37384448a05de52b80361fb63832",
+      "src/lab/execution_evidence.py": "99a32c290cf743a737dade61fb3536a2c41686a4fc7612fd7f6aebc59b795df0",
+      "src/lab/execution_quality.py": "e2d8527234f535ac2f8326aa5d0a673341d09295b446e3a9c682810685b6ffdb",
+      "src/lab/experiments.py": "7ab7e661c4ae6aef1fbdc44d3aafc432768cfa6be09d6a2e9f467ead6f82cf3f",
+      "src/lab/hosted.py": "cf8f5f3fe3c27c1368cd3e7cb22e257cdf9b275d032dcc6c7b8cfd73033d0a94",
+      "src/lab/journal.py": "8b2e9795ec34cd9b2d0f5f147c8012c9b8b508a276b779548c6e49b080cd1f30",
+      "src/lab/ops.py": "ec781a54591cd1ae6c4c47412662cb6846ad5b81eb3a47c5e3a1be48b613b3fa",
+      "src/lab/paper_comparison.py": "844911ad5f681726d7a9c823cca7d76aff6ec6e2e6ae5a70e011482263e53d8e",
+      "src/lab/paper_ops.py": "f58853916aef0330fe8758d34769246562b9ed44f0c4003463340be40e0c5241",
+      "src/lab/performance.py": "ad448b850258746ff349429bb01ebc6df0364cd080cc2c1554533bd865901010",
+      "src/lab/portfolio.py": "66986e0c75ff996e5b850df5366561443d4775f7fb5a5f1c09f7dc3e267ae892",
+      "src/lab/railway_entrypoint.py": "053d5d9fe051ff68ff37a74c78dcacec553df5d6c22ad1f86e82dba6f1d4c99f",
+      "src/lab/realtime.py": "9022c5de5f9328375c048c26934f8c40aae8a6e02ba374ce37aa419064238443",
+      "src/lab/report.py": "e84b1d3c69560da458df6001e9f7ea3d73421a9d1e8fcbe1b6f9a87ed400bd9c",
+      "src/lab/research.py": "dc8160dff3d37cd1141862e3e52dc4bbf31709dbd1d6b5feea1ee02c91ff7ab6",
+      "src/lab/research_attestation.py": "bdf9faae0d1bf0756b7824075d31f95df35750c3ed50545ecac1531569d50c5a",
+      "src/lab/research_data.py": "5a706e844ab8bb541163be632c4dd941072058c9cf8b80a584dacbe6d7c847ae",
+      "src/lab/research_multi.py": "7fdeba0d3e2349036c0c9f94c13cf134ad7d99dd8e0ec03f2c7000b692c156af",
+      "src/lab/research_rt.py": "8e2624c67481b9b5eff68db26956c15af83fb2ee18e43a6caba4142f372f591e",
+      "src/lab/research_short.py": "baebdd4e6a0dcd27972d8a78327443590dffb1d9d72430a8da1bc379a705cff4",
+      "src/lab/research_statistics.py": "6c70fbfa08bcaf3cf6c180463c083946bdf26f2aab2612ba2f8825eafced41c8",
+      "src/lab/risk.py": "e83337905859048da2c56da306cc0afaea16ce20c18aabd03c3cf9c66d8b1c4b",
+      "src/lab/rotation_observer.py": "ff6b6582c2f151712a71cd4dfd0e5a5e7aa7109d3866df97a885a39264d5311b",
+      "src/lab/rotation_plan.py": "f3197c92c0d44cecca644b9eeaf04ec6a0dd88fedf4f6c03b6d5c6a311463fd0",
+      "src/lab/runtime.py": "66204645e8153ed4d64acca170054efe23f8349f2c44500d210d93b9e6d09cbd",
+      "src/lab/service.py": "8095bbac035feaa437e40fe4dd029a80abd8d563ff6c1c797c2c220b660225ee",
+      "src/lab/storage.py": "e723cbcaf7ea56f4f0cdf2947e3bf8a056a6f5693340dd02527d4caff938df32",
+      "src/lab/strategies.py": "8d53e6c608060ebf08aecf7da7e749bac846529d6c77c98b3b9d1d957f6f625f",
+      "src/lab/validation.py": "ad9feee608816d548924655a5fd98f3fbf14e8adaec3b79b54c3346eadbaa3c4",
+      "dashboard/operations.html": "b45def35cc2ef37379c8cbecff025e6d32bc3a34f81d586e2bd5ea9b0ecb14f5",
+      "dashboard/operations.js": "867bd1fca18fdee1b55d4835a1f605c477287b3e5569e4c4d923a360bf483937",
+      "dashboard/operations.css": "7da70bb4b0891b71452fa685ffef59e3a02b952eb1075a3d52886f0c8e2d6d8b"
+    },
+    "profile": "operational-paper"
+  },
+  "local_validation": {
+    "status": "local_verified",
+    "branch": "codex/datos-ejecucion-20261004",
+    "tests": {
+      "passed": 650,
+      "duration_seconds": 36.83
+    },
+    "public_observation": {
+      "captured_market_snapshots": 1,
+      "market_status": "ok",
+      "signal_replay": {
+        "crypto": true,
+        "stocks": true
+      },
+      "panels": {
+        "crypto": {
+          "rows": 719,
+          "assets": 16
+        },
+        "stocks": {
+          "rows": 750,
+          "assets": 20
+        }
+      }
+    },
+    "config_sha256": "bad7256f2e61ab689f0d44b89b6ddfc0b2a0cedd1a927db541cae205f0ff1318",
+    "before_restore": {
+      "trades": true,
+      "equity": true,
+      "live_equity": true,
+      "orders": true,
+      "state": true,
+      "disabled": true
+    },
+    "live_authorized": false,
+    "profitability_verified": false,
+    "replay_regression": {
+      "days": 365,
+      "max_difference_percent": 0.458,
+      "maximum_allowed_percent": 2,
+      "source": "../trading-lab/data/crypto_prices.csv",
+      "scope": "legacy_technical_regression_not_profitability"
+    }
+  },
+  "runtime": {
+    "status": "ok",
+    "last_attempt_utc": "2026-10-05T00:17:26.173574+00:00",
+    "last_success_utc": "2026-10-05T00:18:05.917071+00:00",
+    "interval_seconds": 300,
+    "build_id": "railway-c5b4442986a16922",
+    "config_sha256": "46f218ef56eed818b41b1c36b3e2bcbb0bcd875e9da88a1b55dccd7efa23327a",
+    "last_completed_utc": "2026-10-05T00:18:05.917071+00:00",
+    "duration_seconds": 39.647,
+    "errors": []
+  },
+  "identity": {
+    "uid": 10001,
+    "worker_enabled": true,
+    "volume_mounted": true
+  },
+  "processes": [
+    {
+      "pid": 2,
+      "command": "/usr/local/bin/python -m lab.hosted --config /app/config.yaml --data-dir /data/runtime --backup-dir /data/backups "
+    },
+    {
+      "pid": 51,
+      "command": "/usr/local/bin/python -m lab.runtime --config /app/config.yaml --data-dir /data/runtime --interval 300 "
+    }
+  ],
+  "storage": {
+    "pending_orders": 0,
+    "unknown_orders": 0,
+    "schema_version": 1
+  },
+  "capital": {
+    "target_usd": 1000.0,
+    "applied_usd": 1000.0,
+    "pending_flow_usd": 0.0,
+    "by_sleeve": {
+      "crypto": {
+        "target_usd": 500.0,
+        "applied_usd": 500.0,
+        "pending_flow_usd": 0.0,
+        "initial_usd": 300.0,
+        "initial_inferred": true
+      },
+      "stocks": {
+        "target_usd": 500.0,
+        "applied_usd": 500.0,
+        "pending_flow_usd": 0.0,
+        "initial_usd": 700.0,
+        "initial_inferred": true
+      }
+    }
+  },
+  "evidence": {
+    "schema_version": 1,
+    "status": "collecting",
+    "counts": {
+      "market": 1
+    },
+    "market": {
+      "sha256": "b4188efd947386099c4bc48100878ea20ec6d670ba6f945648499de733185604",
+      "recorded_at_utc": "2026-10-05T00:18:30.249927+00:00",
+      "status": "ok",
+      "integrity": "verified",
+      "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+      "panels": {
+        "crypto": {
+          "assets": [
+            "BTC",
+            "ETH",
+            "SOL",
+            "XRP",
+            "ADA",
+            "DOGE",
+            "LINK",
+            "AVAX",
+            "LTC",
+            "BCH",
+            "XLM",
+            "TRX",
+            "HBAR",
+            "NEAR",
+            "UNI",
+            "ATOM"
+          ],
+          "continuous_market_history_verified": false,
+          "coverage": {
+            "ADA": {
+              "first_date": "2024-10-16",
+              "last_date": "2026-10-04",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 719
+            },
+            "ATOM": {
+              "first_date": "2024-10-16",
+              "last_date": "2026-10-04",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 719
+            },
+            "AVAX": {
+              "first_date": "2024-10-16",
+              "last_date": "2026-10-04",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 719
+            },
+            "BCH": {
+              "first_date": "2024-10-16",
+              "last_date": "2026-10-04",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 719
+            },
+            "BTC": {
+              "first_date": "2024-10-16",
+              "last_date": "2026-10-04",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 719
+            },
+            "DOGE": {
+              "first_date": "2024-10-16",
+              "last_date": "2026-10-04",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 719
+            },
+            "ETH": {
+              "first_date": "2024-10-16",
+              "last_date": "2026-10-04",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 719
+            },
+            "HBAR": {
+              "first_date": "2025-07-10",
+              "last_date": "2026-10-04",
+              "missing_rows": 267,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 452
+            },
+            "LINK": {
+              "first_date": "2024-10-16",
+              "last_date": "2026-10-04",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 719
+            },
+            "LTC": {
+              "first_date": "2024-10-16",
+              "last_date": "2026-10-04",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 719
+            },
+            "NEAR": {
+              "first_date": "2024-10-16",
+              "last_date": "2026-10-04",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 719
+            },
+            "SOL": {
+              "first_date": "2024-10-16",
+              "last_date": "2026-10-04",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 719
+            },
+            "TRX": {
+              "first_date": "2024-10-16",
+              "last_date": "2026-10-04",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 719
+            },
+            "UNI": {
+              "first_date": "2024-10-16",
+              "last_date": "2026-10-04",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 719
+            },
+            "XLM": {
+              "first_date": "2024-10-16",
+              "last_date": "2026-10-04",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 719
+            },
+            "XRP": {
+              "first_date": "2024-10-16",
+              "last_date": "2026-10-04",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 719
+            }
+          },
+          "dtypes": {
+            "ADA": "float64",
+            "ATOM": "float64",
+            "AVAX": "float64",
+            "BCH": "float64",
+            "BTC": "float64",
+            "DOGE": "float64",
+            "ETH": "float64",
+            "HBAR": "float64",
+            "LINK": "float64",
+            "LTC": "float64",
+            "NEAR": "float64",
+            "SOL": "float64",
+            "TRX": "float64",
+            "UNI": "float64",
+            "XLM": "float64",
+            "XRP": "float64"
+          },
+          "exchange_holiday_calendar_verified": false,
+          "expected_latest_candle_from_runtime": "2026-10-04",
+          "format": "csv_utf8_daily_dates_float17g",
+          "latest_candle_unconfirmed_assets": [],
+          "missing_assets": [],
+          "rows": 719,
+          "sha256": "278ff6dbd7c53f0b43e990e9d7e16fc5fe15083be8f6c4fe6b3ed7f964c957af",
+          "sources": {
+            "ADA": {
+              "captured_at_utc": "2026-10-05T00:18:14.314757+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "exchange_daily_close",
+              "source": "kraken",
+              "status": "observed"
+            },
+            "ATOM": {
+              "captured_at_utc": "2026-10-05T00:18:27.523384+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "exchange_daily_close",
+              "source": "kraken",
+              "status": "observed"
+            },
+            "AVAX": {
+              "captured_at_utc": "2026-10-05T00:18:17.930009+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "exchange_daily_close",
+              "source": "kraken",
+              "status": "observed"
+            },
+            "BCH": {
+              "captured_at_utc": "2026-10-05T00:18:20.320019+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "exchange_daily_close",
+              "source": "kraken",
+              "status": "observed"
+            },
+            "BTC": {
+              "captured_at_utc": "2026-10-05T00:18:09.511834+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "exchange_daily_close",
+              "source": "kraken",
+              "status": "observed"
+            },
+            "DOGE": {
+              "captured_at_utc": "2026-10-05T00:18:15.538414+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "exchange_daily_close",
+              "source": "kraken",
+              "status": "observed"
+            },
+            "ETH": {
+              "captured_at_utc": "2026-10-05T00:18:10.729095+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "exchange_daily_close",
+              "source": "kraken",
+              "status": "observed"
+            },
+            "HBAR": {
+              "captured_at_utc": "2026-10-05T00:18:23.915278+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "exchange_daily_close",
+              "source": "kraken",
+              "status": "observed"
+            },
+            "LINK": {
+              "captured_at_utc": "2026-10-05T00:18:16.710985+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "exchange_daily_close",
+              "source": "kraken",
+              "status": "observed"
+            },
+            "LTC": {
+              "captured_at_utc": "2026-10-05T00:18:19.129911+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "exchange_daily_close",
+              "source": "kraken",
+              "status": "observed"
+            },
+            "NEAR": {
+              "captured_at_utc": "2026-10-05T00:18:25.135615+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "exchange_daily_close",
+              "source": "kraken",
+              "status": "observed"
+            },
+            "SOL": {
+              "captured_at_utc": "2026-10-05T00:18:11.915568+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "exchange_daily_close",
+              "source": "kraken",
+              "status": "observed"
+            },
+            "TRX": {
+              "captured_at_utc": "2026-10-05T00:18:22.717509+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "exchange_daily_close",
+              "source": "kraken",
+              "status": "observed"
+            },
+            "UNI": {
+              "captured_at_utc": "2026-10-05T00:18:26.323744+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "exchange_daily_close",
+              "source": "kraken",
+              "status": "observed"
+            },
+            "XLM": {
+              "captured_at_utc": "2026-10-05T00:18:21.518818+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "exchange_daily_close",
+              "source": "kraken",
+              "status": "observed"
+            },
+            "XRP": {
+              "captured_at_utc": "2026-10-05T00:18:13.117784+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "exchange_daily_close",
+              "source": "kraken",
+              "status": "observed"
+            }
+          }
+        },
+        "stocks": {
+          "assets": [
+            "SPY",
+            "QQQ",
+            "IWM",
+            "EFA",
+            "EEM",
+            "EWW",
+            "TLT",
+            "IEF",
+            "GLD",
+            "DBC",
+            "VNQ",
+            "XLK",
+            "XLF",
+            "XLE",
+            "XLV",
+            "XLI",
+            "XLP",
+            "XLU",
+            "XLY",
+            "XLB"
+          ],
+          "continuous_market_history_verified": false,
+          "coverage": {
+            "DBC": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            },
+            "EEM": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            },
+            "EFA": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            },
+            "EWW": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            },
+            "GLD": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            },
+            "IEF": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            },
+            "IWM": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            },
+            "QQQ": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            },
+            "SPY": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            },
+            "TLT": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            },
+            "VNQ": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            },
+            "XLB": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            },
+            "XLE": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            },
+            "XLF": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            },
+            "XLI": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            },
+            "XLK": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            },
+            "XLP": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            },
+            "XLU": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            },
+            "XLV": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            },
+            "XLY": {
+              "first_date": "2023-10-06",
+              "last_date": "2026-10-02",
+              "missing_rows": 0,
+              "nonpositive_or_nonfinite": 0,
+              "observations": 750
+            }
+          },
+          "dtypes": {
+            "DBC": "float64",
+            "EEM": "float64",
+            "EFA": "float64",
+            "EWW": "float64",
+            "GLD": "float64",
+            "IEF": "float64",
+            "IWM": "float64",
+            "QQQ": "float64",
+            "SPY": "float64",
+            "TLT": "float64",
+            "VNQ": "float64",
+            "XLB": "float64",
+            "XLE": "float64",
+            "XLF": "float64",
+            "XLI": "float64",
+            "XLK": "float64",
+            "XLP": "float64",
+            "XLU": "float64",
+            "XLV": "float64",
+            "XLY": "float64"
+          },
+          "exchange_holiday_calendar_verified": false,
+          "expected_latest_candle_from_runtime": "2026-10-02",
+          "format": "csv_utf8_daily_dates_float17g",
+          "latest_candle_unconfirmed_assets": [],
+          "missing_assets": [],
+          "rows": 750,
+          "sha256": "24a8fa61163eb7acbac0e6ed256785d1a2d02109efc7cc1e755908c9b1c461f1",
+          "sources": {
+            "DBC": {
+              "captured_at_utc": "2026-10-05T00:18:28.785568+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            },
+            "EEM": {
+              "captured_at_utc": "2026-10-05T00:18:28.171365+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            },
+            "EFA": {
+              "captured_at_utc": "2026-10-05T00:18:28.043874+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            },
+            "EWW": {
+              "captured_at_utc": "2026-10-05T00:18:28.285925+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            },
+            "GLD": {
+              "captured_at_utc": "2026-10-05T00:18:28.652898+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            },
+            "IEF": {
+              "captured_at_utc": "2026-10-05T00:18:28.552409+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            },
+            "IWM": {
+              "captured_at_utc": "2026-10-05T00:18:27.938383+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            },
+            "QQQ": {
+              "captured_at_utc": "2026-10-05T00:18:27.805550+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            },
+            "SPY": {
+              "captured_at_utc": "2026-10-05T00:18:27.691791+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            },
+            "TLT": {
+              "captured_at_utc": "2026-10-05T00:18:28.431352+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            },
+            "VNQ": {
+              "captured_at_utc": "2026-10-05T00:18:28.885382+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            },
+            "XLB": {
+              "captured_at_utc": "2026-10-05T00:18:30.120096+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            },
+            "XLE": {
+              "captured_at_utc": "2026-10-05T00:18:29.314976+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            },
+            "XLF": {
+              "captured_at_utc": "2026-10-05T00:18:29.187939+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            },
+            "XLI": {
+              "captured_at_utc": "2026-10-05T00:18:29.567329+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            },
+            "XLK": {
+              "captured_at_utc": "2026-10-05T00:18:29.011951+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            },
+            "XLP": {
+              "captured_at_utc": "2026-10-05T00:18:29.713183+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            },
+            "XLU": {
+              "captured_at_utc": "2026-10-05T00:18:29.825480+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            },
+            "XLV": {
+              "captured_at_utc": "2026-10-05T00:18:29.455439+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            },
+            "XLY": {
+              "captured_at_utc": "2026-10-05T00:18:30.022488+00:00",
+              "observed_at_utc": "2026-10-05T00:18:06.187678+00:00",
+              "price_basis": "provider_adjusted_close",
+              "source": "yahoo_chart",
+              "status": "observed"
+            }
+          }
+        }
+      },
+      "signal_replay": {
+        "crypto": {
+          "execution_equivalence_verified": false,
+          "independent_implementation": false,
+          "input_roundtrip_equal": true,
+          "input_sha256": "278ff6dbd7c53f0b43e990e9d7e16fc5fe15083be8f6c4fe6b3ed7f964c957af",
+          "method": "frozen_input_signal_replay",
+          "passed": true,
+          "signal_values_valid": true,
+          "target_weights": {
+            "ADA": 0.0,
+            "ATOM": 0.0,
+            "AVAX": 0.0,
+            "BCH": 0.0,
+            "BTC": 0.0,
+            "DOGE": 0.0,
+            "ETH": 0.0,
+            "HBAR": 0.0,
+            "LINK": 0.15320069592251756,
+            "LTC": 0.1776078199480661,
+            "NEAR": 0.09229091266088255,
+            "SOL": 0.19879773051426136,
+            "TRX": 0.0,
+            "UNI": 0.10762590269943012,
+            "XLM": 0.0,
+            "XRP": 0.0
+          },
+          "targets_and_diagnostics_equal": true
+        },
+        "stocks": {
+          "execution_equivalence_verified": false,
+          "independent_implementation": false,
+          "input_roundtrip_equal": true,
+          "input_sha256": "24a8fa61163eb7acbac0e6ed256785d1a2d02109efc7cc1e755908c9b1c461f1",
+          "method": "frozen_input_signal_replay",
+          "passed": true,
+          "signal_values_valid": true,
+          "target_weights": {
+            "DBC": 0.0,
+            "EEM": 0.0,
+            "EFA": 0.0,
+            "EWW": 0.0,
+            "GLD": 0.0,
+            "IEF": 0.4,
+            "IWM": 0.0,
+            "QQQ": 0.0,
+            "SPY": 0.6,
+            "TLT": 0.0,
+            "VNQ": 0.0,
+            "XLB": 0.0,
+            "XLE": 0.0,
+            "XLF": 0.0,
+            "XLI": 0.0,
+            "XLK": 0.0,
+            "XLP": 0.0,
+            "XLU": 0.0,
+            "XLV": 0.0,
+            "XLY": 0.0
+          },
+          "targets_and_diagnostics_equal": true
+        }
+      },
+      "errors": [],
+      "record_count": 37,
+      "stale": false
+    },
+    "execution": {},
+    "errors": [],
+    "profitability_verified": false,
+    "live_authorized": false,
+    "limitations": [
+      "Reproducir una simulación no demuestra rentabilidad ni ejecución con dinero real.",
+      "Los listados observados hoy no reconstruyen el universo histórico.",
+      "Los precios ajustados de ETFs no prueban una contabilidad de dividendos y splits.",
+      "La validación independiente y las cuatro semanas prospectivas siguen pendientes."
+    ],
+    "last_collection": {
+      "status": "ok",
+      "attempted_at_utc": "2026-10-05T00:18:06.187678+00:00",
+      "build_id": "railway-c5b4442986a16922",
+      "sha256": "b4188efd947386099c4bc48100878ea20ec6d670ba6f945648499de733185604",
+      "completed_at_utc": "2026-10-05T00:18:30.281787+00:00"
+    }
+  },
+  "http": {
+    "health": 200,
+    "unauthenticated": 401,
+    "authenticated": 200,
+    "execution_quality_authenticated": 200,
+    "execution_quality_unauthenticated": 401,
+    "evidence_authenticated": 200,
+    "evidence_unauthenticated": 401
+  },
+  "assets": {
+    "": 200,
+    "operations.js": 200,
+    "operations.css": 200
+  },
+  "installed_file_count": 48,
+  "installed_files_match": true,
+  "backup_before": {
+    "format": "trading-lab-sqlite-backup-v1",
+    "created_at_utc": "2026-10-05T00:06:45.748867+00:00",
+    "file": "improvement-before-20261005T000645Z.sqlite3",
+    "sha256": "3221a32a5a8521d27a21cfe13e8c80b42c3682319ca0b25142731151de08fdee",
+    "bytes": 1720320,
+    "schema_version": 1,
+    "build_id": "railway-fe50d0ea8a3e5a3d"
+  },
+  "backup_after": {
+    "format": "trading-lab-sqlite-backup-v1",
+    "created_at_utc": "2026-10-05T00:19:21.780608+00:00",
+    "file": "improvement-after-20261005T001921Z.sqlite3",
+    "sha256": "e7134bb6ea0a1ac260b1e3e097540102fec1f168dfe9530857427495b1c2e644",
+    "bytes": 3039232,
+    "schema_version": 1,
+    "build_id": "railway-c5b4442986a16922"
+  },
+  "restore_after": {
+    "restore": {
+      "restored": "runtime-data/evidence-20261004/after-restored/trading.sqlite3",
+      "worker_enabled": false,
+      "source_sha256": "e7134bb6ea0a1ac260b1e3e097540102fec1f168dfe9530857427495b1c2e644"
+    },
+    "checks": {
+      "trades": true,
+      "equity": true,
+      "live_equity": true,
+      "orders": true,
+      "state": true,
+      "disabled": true,
+      "evidence": true,
+      "all_capture_hashes": true,
+      "capture_count": true,
+      "market_replay": true
+    },
+    "operational_preservation": {
+      "trades": true,
+      "equity": true,
+      "orders": true,
+      "state": true,
+      "config": true,
+      "runtime_config": true
+    },
+    "capture_payload_bytes": 1318063
+  },
+  "configuration_preserved": {
+    "trades": true,
+    "equity": true,
+    "orders": true,
+    "state": true,
+    "config": true,
+    "runtime_config": true
+  },
+  "limitations": [
+    "Reproducir una simulación no demuestra rentabilidad ni ejecución con dinero real.",
+    "Los listados observados hoy no reconstruyen el universo histórico.",
+    "Los precios ajustados de ETFs no prueban una contabilidad de dividendos y splits.",
+    "La validación independiente y las cuatro semanas prospectivas siguen pendientes.",
+    "Primera decisión diaria con captura de órdenes pendiente del siguiente cierre elegible; no se forzó una operación.",
+    "Déficit ETF de US$0.10 heredado: recuperación automática espera cierre fresco.",
+    "Copia externa automática pendiente; descarga manual anterior y posterior restauradas."
+  ],
+  "live_authorized": false,
+  "profitability_verified": false,
+  "candidate_promoted": false
+}

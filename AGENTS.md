@@ -17,6 +17,8 @@ Laboratorio y bot de inversión de Brandon, con dinero potencialmente real. El o
 
 - Investigación `cost-aware-v1` aprobada por Brandon el 4-oct: preregistro `55a8fc8fa4fd30c022da5bc9149cd132cf58c10b`, capital 500/500, control y tres variantes de margen/banda, dos referencias. Motor financiado opt-in, bootstrap emparejado y corrección familiar; 589 pruebas. Ver `docs/DEEP_RESEARCH_RUNBOOK.md` y el estado real de corridas en `reports/experiments/cost-aware-v1/`. Histórico inspeccionado y datos/ejecución incompletos: ningún resultado promueve una estrategia. Base técnica publicada registrada en `f937086`; sin push ni nuevo despliegue.
 
+- Estado verificado 4-oct 18:19 CDMX: `railway-c5b4442986a16922`, commit limpio `bd53c1c`, 650 pruebas, primer ciclo sano y captura pública automática con señales reproducidas. API/panel «Datos y decisiones verificables», captura exacta de decisiones paper y replay sin red; datos/estado/capital 500/500 preservados y backup/restore incluyen evidencia. Primera decisión con tape pendiente del próximo cierre elegible. `cost-aware-v1` cerrada sin candidatas aprobadas; no confundir reproducción con rentabilidad. Rama `codex/datos-ejecucion-20261004`, sin push. Ver `docs/EVIDENCE_RUNBOOK.md` y `reports/operations/evidence-20261004.json`.
+
 ## Antes de trabajar
 
 1. Revisar cambios locales y usar `git pull --ff-only origin main`: el antiguo bot hacía commit de `state/`; tras el corte Railway, ese estado es histórico y no debe reactivarse para sincronizarlo. Si hay divergencia, inspeccionar e integrar sin reescribir commits utilizados por preregistros, corridas o imágenes. No hacer rebase de evidencia publicada o registrada; conservar cambios ajenos y SHAs científicos.

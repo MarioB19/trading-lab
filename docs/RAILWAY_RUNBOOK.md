@@ -15,7 +15,23 @@ La estrategia, los movimientos de capital y el historial se conservan.
 
 ## Configuración
 
-**Versión vigente:** `railway-fe50d0ea8a3e5a3d`, deployment `dd5e35e1-3a7c-4bd3-b41b-797d0d2559ca` (`SUCCESS`, 4-oct UTC / 3-oct CDMX). FIFO desde SQLite en lectura coherente, conciliación de cantidades/P&L, recuperación paper de efectivo negativo, flujo diario conservado en reintentos y escenarios económicos del panel. 508 pruebas, replay 0.458%; configuración idéntica, 42 archivos instalados verificables por SHA256. Primer ciclo sano 4-oct 01:02:47 UTC, un worker, paper/ready, cero órdenes pendientes/desconocidas. Backups antes/después restaurados con datos idénticos y worker desactivado. Base US$1,000 aplicada 500/500; déficit ETF −US$0.10 pendiente del próximo cierre fresco, sin operación forzada.
+**Versión vigente (4-oct, 18:19 CDMX):** `railway-c5b4442986a16922`, deployment
+`f9f06360-fbd4-42f4-9c2b-f64aadc3dd41` (`SUCCESS`), commit limpio
+`bd53c1cb3e14e7ecc7fa79abb037327b3c9be6b2`, imagen
+`sha256:a1b25410f44ada7fdbb39d5a63dc3f08f403aff4b88ba47e8ac1dd59d0938a0c`.
+650 pruebas pasan; replay legacy de 365 días conserva diferencia 0.458%.
+48 archivos instalados coinciden con el manifiesto. Primer ciclo sano
+5-oct 00:18:05 UTC, un worker, paper/ready y cero órdenes pendientes/desconocidas.
+Primera captura automática 00:18:06–00:18:30 UTC: datos de 16 cripto y 20 ETFs,
+ambas señales reproducidas y sin errores. API nueva `/api/evidence`: HTTPS 200
+con autenticación, 401 sin ella. Backups anterior y posterior descargados y
+restaurados desactivados: filas, estado e integridad de captura idénticos.
+Configuración y base US$1,000 (500/500) intactas. Primera reproducción diaria de
+órdenes pendiente del siguiente cierre; no se fuerza una decisión. Ninguna
+estrategia promovida ni rentabilidad acreditada. Ver `docs/EVIDENCE_RUNBOOK.md`,
+`reports/operations/evidence-20261004.json` y `runtime-data/evidence-20261004/`.
+
+**Versión anterior (3-oct):** `railway-fe50d0ea8a3e5a3d`, deployment `dd5e35e1-3a7c-4bd3-b41b-797d0d2559ca` (`SUCCESS`, 4-oct UTC / 3-oct CDMX). FIFO desde SQLite en lectura coherente, conciliación de cantidades/P&L, recuperación paper de efectivo negativo, flujo diario conservado en reintentos y escenarios económicos del panel. 508 pruebas, replay 0.458%; configuración idéntica, 42 archivos instalados verificables por SHA256. Primer ciclo sano 4-oct 01:02:47 UTC, un worker, paper/ready, cero órdenes pendientes/desconocidas. Backups antes/después restaurados con datos idénticos y worker desactivado. Base US$1,000 aplicada 500/500; déficit ETF −US$0.10 pendiente del próximo cierre fresco, sin operación forzada.
 
 Origen HEAD `9190176` con cambios sin commit en rama `codex/rentabilidad-20261003`; identidad por manifiesto de contenido. Evidencia: `reports/operations/profitability-20261003.json` y `runtime-data/profitability-20261003/`. Investigación: `docs/PROFITABILITY_RESEARCH_20261003.md`. La corrección del bootstrap no vuelve a ejecutar ni altera ensayos congelados; ninguna candidata se promueve.
 
