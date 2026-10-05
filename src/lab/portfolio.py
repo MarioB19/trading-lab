@@ -530,3 +530,49 @@ def fixed_weights(prices: pd.DataFrame, mix: dict[str, float]) -> pd.DataFrame:
     for k, v in mix.items():
         W[k] = v
     return W.where(prices.notna(), 0.0)
+
+
+# Four-family paper arena: shared causal signals, also available to research.
+def arena_directional_signal(variant, rows, wallet, ts):
+    """Pure causal decision; rows are closed candles, not current live prices."""
+    family = variant['id']
+    closes = pd.Series([r[4] for r in rows], dtype=float)
+    price = closes.iloc[-1]
+    if family == 'swing-v1':
+        if len(rows) < 250:
+            return None, 'Calentando: necesita 250 cierres diarios'
+        index = pd.to_datetime([r[0] for r in rows], unit='ms')
+        panel = pd.DataFrame({'BTC': closes.values}, index=index)
+        params = PortfolioParams(top_k=1, vol_target=variant['vol_target'], max_weight=variant['max_weight'], regime_asset='BTC')
+        weight = float(target_weights(panel, None, params, last_only=True).iloc[-1, 0])
+        return weight, 'Tendencia diaria y momentum con ajuste por volatilidad'
+    if len(rows) < 30:
+        return None, 'Calentando: necesita 30 cierres completos'
+    holding = wallet['qty'] * price >= 5.0
+    if holding:
+        entry_price = wallet['cost_basis'] / wallet['qty']
+        held = ts - (wallet['entry_ms'] or ts)
+        change = price / entry_price - 1
+        if change <= -variant['stop_loss']:
+            return 0., 'Salida: pérdida por posición'
+        if held >= variant['max_hold_seconds'] * 1000:
+            return 0., 'Salida: tiempo máximo'
+        if family == 'scalping-v1' and change >= variant['take_profit']:
+            return 0., 'Salida: objetivo de precio'
+    if family == 'scalping-v1':
+        fast = closes.ewm(span=variant['ema_fast'], adjust=False).mean().iloc[-1]
+        slow = closes.ewm(span=variant['ema_slow'], adjust=False).mean().iloc[-1]
+        if holding:
+            if fast < slow or wallet.get('entry_day') != pd.Timestamp(ts, unit='ms', tz='UTC').date().isoformat():
+                return 0., 'Salida: tendencia o fin de sesión UTC'
+            return None, 'Mantiene posición intradía'
+        breakout = max(r[2] for r in rows[-variant['breakout_bars']-1:-1])
+        if fast > slow and price > breakout and wallet['entries_today'] < variant['max_entries_per_day']:
+            return variant['allocation'], 'Entrada: ruptura de 20 velas y EMA9 > EMA21'
+        return None, 'Espera ruptura confirmada'
+    window = closes.iloc[-variant['lookback']:]
+    std = float(window.std(ddof=0))
+    z = (price - float(window.mean())) / std if std > 0 else 0.
+    if holding:
+        return (0., 'Salida: regreso a la media') if z >= variant['exit_z'] else (None, 'Espera regreso a la media')
+    return (variant['allocation'], 'Entrada: desviación bajo −2σ') if z <= variant['entry_z'] else (None, 'Espera desviación bajo −2σ')

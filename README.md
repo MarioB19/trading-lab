@@ -75,3 +75,13 @@ Abrir `http://127.0.0.1:8847/`. La vista usa pesos por defecto, permite USD y se
 Faltan verificar proyecto/facturación/créditos, aplicar el plan revisado, publicar/instalar la imagen, cortar GitHub, observar un ciclo remoto, descargar/restaurar un respaldo GCS, comprobar notificaciones y medir costo/consumo. Después se observa la versión operativa en paper durante al menos cuatro semanas. El rechazo de la variante agresiva se conserva y no se revoca por esperar más días.
 
 La VM es única, sin alta disponibilidad. Las alertas presupuestarias no cortan automáticamente el gasto. La simulación no reproduce toda la liquidez, prioridad de cola, comisiones o eventos de una cuenta real; las limitaciones y migraciones pendientes están en la guía de cuentas.
+
+
+## Arena local de cuatro estrategias — 4-oct-2026
+
+La arena experimental compara scalping, swing, reversión y creación de mercado,
+con **US$1,000 ficticios independientes por cartera** (US$4,000 total), en BTC/USD.
+Tiene panel, contabilidad financiada, capturas auditables, pausas y backup/restore.
+Está separada del piloto Railway y requiere el preregistro aprobado y código
+congelado para iniciar ciclos de mercado. No modifica `config.yaml` ni su estado.
+[Reglas, arranque local y límites](docs/ARENA_RUNBOOK.md).

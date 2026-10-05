@@ -44,6 +44,11 @@ CANDIDATES = {
 }
 
 SLEEVES = {
+    # Four preregistered families; counted separately, never run by the daily grid.
+    "arena_crypto": {
+        "grid": {"family": ["scalping-v1", "swing-v1", "mean-reversion-v1", "market-making-v1"]},
+        "fixed": {"protocol": "four-strategy-arena-v1", "book": "btc_usd", "capital": 1000.0},
+    },
     # Separate, explicitly counted profile. Legacy experiments keep their grids.
     "deep_crypto": {
         "grid": {"rotation_buffer": [0.0, 0.15], "band": [0.02, 0.04]},
@@ -138,6 +143,8 @@ def research_plan(multi_market: bool = False, candidate: str = "multi", universe
         scope = universe if sleeve == "crypto" else "historical"
         config["sleeves"][sleeve] = {"config": cfg, "candidate": selected, "universe": scope}
         combos, historical = grid_variants(cfg)
+        if sleeve == "crypto":
+            historical += list(SLEEVES["arena_crypto"]["grid"]["family"])
         config["sleeves"][sleeve]["legacy_external_trial_labels"] = historical
         for params in combos:
             full = params_for(sleeve, params).to_dict()
@@ -265,6 +272,8 @@ def run_sleeve(sleeve: str, refresh: bool = False, candidate: str | None = None,
 
     # 1) todas las variantes --------------------------------------------------------------
     combos, rt_trials = grid_variants(cfg)
+    if sleeve == "crypto":
+        rt_trials += list(SLEEVES["arena_crypto"]["grid"]["family"])
     runs = {}
     for d in combos:
         p = params_for(sleeve, d)

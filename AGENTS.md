@@ -66,3 +66,19 @@ Mensajes en español, en presente, explicando qué cambia y por qué. Corre las 
 ## Evidencia de operación GCP
 
 Distinguir preparación local, pruebas, imagen construida, infraestructura aplicada, runtime verificado, broker paper externo y cuatro semanas observadas. No autenticar, desplegar ni activar hasta la instrucción posterior de Brandon. No tocar secrets; Brandon los gestiona a mano. Alertas de presupuesto no son un tope de gasto. Guardar evidencia SHA → digest → instalación → lectura del estado y restore probado.
+
+
+## Arena autorizada — 4-oct-2026
+
+Brandon solicita y aprueba una plataforma experimental separada con cuatro
+estrategias y US$1,000 ficticios cada una, BTC/USD en Bitso. Autoriza protocolo,
+commits locales e inicio local paper; no push, cloud ni dinero real. Ver
+`reports/four_strategy_arena_v1_preregistro.md` y `docs/ARENA_RUNBOOK.md`.
+Las señales intradía de esta arena usan cierres completos5m/1h; swing usa1d y
+market making libro/trades públicos posteriores a cada cotización. Esta excepción
+solicitada no altera la regla diaria, capital ni estado del piloto habitual.
+Las matemáticas de señales viven en `lab.portfolio` y se prueban con datos artificiales;
+`lab.arena` reutiliza esas funciones en su motor financiado. Ninguna variante se presume rentable ni aprobada
+para promoción. Preregistro previo, contabilidad de intentos y validaciones siguen
+vigentes. Una base iniciada congela su versión: no cambiar código a mitad de la
+observación sin detenerla y registrar el alcance de una nueva versión.
