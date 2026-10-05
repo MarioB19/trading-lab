@@ -1,0 +1,81 @@
+{
+  "experiment_id": "arena-fees-v2",
+  "model_id": "bitso-usd-20261005-v2",
+  "mode": "paper",
+  "scope": "per_strategy",
+  "window_days": 30,
+  "threshold_rule": "strictly_greater",
+  "source_url": "https://bitso.com/fees?l=en",
+  "verified_on": "2026-10-05",
+  "tiers": [
+    {
+      "above_usd": 0,
+      "maker": 0.003,
+      "taker": 0.0036
+    },
+    {
+      "above_usd": 1000,
+      "maker": 0.00239,
+      "taker": 0.00333
+    },
+    {
+      "above_usd": 5000,
+      "maker": 0.00205,
+      "taker": 0.00282
+    },
+    {
+      "above_usd": 10000,
+      "maker": 0.00171,
+      "taker": 0.00243
+    },
+    {
+      "above_usd": 50000,
+      "maker": 0.00137,
+      "taker": 0.00205
+    },
+    {
+      "above_usd": 100000,
+      "maker": 0.00114,
+      "taker": 0.00154
+    },
+    {
+      "above_usd": 1000000,
+      "maker": 0.00085,
+      "taker": 0.00095
+    },
+    {
+      "above_usd": 5000000,
+      "maker": 0.00072,
+      "taker": 0.00082
+    },
+    {
+      "above_usd": 10000000,
+      "maker": 0.0006,
+      "taker": 0.00069
+    },
+    {
+      "above_usd": 20000000,
+      "maker": 0.0005,
+      "taker": 0.0006
+    },
+    {
+      "above_usd": 30000000,
+      "maker": 0.0004,
+      "taker": 0.0005
+    }
+  ],
+  "variants": [
+    {
+      "id": "scalping-v1"
+    },
+    {
+      "id": "swing-v1"
+    },
+    {
+      "id": "mean-reversion-v1"
+    },
+    {
+      "id": "market-making-v1"
+    }
+  ]
+}
