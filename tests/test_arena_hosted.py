@@ -39,7 +39,7 @@ def test_hosted_requires_credentials_before_binding(tmp_path):
 
 def test_cloud_auth_protects_data_assets_and_readiness(cloud):
     directory, server = cloud
-    for path in ['/', '/arena.js', '/arena.css', '/api/arena', '/api/export', '/readyz']:
+    for path in ['/', '/arena.js', '/arena.css', '/api/arena', '/api/export', '/readyz', '/api/daily-audit', '/api/daily-audit.csv', '/api/integrity']:
         assert request(server, path)[0] == 401
     assert request(server, '/api/arena', auth=True)[0] == 200
     assert request(server, '/readyz', auth=True)[0] == 503
@@ -117,3 +117,15 @@ def test_image_proof_path_rejects_invalid_attestation(tmp_path, monkeypatch):
     monkeypatch.setenv('ARENA_ATTESTATION', str(bad))
     monkeypatch.setenv('TRADING_LAB_BUILD_ID', 'a' * 40)
     with pytest.raises(ValueError): arena.execution_proof(arena_hosted.PREREG)
+
+
+def test_authenticated_daily_report_and_integrity_are_read_only(cloud):
+    directory, server = cloud
+    before = arena.status(directory)
+    assert request(server, '/api/daily-audit', auth=True)[0] == 200
+    code, raw = request(server, '/api/daily-audit.csv', auth=True)
+    assert code == 200 and 'fecha_cdmx' in raw.decode('utf-8-sig')
+    code, raw = request(server, '/api/integrity', auth=True)
+    assert code == 200 and json.loads(raw)['status'] == 'verified'
+    assert arena.status(directory)['wallets'] == before['wallets']
+    assert arena.status(directory)['counts'] == before['counts']

@@ -78,3 +78,38 @@ document.addEventListener('click',async event=>{
  const cb=event.target.closest('[data-control]');if(cb){cb.disabled=true;try{const response=await fetch('/api/control',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({strategy:cb.dataset.control,action:cb.dataset.action})});const result=await response.json();if(!response.ok)throw Error(result.error);data=result;render();toast(cb.dataset.action==='pause'?'Cartera pausada. El inventario se conserva.':'Cartera lista para el siguiente ciclo.');}catch(error){toast(error.message);cb.disabled=false;}}
 });
 refresh();setInterval(refresh,15000);
+
+
+let dailyData=null,auditDay='',dailyBusy=false;
+const nullableMoney=n=>n===null||n===undefined?'—':money(n);
+const nullableSigned=n=>n===null||n===undefined?'—':`<span class="${tone(n)}">${signed(n)}</span>`;
+const dayLabel=s=>new Intl.DateTimeFormat('es-MX',{day:'2-digit',month:'short',year:'numeric',timeZone:'UTC'}).format(new Date(s+'T12:00:00Z'));
+const duration=s=>s<60?`${Math.round(s)} s`:`${(s/60).toFixed(1)} min`;
+function renderDaily(){
+ if(!dailyData.days.length){$('audit-status').textContent='Todavía no hay observaciones para crear el primer resumen diario.';return;}
+ if(!dailyData.days.some(d=>d.date===auditDay))auditDay=dailyData.days[0].date;
+ $('audit-date').innerHTML=dailyData.days.map(d=>`<option value="${d.date}" ${d.date===auditDay?'selected':''}>${dayLabel(d.date)}${d.in_progress?' · en curso':''}</option>`).join('');
+ const d=dailyData.days.find(d=>d.date===auditDay),q=d.quality;
+ const label=d.no_data?'Sin observaciones':d.in_progress?'Día en curso':'Corte histórico';
+ const parts=[label,d.partial_start?'Inicio parcial del experimento':null,d.as_of_ms?`Última valoración: ${date(d.as_of_ms)} CDMX`:null,dailyData.ledger.reconciled?'Saldos conciliados':'La contabilidad necesita revisión'].filter(Boolean);
+ if(dailyData.stale&&d.in_progress)parts.push('Datos desactualizados');
+ if(d.opening_missing)parts.push('Sin valoración del día anterior: no se calcula rendimiento diario');
+ $('audit-status').textContent=parts.join(' · ');
+ $('audit-status').className='audit-status'+(!dailyData.ledger.reconciled?' error':d.no_data||d.opening_missing||(dailyData.stale&&d.in_progress)?' warning':'');
+ $('audit-summary').innerHTML=`<div><span>Resultado neto del día</span><strong>${nullableSigned(d.net_pnl)}</strong><small>${d.return===null?'Sin base diaria disponible':pct(d.return)+' sobre el patrimonio inicial del día'}</small></div><div><span>Última valoración conjunta</span><strong>${nullableMoney(d.closing_equity)}</strong><small>Inicio: ${nullableMoney(d.opening_equity)}</small></div><div><span>Comisiones del día</span><strong>${money(d.fees)}</strong><small>Ya descontadas del resultado</small></div><div><span>Operaciones registradas</span><strong>${d.operations}</strong><small>${d.strategies.reduce((s,r)=>s+r.buys,0)} compras · ${d.strategies.reduce((s,r)=>s+r.sells,0)} ventas</small></div>`;
+ const rows=d.strategies.map((r,i)=>[short[i],nullableMoney(r.opening_equity),nullableMoney(r.closing_equity),`${nullableSigned(r.net_pnl)}<span class="audit-sub">${r.return===null?'Sin rendimiento disponible':pct(r.return)}</span>`,money(r.fees),r.operations,nullableSigned(r.realized_pnl),nullableSigned(r.unrealized_change),r.max_drawdown===null?'—':(r.max_drawdown*100).toFixed(2)+'%']);
+ $('audit-comparison').innerHTML=table(['Estrategia','Inicio','Última valoración','Neto del día','Comisiones','Operaciones','Realizado','Cambio abierto','Mayor caída observada'],rows);
+ const history=dailyData.days.map(day=>[`<button class="audit-day" data-audit-day="${day.date}">${dayLabel(day.date)}</button><span class="audit-sub">${day.no_data?'Sin datos':day.in_progress?'En curso':'Corte histórico'}${day.partial_start?' · inicio parcial':''}</span>`,nullableSigned(day.net_pnl),...day.strategies.map(r=>nullableSigned(r.net_pnl)),money(day.fees),day.quality.coverage===null?'—':(day.quality.coverage*100).toFixed(1)+'%']);
+ $('audit-history').innerHTML=table(['Día · CDMX','Total neto','Scalping','Swing','Reversión','Market making','Comisiones','Cobertura'],history);
+ $('audit-history').querySelectorAll('tr').forEach(row=>row.classList.toggle('audit-selected',row.querySelector('[data-audit-day]')?.dataset.auditDay===auditDay));
+ $('audit-quality').textContent=`${q.coverage===null?'Cobertura aún no calculable':(q.coverage*100).toFixed(1)+'% de cobertura de datos'} · ${q.gaps} huecos · ${duration(q.missing_seconds)} sin datos frescos · ${d.error_count} errores registrados. ${dailyData.ledger.fills_checked} operaciones conciliadas en todo el historial.`;
+ const labels={error:'Captura rechazada',pause:'Pausa manual',resume:'Reanudación',railway_cutover:'Traslado a Railway',daily_reporting_upgrade:'Actualización de la auditoría'};
+ $('audit-events').innerHTML=d.events.slice(-5).reverse().map(e=>`<div class="audit-event"><strong>${esc(date(e.ts))} · ${esc(labels[e.type]||e.type)}</strong>${e.message?' — '+esc(e.message):''}${e.strategy?' · '+esc(short[ids.indexOf(e.strategy)]||e.strategy):''}</div>`).join('')||'<div class="audit-event">Sin eventos registrados en esta fecha.</div>';
+ if(!dailyData.ledger.reconciled)$('audit-events').innerHTML+='<div class="negative">'+dailyData.ledger.issues.map(esc).join(' · ')+'</div>';
+}
+async function refreshDaily(){if(dailyBusy)return;dailyBusy=true;try{const response=await fetch('/api/daily-audit');if(!response.ok)throw Error('No se pudo leer el resumen diario');dailyData=await response.json();renderDaily();}catch(error){$('audit-status').textContent='No se pudo actualizar la auditoría. Conserva el último corte visible; intenta Actualizar.';$('audit-status').className='audit-status error';}finally{dailyBusy=false;}}
+$('audit-date').addEventListener('change',e=>{auditDay=e.target.value;renderDaily();});
+$('refresh').addEventListener('click',refreshDaily);
+document.addEventListener('click',event=>{const button=event.target.closest('[data-audit-day]');if(button){auditDay=button.dataset.auditDay;renderDaily();$('daily-audit').scrollIntoView({behavior:'smooth'});}});
+$('audit-verify').addEventListener('click',async()=>{const button=$('audit-verify');button.disabled=true;$('audit-integrity').textContent='Verificando registros completos…';try{const response=await fetch('/api/integrity');const result=await response.json();if(!response.ok||result.status!=='verified')throw Error(result.error||'No se pudo verificar');$('audit-integrity').textContent=`Verificado ${date(result.verified_at_ms)} CDMX: ${result.captures} capturas, ${result.candle_inputs} conjuntos de velas, ${result.fills} operaciones y ${result.wallets} carteras. Esto acredita integridad de registros, no rentabilidad.`;}catch(error){$('audit-integrity').textContent='Verificación pendiente o fallida: '+error.message;}finally{button.disabled=false;}});
+refreshDaily();setInterval(refreshDaily,30000);

@@ -96,3 +96,13 @@ Migración documentada en `docs/ARENA_RAILWAY_RUNBOOK.md`: detener propietario l
 backup/restore, conciliación, evento explícito de cambio de identidad del código
 y activación remota. El cambio de versión es de alojamiento, sin nuevas señales
 ni parámetros ni reinicio del periodo científico.
+
+
+## Auditoría diaria autorizada — 4-oct-2026
+
+Brandon pide agregar una herramienta de auditoría y resumen diario entre todas
+las estrategias en la plataforma publicada. Se implementa y publica una vista
+de solo lectura con días CDMX, costos, actividad, calidad e integridad. Código
+de trading y plan intactos; actualización de identidad documentada y comprobada
+por hashes desde `4ac103b`. Ver `docs/ARENA_DAILY_AUDIT.md`. No se reinicia capital
+ni observación, no se alteran parámetros ni se promueve ninguna estrategia.

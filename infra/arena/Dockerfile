@@ -13,5 +13,5 @@ COPY dashboard/arena ./dashboard/arena
 COPY arena-attestation.json release.json ./
 ARG ARENA_SOURCE_COMMIT
 ENV TRADING_LAB_BUILD_ID=$ARENA_SOURCE_COMMIT
-RUN python -c 'from lab.arena import execution_proof; from lab.arena_hosted import PREREG; execution_proof(PREREG)'
+RUN python -c 'from lab.arena import execution_proof; from lab.arena_hosted import PREREG; execution_proof(PREREG); from lab.arena_reporting import TZ; assert str(TZ) == "America/Mexico_City"'
 ENTRYPOINT ["python", "-m", "lab.arena_hosted", "run"]

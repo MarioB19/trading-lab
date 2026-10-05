@@ -4,11 +4,14 @@ import base64
 import hmac
 import json
 import re
+import threading
+import time
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
 
-from .arena import ROOT, control, initialize, status
+from .arena import ROOT, audit, control, initialize, now_ms, status
+from .arena_reporting import daily_report, report_csv
 
 ASSETS = ROOT / 'dashboard/arena'
 
@@ -21,6 +24,16 @@ def make_server(directory, port=8874, *, public_domain=None, username=None, pass
         authorization = 'Basic ' + base64.b64encode(f'{username}:{password}'.encode()).decode()
     else:
         initialize(directory)
+    report_cache = {'at': 0., 'value': None}
+    report_lock = threading.Lock()
+
+    def daily():
+        with report_lock:
+            if report_cache['value'] is None or time.monotonic() - report_cache['at'] >= 30:
+                report_cache['value'] = daily_report(directory)
+                report_cache['at'] = time.monotonic()
+            return report_cache['value']
+
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_):
             pass
@@ -65,6 +78,16 @@ def make_server(directory, port=8874, *, public_domain=None, username=None, pass
             try:
                 if path == '/api/arena':
                     self.send(200, status(directory))
+                elif path == '/api/daily-audit':
+                    self.send(200, daily())
+                elif path == '/api/daily-audit.csv':
+                    self.send(200, report_csv(daily()).encode('utf-8'), 'text/csv; charset=utf-8')
+                elif path == '/api/integrity':
+                    try:
+                        result = audit(directory)
+                        self.send(200, {**result, 'verified_at_ms': now_ms()})
+                    except ValueError as exc:
+                        self.send(409, {'status': 'failed', 'error': str(exc), 'verified_at_ms': now_ms()})
                 elif path == '/api/export':
                     data = status(directory)
                     self.send(200, data)
