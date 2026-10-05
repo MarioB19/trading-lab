@@ -12,6 +12,7 @@ from urllib.parse import urlparse
 
 from .arena import ROOT, audit, control, initialize, now_ms, status
 from .arena_reporting import daily_report, report_csv
+from .arena_fees import report as fee_report, report_csv as fee_csv
 
 ASSETS = ROOT / 'dashboard/arena'
 
@@ -82,6 +83,10 @@ def make_server(directory, port=8874, *, public_domain=None, username=None, pass
                     self.send(200, daily())
                 elif path == '/api/daily-audit.csv':
                     self.send(200, report_csv(daily()).encode('utf-8'), 'text/csv; charset=utf-8')
+                elif path == '/api/fees':
+                    self.send(200, fee_report(directory))
+                elif path == '/api/fees.csv':
+                    self.send(200, fee_csv(fee_report(directory)).encode('utf-8'), 'text/csv; charset=utf-8')
                 elif path == '/api/integrity':
                     try:
                         result = audit(directory)

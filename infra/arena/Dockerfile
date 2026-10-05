@@ -9,9 +9,10 @@ COPY src ./src
 COPY config.yaml ./config.yaml
 COPY configs/arena ./configs/arena
 COPY reports/four_strategy_arena_v1_preregistro.md ./reports/four_strategy_arena_v1_preregistro.md
+COPY reports/arena_fees_v2_preregistro.md ./reports/arena_fees_v2_preregistro.md
 COPY dashboard/arena ./dashboard/arena
-COPY arena-attestation.json release.json ./
+COPY arena-attestation.json arena-fees-attestation.json release.json ./
 ARG ARENA_SOURCE_COMMIT
 ENV TRADING_LAB_BUILD_ID=$ARENA_SOURCE_COMMIT
-RUN python -c 'from lab.arena import execution_proof; from lab.arena_hosted import PREREG; execution_proof(PREREG); from lab.arena_reporting import TZ; assert str(TZ) == "America/Mexico_City"'
+RUN python -c 'from lab.arena import execution_proof; from lab.arena_hosted import PREREG; execution_proof(PREREG); from lab.arena_fees import proof; proof(); from lab.arena_reporting import TZ; assert str(TZ) == "America/Mexico_City"'
 ENTRYPOINT ["python", "-m", "lab.arena_hosted", "run"]

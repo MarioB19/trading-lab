@@ -159,7 +159,7 @@ def validate_frame(frame, expected_kind):
 
 
 
-def _fill(db, wallet, side, qty, price, fee_rate, ts, liquidity, reason, capture, trade_id=None):
+def _fill(db, wallet, side, qty, price, fee_rate, ts, liquidity, reason, capture, trade_id=None, fee_context=None):
     qty = math.floor(qty * 1e8 + 1e-7) / 1e8
     if qty <= 0:
         return None
@@ -190,15 +190,22 @@ def _fill(db, wallet, side, qty, price, fee_rate, ts, liquidity, reason, capture
     fill = {'strategy': wallet['id'], 'ts': ts, 'side': side, 'qty': qty, 'price': price,
             'value': value, 'fee': fee, 'realized': realized, 'liquidity': liquidity,
             'reason': reason, 'capture': capture, 'public_trade_id': trade_id, 'mode': 'paper'}
+    if fee_context is not None:
+        if fee_rate != fee_context['rate']:
+            raise ValueError('Tarifa distinta del contexto registrado')
+        fill['fee_context'] = fee_context
     db.execute('INSERT INTO fills(strategy,ts,payload) VALUES (?,?,?)', (wallet['id'], ts, _json(fill)))
     return fill
 
 
 def taker(db, wallet, side, requested_qty, frame, cfg, reason, capture):
+    from .arena_fees import execution_context
+    fees = execution_context(db, wallet['id'], frame['observed_ms'], 'taker')
+    rate = fees['rate'] if fees else cfg['taker_fee']
     levels = frame['order_book']['asks' if side == 'buy' else 'bids']
     remaining = min(requested_qty, wallet['qty']) if side == 'sell' else requested_qty
     total_qty = total_value = 0.
-    budget = wallet['cash'] / (1 + cfg['taker_fee'])
+    budget = wallet['cash'] / (1 + rate)
     for price, depth in levels:
         take = min(remaining, depth)
         if side == 'buy':
@@ -211,8 +218,8 @@ def taker(db, wallet, side, requested_qty, frame, cfg, reason, capture):
     if total_value < cfg['min_order_usd'] or total_qty <= 0:
         wallet['reason'] = 'Sin fill: importe mínimo o profundidad insuficiente'
         return None
-    return _fill(db, wallet, side, total_qty, total_value / total_qty, cfg['taker_fee'],
-                 frame['observed_ms'], 'taker', reason, capture)
+    return _fill(db, wallet, side, total_qty, total_value / total_qty, rate,
+                 frame['observed_ms'], 'taker', reason, capture, fee_context=fees)
 
 
 def maker_fills(db, wallet, frame, variant, cfg, capture, gap):
@@ -232,10 +239,13 @@ def maker_fills(db, wallet, frame, variant, cfg, capture, gap):
                 crosses = trade['price'] < quote['price'] if quote['side'] == 'buy' else trade['price'] > quote['price']
                 if not crosses or trade['side'] != quote['side']:
                     continue
+                from .arena_fees import execution_context
+                fees = execution_context(db, wallet['id'], ts, 'maker')
+                rate = fees['rate'] if fees else cfg['maker_fee']
                 qty = min(quote['qty'], trade['qty'] * variant['participation'])
-                qty = min(qty, wallet['cash'] / (quote['price'] * (1 + cfg['maker_fee']))) if quote['side'] == 'buy' else min(qty, wallet['qty'])
-                fill = _fill(db, wallet, quote['side'], qty, quote['price'], cfg['maker_fee'], trade['ts'],
-                             'maker', 'Trade público posterior atraviesa cotización', capture, trade['tid'])
+                qty = min(qty, wallet['cash'] / (quote['price'] * (1 + rate))) if quote['side'] == 'buy' else min(qty, wallet['qty'])
+                fill = _fill(db, wallet, quote['side'], qty, quote['price'], rate, trade['ts'],
+                             'maker', 'Trade público posterior atraviesa cotización', capture, trade['tid'], fee_context=fees)
                 if fill:
                     quote['qty'] = max(0., quote['qty'] - fill['qty'])
     if trades:
@@ -285,6 +295,8 @@ def tick(directory, frame, *, proof=None):
             if frozen and frozen != proof:
                 raise ValueError('Código distinto de la versión congelada')
             manifest['proof'] = proof
+            from .arena_fees import verify_policy
+            verify_policy(manifest)
         mid = validate_frame(frame, manifest['kind'])
         ts = frame['observed_ms']
         previous = db.execute('SELECT MAX(observed_ms) FROM captures').fetchone()[0]
@@ -474,6 +486,9 @@ def audit(directory):
             if canonical_hash(payload) != checksum:
                 raise ValueError('La captura de mercado fue alterada')
             captures += 1
+        from .arena_fees import records, verify_ledger
+        manifest = json.loads(db.execute("SELECT value FROM meta WHERE key='manifest'").fetchone()[0])
+        verify_ledger(records(db), manifest.get('fee_policy'))
         books = {wid: {'cash': 1000., 'qty': 0., 'fees': 0.} for wid in NAMES}
         fills = 0
         for raw, in db.execute('SELECT payload FROM fills ORDER BY id'):

@@ -57,6 +57,8 @@ def activate(directory, *, cutover_confirmed=False):
     state = arena.status(directory)
     if state['manifest'].get('proof') != arena.execution_proof(PREREG):
         raise ValueError('Primero migrar y verificar la versión')
+    from .arena_fees import verify_policy
+    verify_policy(state['manifest'])
     arena.audit(directory)
     (directory / 'arena.enabled').write_text('railway-paper-only\n')
 
@@ -134,7 +136,7 @@ def run():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['run', 'migrate', 'activate', 'deactivate', 'upgrade-reporting'])
+    parser.add_argument('action', choices=['run', 'migrate', 'activate', 'deactivate', 'upgrade-reporting', 'upgrade-fees'])
     parser.add_argument('--directory', type=Path, default=Path('/data/arena'))
     parser.add_argument('--cutover-confirmed', action='store_true')
     args = parser.parse_args()
@@ -145,6 +147,9 @@ def main():
     elif args.action == 'activate':
         activate(args.directory, cutover_confirmed=args.cutover_confirmed)
         print('Arena paper activada')
+    elif args.action == 'upgrade-fees':
+        from .arena_fees_upgrade import upgrade
+        print(json.dumps(upgrade(args.directory, cutover_confirmed=args.cutover_confirmed)))
     elif args.action == 'upgrade-reporting':
         from .arena_reporting_upgrade import upgrade
         print(json.dumps(upgrade(args.directory, cutover_confirmed=args.cutover_confirmed)))

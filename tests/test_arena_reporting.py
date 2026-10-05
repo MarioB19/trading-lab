@@ -116,6 +116,9 @@ def test_drawdown_uses_every_valuation_not_chart_samples(tmp_path):
 
 
 def test_reporting_upgrade_requires_stopped_writer_preserves_balances(tmp_path,monkeypatch):
+    # Legacy migration tested with its frozen engine; v2 must use upgrade-fees.
+    from lab import arena_reporting_upgrade as mod
+    monkeypatch.setattr(mod, 'verify_frozen_engine', lambda: None)
     arena.initialize(tmp_path)
     old={'code_commit':SOURCE_COMMIT,'commit':PREREG}
     new={**old,'code_commit':'b'*40}
@@ -141,3 +144,8 @@ def test_reporting_upgrade_protects_trading_source(tmp_path,monkeypatch):
     monkeypatch.setattr(mod,'FROZEN_FILES',{'portfolio.py':'0'*64})
     (tmp_path/'portfolio.py').write_text('changed')
     with pytest.raises(ValueError,match='ejecución'):verify_frozen_engine()
+
+
+def test_legacy_reporting_migration_rejects_the_new_cost_engine():
+    with pytest.raises(ValueError, match='ejecución'):
+        verify_frozen_engine()

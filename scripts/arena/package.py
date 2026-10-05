@@ -9,7 +9,7 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(ROOT / 'src'))
-from lab import arena
+from lab import arena, arena_fees
 from lab.arena_hosted import PREREG
 from lab.research_attestation import generate_attestation
 
@@ -17,10 +17,13 @@ from lab.research_attestation import generate_attestation
 def package(destination):
     cfg = arena.plan()
     attestation = generate_attestation(ROOT, arena.PLAN_PATH, arena.PREREG_PATH, PREREG, cfg, cfg['variants'])
+    fees = arena_fees.plan()
+    fee_attestation = generate_attestation(ROOT, arena_fees.PLAN_PATH, arena_fees.PREREG_PATH, arena_fees.PREREG, fees, fees['variants'])
     destination.mkdir(parents=True, exist_ok=False)
     files = {'Dockerfile': ROOT / 'infra/arena/Dockerfile',
              'requirements-runtime.txt': ROOT / 'requirements-runtime.txt',
              **{name: ROOT / name for name in attestation['artifacts']}}
+    files.update({name: ROOT / name for name in fee_attestation['artifacts']})
     files.update({str(p.relative_to(ROOT)): p for p in (ROOT / 'dashboard/arena').iterdir() if p.is_file()})
     for name, source in files.items():
         if source.is_symlink():
@@ -29,6 +32,7 @@ def package(destination):
         target.parent.mkdir(parents=True, exist_ok=True)
         shutil.copyfile(source, target)
     (destination / 'arena-attestation.json').write_text(json.dumps(attestation, sort_keys=True) + '\n')
+    (destination / 'arena-fees-attestation.json').write_text(json.dumps(fee_attestation, sort_keys=True) + '\n')
     # Pin the source in the image itself; no runtime environment override is needed.
     docker = destination / 'Dockerfile'
     docker.write_text(docker.read_text().replace('ARG ARENA_SOURCE_COMMIT', 'ARG ARENA_SOURCE_COMMIT=' + attestation['code_commit']))

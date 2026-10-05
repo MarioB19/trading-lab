@@ -18,8 +18,8 @@ function render(){
  const total=data.total_equity,pnl=total-4000;
  $('total').textContent=money(total);$('pnl').textContent=signed(pnl);$('pnl').className=tone(pnl);$('return').textContent=`${pct(pnl/4000)} · después de comisiones`;
  $('fees').textContent=money(data.wallets.reduce((s,w)=>s+w.fees,0));
- const start=data.manifest.started_at?Date.parse(data.manifest.started_at):null;
- $('days').textContent=start?`${Math.max(0,Math.floor((data.last_observed_ms-start)/86400000))} / 28 días`:'Sin iniciar';
+ const start=data.manifest.fee_policy?.activated_ms||(data.manifest.started_at?Date.parse(data.manifest.started_at):null);
+ $('days').textContent=start?`${Math.max(0,Math.floor((data.last_observed_ms-start)/86400000))} / 28 días${data.manifest.fee_policy?' · tarifas v2':''}`:'Sin iniciar';
  $('updated').textContent=data.last_observed_ms?`Último dato: ${date(data.last_observed_ms)} CDMX`:'Pendiente del primer ciclo';
  let notice='Simulación en marcha. Cada cartera opera con su propio efectivo e inventario.';
  $('notice').className='notice';
@@ -48,16 +48,17 @@ function renderChart(){
  let svg=`<svg viewBox="0 0 ${width} ${height}" role="img" aria-label="Patrimonio en dólares de las cuatro carteras a lo largo de las observaciones">`;
  for(let i=0;i<5;i++){const value=min+(max-min)*i/4,yy=y(value);svg+=`<line x1="${left}" x2="${width-right}" y1="${yy}" y2="${yy}" stroke="#edf1f0"/><text x="${left-12}" y="${yy+4}" text-anchor="end" fill="#7c8a91" font-size="11">${money(value)}</text>`;}
  svg+=`<line x1="${left}" x2="${width-right}" y1="${y(1000)}" y2="${y(1000)}" stroke="#aebcb6" stroke-dasharray="4 5"/>`;
+ const cut=data.manifest.fee_policy?.activated_ms;if(cut&&cut>=t0&&cut<=t1){svg+=`<line x1="${x(cut)}" x2="${x(cut)}" y1="${top}" y2="${height-bottom}" stroke="#89978f" stroke-dasharray="3 3"><title>Inicio de tarifas por volumen: ${esc(date(cut))} CDMX</title></line>`;}
  series.forEach((values,i)=>{const path=values.map((p,j)=>`${j?'L':'M'}${x(p.ts).toFixed(2)},${y(p.equity).toFixed(2)}`).join(' ');svg+=`<path d="${path}" fill="none" stroke="${colors[i]}" stroke-width="2"/>`;if(values.length){const p=values[values.length-1];svg+=`<circle cx="${x(p.ts)}" cy="${y(p.equity)}" r="3" fill="${colors[i]}"><title>${esc(names[i])}: ${money(p.equity)}</title></circle>`;}});
  svg+=`<text x="${left}" y="${height-7}" fill="#7c8a91" font-size="10">${esc(date(t0))}</text><text x="${width-right}" y="${height-7}" text-anchor="end" fill="#7c8a91" font-size="10">${esc(date(t1))} CDMX</text></svg>`;
  $('chart').innerHTML=svg;
- $('chart-caption').textContent=`${data.counts.captures} capturas · línea discontinua: capital inicial. ${data.benchmark_equity?`Referencia BTC: ${money(data.benchmark_equity)} por US$1,000 (compra estimada).`:''}`;
+ $('chart-caption').textContent=`${data.counts.captures} capturas · línea horizontal discontinua: capital inicial.${data.manifest.fee_policy?' Línea vertical: inicio de tarifas por volumen.':''} ${data.benchmark_equity?`Referencia BTC: ${money(data.benchmark_equity)} por US$1,000 (compra estimada).`:''}`;
 }
 function table(head,rows){return `<table><thead><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr></thead><tbody>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</tbody></table>`;}
 function renderActivity(){
  let rows=[];
  if(tab==='trades'){
-  rows=data.fills.filter(f=>filter==='all'||f.strategy===filter).map(f=>[esc(date(f.ts)),short[ids.indexOf(f.strategy)],`<span class="side ${f.side}">${f.side==='buy'?'Compra':'Venta'}</span>`,f.qty.toFixed(8),money(f.price),money(f.value),money(f.fee),esc(f.liquidity)]);
+  rows=data.fills.filter(f=>filter==='all'||f.strategy===filter).map(f=>[esc(date(f.ts)),short[ids.indexOf(f.strategy)],`<span class="side ${f.side}">${f.side==='buy'?'Compra':'Venta'}</span>`,f.qty.toFixed(8),money(f.price),money(f.value),`${money(f.fee)}<span class="audit-sub">${((f.fee_context?.rate??(f.fee/f.value))*100).toFixed(3)}% · ${f.fee_context?'volumen 30 d':'tarifa histórica'}</span>`,esc(f.liquidity)]);
   $('activity-content').innerHTML=rows.length?table(['Fecha · CDMX','Cartera','Operación','BTC','Precio','Importe','Comisión','Ejecución'],rows):empty('Todavía no hay operaciones','El motor espera las condiciones de cada estrategia. No operar también es una decisión.');
  }else if(tab==='decisions'){
   rows=data.decisions.filter(f=>filter==='all'||f.strategy===filter).map(f=>[esc(date(f.ts)),short[ids.indexOf(f.strategy)],esc(f.reason)]);
@@ -103,7 +104,7 @@ function renderDaily(){
  $('audit-history').innerHTML=table(['Día · CDMX','Total neto','Scalping','Swing','Reversión','Market making','Comisiones','Cobertura'],history);
  $('audit-history').querySelectorAll('tr').forEach(row=>row.classList.toggle('audit-selected',row.querySelector('[data-audit-day]')?.dataset.auditDay===auditDay));
  $('audit-quality').textContent=`${q.coverage===null?'Cobertura aún no calculable':(q.coverage*100).toFixed(1)+'% de cobertura de datos'} · ${q.gaps} huecos · ${duration(q.missing_seconds)} sin datos frescos · ${d.error_count} errores registrados. ${dailyData.ledger.fills_checked} operaciones conciliadas en todo el historial.`;
- const labels={error:'Captura rechazada',pause:'Pausa manual',resume:'Reanudación',railway_cutover:'Traslado a Railway',daily_reporting_upgrade:'Actualización de la auditoría'};
+ const labels={error:'Captura rechazada',pause:'Pausa manual',resume:'Reanudación',railway_cutover:'Traslado a Railway',daily_reporting_upgrade:'Actualización de la auditoría',fee_model_upgrade:'Inicio de tarifas por volumen'};
  $('audit-events').innerHTML=d.events.slice(-5).reverse().map(e=>`<div class="audit-event"><strong>${esc(date(e.ts))} · ${esc(labels[e.type]||e.type)}</strong>${e.message?' — '+esc(e.message):''}${e.strategy?' · '+esc(short[ids.indexOf(e.strategy)]||e.strategy):''}</div>`).join('')||'<div class="audit-event">Sin eventos registrados en esta fecha.</div>';
  if(!dailyData.ledger.reconciled)$('audit-events').innerHTML+='<div class="negative">'+dailyData.ledger.issues.map(esc).join(' · ')+'</div>';
 }
@@ -113,3 +114,20 @@ $('refresh').addEventListener('click',refreshDaily);
 document.addEventListener('click',event=>{const button=event.target.closest('[data-audit-day]');if(button){auditDay=button.dataset.auditDay;renderDaily();$('daily-audit').scrollIntoView({behavior:'smooth'});}});
 $('audit-verify').addEventListener('click',async()=>{const button=$('audit-verify');button.disabled=true;$('audit-integrity').textContent='Verificando registros completos…';try{const response=await fetch('/api/integrity');const result=await response.json();if(!response.ok||result.status!=='verified')throw Error(result.error||'No se pudo verificar');$('audit-integrity').textContent=`Verificado ${date(result.verified_at_ms)} CDMX: ${result.captures} capturas, ${result.candle_inputs} conjuntos de velas, ${result.fills} operaciones y ${result.wallets} carteras. Esto acredita integridad de registros, no rentabilidad.`;}catch(error){$('audit-integrity').textContent='Verificación pendiente o fallida: '+error.message;}finally{button.disabled=false;}});
 refreshDaily();setInterval(refreshDaily,30000);
+
+
+let feesBusy=false;
+const feePct=n=>(n*100).toFixed(3)+'%';
+function renderFees(f){
+ const cut=f.cutover;
+ $('fee-status').textContent=(f.active?`Activo desde ${date(cut.activated_ms)} CDMX · ventana de 30 días por estrategia`:'Modelo preparado; las tarifas anteriores siguen activas')+(f.stale?' · captura de mercado desactualizada':'')+'. Historial conservado.';
+ $('fee-status').className='audit-status'+(f.stale?' warning':'');
+ $('fee-tiers').innerHTML=table(['Cartera','Volumen 30 días','Tarifa maker','Tarifa taker','Siguiente escalón','Operaciones maker / taker'],f.strategies.map((r,i)=>[short[i],money(r.volume_30d_usd),feePct(r.tier.maker),feePct(r.tier.taker),r.next_above_usd===null?'Último escalón':`Más de ${money(r.next_above_usd)}<span class="audit-sub">Falta superar ${money(r.volume_to_threshold_usd)} de volumen</span>`,`${r.maker_fills} / ${r.taker_fills}`]));
+ const t=f.totals;
+ $('fee-summary').innerHTML=`<div><span>Comisiones anteriores al cambio</span><strong>${money(t.historical_fees_usd)}</strong><small>Historial conservado</small></div><div><span>Cobradas desde el cambio</span><strong>${money(t.new_fees_usd)}</strong><small>${t.new_fills} ejecuciones simuladas</small></div><div><span>Con la tarifa fija anterior</span><strong>${money(t.fixed_fees_usd)}</strong><small>Mismas ejecuciones desde el corte</small></div><div><span>Diferencia de comisiones</span><strong>${money(t.fee_difference_usd)}</strong><small>Tarifa fija menos tarifa aplicada</small></div>`;
+ $('fee-comparison').innerHTML=table(['Desde el corte','Cobradas','Tarifa fija anterior','Todo maker · hipotético','Todo taker · hipotético'],f.strategies.map((r,i)=>[short[i],money(r.new_fees_usd),money(r.fixed_fees_usd),money(r.all_maker_fees_usd),money(r.all_taker_fees_usd)]));
+ if(!t.new_fills)$('fee-comparison').innerHTML+='<p class="audit-method">Todavía no hay operaciones posteriores al corte. No se atribuyen ahorros al historial previo.</p>';
+}
+async function refreshFees(){if(feesBusy)return;feesBusy=true;try{const r=await fetch('/api/fees');if(!r.ok)throw Error('No se pudo verificar el registro de tarifas');renderFees(await r.json());}catch(error){$('fee-status').textContent='No se pudo actualizar o verificar comisiones. Los últimos valores visibles pueden estar desactualizados.';$('fee-status').className='audit-status error';}finally{feesBusy=false;}}
+$('refresh').addEventListener('click',refreshFees);
+refreshFees();setInterval(refreshFees,30000);

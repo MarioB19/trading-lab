@@ -106,3 +106,14 @@ de solo lectura con días CDMX, costos, actividad, calidad e integridad. Código
 de trading y plan intactos; actualización de identidad documentada y comprobada
 por hashes desde `4ac103b`. Ver `docs/ARENA_DAILY_AUDIT.md`. No se reinicia capital
 ni observación, no se alteran parámetros ni se promueve ninguna estrategia.
+
+
+## Enmienda de comisiones autorizada — 5-oct-2026
+
+Brandon solicita implementar el modelo de escalones de tarifas y comparación
+maker/taker preservando historial. Corrección prospectiva paper declarada en
+`reports/arena_fees_v2_preregistro.md`, commit previo `d26ee0b`. No modifica
+señales ni estrecha cotizaciones; aplica tarifas por volumen de cada cartera
+independiente. Migración explícita desde7e35212 con corte, balances conservados
+y contador propio del tramo corregido. No es promoción ni prueba de rentabilidad.
+Ver `docs/ARENA_FEES_RUNBOOK.md`. Conserva no push y ninguna llave privada.
