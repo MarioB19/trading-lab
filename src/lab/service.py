@@ -147,6 +147,14 @@ class Reader:
             trades = [json.loads(row[0]) for row in db.execute("SELECT payload FROM trades ORDER BY rowid")]
         return build_execution_quality(trades)
 
+    def evidence(self):
+        from .evidence import build_summary
+        if not self.path.exists():
+            return build_summary()
+        with closing(self.connect()) as db:
+            db.execute("BEGIN")
+            return build_summary(db)
+
 
 def comparison_status(paper_dir: Path | None, research_dir: Path | None) -> dict:
     """Read dedicated evidence; never choose a winner or run a strategy."""
@@ -260,6 +268,8 @@ def make_server(data_dir: Path, host="127.0.0.1", port=8080, *, comparison_dir: 
                         return self.send(503, {"error": "Ganancias no disponibles: configuración o datos no válidos"})
                 if url.path == "/api/execution-quality":
                     return self.send(200, reader.execution_quality())
+                if url.path == "/api/evidence":
+                    return self.send(200, reader.evidence())
                 if url.path == "/api/comparison":
                     try:
                         return self.send(200, comparison_status(comparison_dir, research_dir))

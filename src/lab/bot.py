@@ -15,6 +15,7 @@ from __future__ import annotations
 import argparse
 import copy
 import csv
+import hashlib
 import json
 import os
 import sys
@@ -306,7 +307,7 @@ def cover_paper_cash_deficit(orders, positions, prices, fresh, equity, cash, sc,
 
 # ------------------------------------------------------------------ lógica diaria de un bloque
 def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now: pd.Timestamp,
-               mode: str, eq_hist: pd.Series, max_jump: float) -> dict:
+               mode: str, eq_hist: pd.Series, max_jump: float, *, evidence=None) -> dict:
     """Decide y ejecuta. Devuelve trades, fila de capital y la foto para el tablero."""
     candle = prices.index[-1]
     cstr = candle.date().isoformat()
@@ -462,9 +463,25 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
     buffer = sc["fee"] + sc["slippage"] + 0.005
     fills: list[Fill] = []
 
+    def observe(method, *args):
+        if evidence is not None:
+            try:
+                getattr(evidence, method)(*args)
+            except Exception as exc:
+                # An evidence sink must never change sizing, fills or bot status.
+                try:
+                    evidence.unavailable(f"{method}: {type(exc).__name__}")
+                except Exception:
+                    pass
+
+    def execute(asset, side, qty, price):
+        observe("record_request", asset, side, qty, price)
+        return broker.execute(asset, side, qty, price)
+
     def book(f: Fill) -> None:
         """En cuenta externa, el efectivo del bloque se mueve con lo que el propio bloque compra y vende."""
         fills.append(f)
+        observe("record_fill", f)
         if capped and not getattr(broker, "manages_ledger", False) and f.status in ("filled", "partial") and f.qty > 0:
             amt = f.qty * f.price
             st["sleeve_cash"] = float(st["sleeve_cash"]) + ((amt - f.fee) if f.side == "sell" else -(amt + f.fee))
@@ -477,7 +494,7 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
             qty = positions.get(a, 0.0) if desired.get(a, 0.0) == 0 else min(-diff * equity / price, positions.get(a, 0.0))
             if qty * price < minv:
                 continue
-            book(broker.execute(a, "sell", qty, price))
+            book(execute(a, "sell", qty, price))
         else:
             available = getattr(broker, "available_cash", broker.cash)()
             avail = available if not capped else min(available, float(st["sleeve_cash"]))
@@ -492,7 +509,7 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
                 if qty == 0:
                     notes.append(f"{a}: no admite fracciones y no alcanza para una acción entera")
                     continue
-            book(broker.execute(a, "buy", qty, price))
+            book(execute(a, "buy", qty, price))
     for f in fills:
         # costo real de ejecutar: precio contra la referencia (a favor = negativo) + comisión
         cost_bps = ""
@@ -565,8 +582,16 @@ def _jsonable(v):
     return None if v is None or (isinstance(v, float) and np.isnan(v)) else v
 
 
+def _unavailable_evidence(name, now, candle, reason):
+    payload = {"sleeve": name, "observed_at": now.isoformat(), "candle": candle.date().isoformat(),
+               "status": "unavailable", "checks": {}, "limitations": [reason], "inputs": {},
+               "outputs": {}, "replay": {"status": "unavailable"}}
+    payload["capture_id"] = hashlib.sha256(json.dumps(payload, sort_keys=True).encode()).hexdigest()
+    return payload
+
+
 # ------------------------------------------------------------------ brokers
-def make_broker(name: str, sc: dict, mode: str, st: dict, notes: list[str], store=None):
+def make_broker(name: str, sc: dict, mode: str, st: dict, notes: list[str], store=None, *, evidence=None):
     def external(broker):
         if store is None:
             raise RuntimeError("broker externo bloqueado: configura paths.database para propiedad y conciliación durable")
@@ -588,7 +613,19 @@ def make_broker(name: str, sc: dict, mode: str, st: dict, notes: list[str], stor
         maker = ({"wait_s": ex.get("wait_s", 120), "poll_s": ex.get("poll_s", 15), "budget_s": ex.get("budget_s", 480),
                   "fee": ex.get("maker_fee", 0.003)} if ex.get("maker_first") else None)
         try:
-            return BookSimBroker(st["ledger"], sc["fee"], sc["quote"], minv, sc["slippage"], maker=maker)
+            kwargs = {}
+            if evidence is not None:
+                exchange = make_exchange("bitso")
+                try:
+                    kwargs = evidence.book_kwargs(exchange)
+                except Exception as exc:
+                    kwargs = {"exchange": exchange}
+                    try:
+                        evidence.unavailable(f"public tape initialization: {type(exc).__name__}")
+                    except Exception:
+                        pass
+            return BookSimBroker(st["ledger"], sc["fee"], sc["quote"], minv, sc["slippage"], maker=maker,
+                                 **kwargs)
         except Exception as exc:  # noqa: BLE001
             notes.append(f"libro de Bitso no disponible ({str(exc)[:80]}); uso deslizamiento supuesto")
     return SimBroker(st["ledger"], sc["fee"], sc["slippage"], minv)
@@ -761,6 +798,7 @@ def _main(argv: list[str] | None = None) -> int:
             print(f"[aviso] tipo de cambio: {exc}")
     eq_all = pd.DataFrame(store.rows("equity"), columns=EQUITY_FIELDS) if store else (pd.read_csv(paths["equity"]) if paths["equity"].exists() else pd.DataFrame(columns=EQUITY_FIELDS))
     trades, eq_rows, failures = [], [], 0
+    evidence_rows = []
     names = [args.sleeve] if args.sleeve else [n for n, s in cfg["sleeves"].items() if s.get("enabled")]
     if args.if_due:
         pending_names = {o["namespace"].rsplit(":", 1)[-1] for o in store.orders(pending_only=True)} if store else set()
@@ -774,15 +812,48 @@ def _main(argv: list[str] | None = None) -> int:
         notes: list[str] = []
         before = copy.deepcopy(st)
         broker = None
+        capture = None
+        provenance = None
         try:
             if st.get("mode") and st["mode"] != mode:
                 raise RuntimeError("cambio de modo bloqueado: usa otro directorio y base de datos")
             st["mode"] = mode
-            P = offline_prices(name, sc) if args.offline else fetch_prices(name, sc, now, notes)
+            observation_context = observation = None
+            if store and mode == "paper" and not args.offline:
+                try:
+                    from .data_evidence import market_observation
+                    observation_context = market_observation(observed_at_utc=now)
+                    observation = observation_context.__enter__()
+                except Exception as exc:
+                    provenance = {"status": "unavailable", "error": type(exc).__name__}
+            try:
+                P = offline_prices(name, sc) if args.offline else fetch_prices(name, sc, now, notes)
+            finally:
+                if observation is not None:
+                    try:
+                        observation_context.__exit__(*sys.exc_info())
+                        provenance = {"observed_at_utc": observation.observed_at_utc,
+                                      "records": observation.records, "sha256": observation.digest}
+                    except Exception as exc:
+                        provenance = {"status": "unavailable", "error": type(exc).__name__}
             run_now = P.index[-1] + pd.Timedelta(days=1, minutes=10) if args.offline else now
-            broker = make_broker(name, sc, mode, st, notes, store=store)
             eq_hist = equity_history(eq_all, name, mode)
-            r = run_sleeve(name, sc, P, broker, st, run_now, mode, eq_hist, cfg["max_price_jump"])
+            if store and mode == "paper":
+                try:
+                    from .execution_evidence import ExecutionCapture
+                    capture = ExecutionCapture(name, sc, P, run_now, mode, eq_hist, cfg["max_price_jump"])
+                    capture.inputs["prices_provenance"] = provenance or {"status": "offline_input"}
+                except Exception as exc:
+                    capture = None
+                    evidence_rows.append(_unavailable_evidence(name, run_now, P.index[-1],
+                                                               f"capture initialization: {type(exc).__name__}"))
+            if capture is None:
+                broker = make_broker(name, sc, mode, st, notes, store=store)
+                r = run_sleeve(name, sc, P, broker, st, run_now, mode, eq_hist, cfg["max_price_jump"])
+            else:
+                broker = make_broker(name, sc, mode, st, notes, store=store, evidence=capture)
+                capture.begin(broker, st)
+                r = run_sleeve(name, sc, P, broker, st, run_now, mode, eq_hist, cfg["max_price_jump"], evidence=capture)
         except Exception as exc:  # noqa: BLE001  un bloque que falla no detiene al otro
             # Internal simulation can roll back entirely; external fills are already
             # durable in their journal and are restored by the next reconciliation.
@@ -794,6 +865,14 @@ def _main(argv: list[str] | None = None) -> int:
             state["sleeves"][name] = before
             before["execution_pending"] = True
             r = {"status": "error", "notes": [f"error: {exc}"], "trades": [], "equity_row": None, "snapshot": None}
+            if capture is not None:
+                capture.unavailable(f"decision raised: {type(exc).__name__}")
+        if capture is not None:
+            try:
+                evidence_rows.append(capture.finish(r, state["sleeves"][name]))
+            except Exception as exc:
+                evidence_rows.append(_unavailable_evidence(name, run_now, P.index[-1],
+                                                           f"capture finalization: {type(exc).__name__}"))
         if r["status"] in ("error", "blocked"):
             failures += 1
         r["notes"][:0] = notes
@@ -815,7 +894,7 @@ def _main(argv: list[str] | None = None) -> int:
     if fx_now:
         snapshot["fx"] = fx_now
     if store:
-        store.commit_run(state, trades, eq_rows, snapshot)
+        store.commit_run(state, trades, eq_rows, snapshot, evidence=evidence_rows)
         try:
             store.export(paths, TRADE_FIELDS, EQUITY_FIELDS)
         except Exception as exc:

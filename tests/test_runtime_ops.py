@@ -121,7 +121,8 @@ def test_cycle_records_component_failure_even_if_other_component_succeeds(import
     health = runtime.run_cycle(config, store, 300, runner=runner)
     assert health["status"] == "error"
     assert health["last_success_utc"] is None
-    assert len(calls) == 2
+    assert len(calls) == 3
+    assert calls[-1][2] == "lab.evidence"
     assert all("--live" not in cmd for cmd in calls)
     assert store.read_document("runtime_health")["errors"][0]["component"] == "lab.bot"
 

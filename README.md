@@ -21,6 +21,7 @@ La candidata agresiva **falló los siete criterios**: CAGR cripto neto 17.08% fr
 3. [Conectar una cuenta para consulta GET](docs/REAL_ACCOUNT_RUNBOOK.md).
 4. [Estado de preparación y evidencia vigente](docs/CONNECTION_READINESS.md).
 5. [Vista en pesos, capital de US$1,000 y ganancias por día](docs/PERFORMANCE_VIEW.md).
+6. [Capturas de datos y reproducción de decisiones paper](docs/EVIDENCE_RUNBOOK.md).
 
 GitHub conserva código y validación; su workflow de operación está desactivado desde el corte del 28-sep-2026. Railway aloja una instancia con API protegida y worker simulado supervisado, SQLite persistente y backups verificados. [Panel publicado](https://trading-lab-production-a56b.up.railway.app/), usuario `brandon`: acceso autenticado y ciclo posterior al reinicio comprobados el 29-sep 04:08 UTC. No activar dos escritores. La copia externa automática sigue pendiente. La arquitectura alternativa GCP usa IAP y GCS, descritos en su propia guía.
 

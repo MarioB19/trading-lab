@@ -164,6 +164,19 @@ def run_cycle(config: Path, store, interval: int, *, timeout: int = 900, runner=
     store.write_document("runtime_health", health)
     store.record_event("runtime_cycle", health)
     log("runtime_cycle", **health)
+    # Public data collection has its own health and retry budget. It cannot
+    # authorize trading or turn a healthy operational ledger into an error.
+    try:
+        result = runner([sys.executable, "-m", "lab.evidence", "--config", str(config), "--once"],
+                        timeout=min(timeout, 240), capture_output=True, text=True, check=False)
+        if result.returncode:
+            previous_capture = store.read_document("evidence_collection", {}) or {}
+            if previous_capture.get("status") not in {"error", "partial"}:
+                store.write_document("evidence_collection", {"status": "error", "attempted_at_utc": utc_now(),
+                                      "error": "collector_process_failed"})
+    except (subprocess.TimeoutExpired, OSError) as exc:
+        store.write_document("evidence_collection", {"status": "error", "attempted_at_utc": utc_now(),
+                              "error": type(exc).__name__})
     return health
 
 

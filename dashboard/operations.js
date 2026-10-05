@@ -509,12 +509,51 @@ async function refreshExecutionQuality() {
   }
 }
 
+async function refreshEvidence() {
+  const labels = {crypto: "Cripto", stocks: "ETF"};
+  try {
+    const data = await fetchJson("/api/evidence");
+    const states = {pending: "Esperando la primera captura.", collecting: "Registro de datos activo.",
+      partial: "Registro parcial: hay datos o comprobaciones pendientes.", stale: "La última captura de datos está vencida.",
+      error: "La integridad de la evidencia requiere revisión."};
+    el("evidence-status").textContent = states[data.status] || "Evidencia sin verificar.";
+    el("evidence-market-count").textContent = String(data.counts?.market || 0);
+    el("evidence-cutoff").textContent = data.market ? `Última captura ${date(data.market.observed_at_utc)}` : "Sin captura verificada";
+    el("evidence-replay-count").textContent = String(data.counts?.execution || 0);
+    el("evidence-replay-note").textContent = "Decisiones archivadas; el resultado de reproducción se muestra por bloque.";
+    el("evidence-details").replaceChildren();
+    for (const [name, check] of Object.entries(data.market?.signal_replay || {})) {
+      const passed = check.passed === true || check.status === "passed" || check.status === "ok";
+      el("evidence-details").append(text("li", `${labels[name] || name}: señal sobre datos congelados ${passed ? "reproducida" : "pendiente de verificar"}.`));
+    }
+    for (const [name, capture] of Object.entries(data.execution || {})) {
+      const descriptions = {verified: "reproducción verificada", verified_no_orders: "reproducción verificada sin órdenes",
+        mismatch: "reproducción con diferencias; requiere revisión", unavailable: "reproducción pendiente por falta de evidencia"};
+      el("evidence-details").append(text("li", `${labels[name] || name}: decisión del ${capture.candle || "cierre sin identificar"}, ${descriptions[capture.status] || "reproducción pendiente"}.`));
+      if (["blocked", "pending", "error"].includes(capture.replay?.decision_status)) {
+        el("evidence-details").append(text("li", `${labels[name] || name}: la decisión original requiere revisión operativa (${capture.replay.decision_status}). Reproducirla no elimina ese pendiente.`));
+      }
+    }
+    if (!Object.keys(data.execution || {}).length) {
+      el("evidence-details").append(text("li", "La primera reproducción de operaciones se registrará cuando el bot procese su siguiente cierre elegible."));
+    }
+    if (data.last_collection?.status === "error") {
+      el("evidence-details").append(text("li", "La última recolección falló; el sistema reintenta sin generar órdenes."));
+    }
+    el("evidence-limitations").replaceChildren();
+    for (const note of data.limitations || []) el("evidence-limitations").append(text("li", note));
+  } catch (_) {
+    el("evidence-status").textContent = "No se pudo actualizar la evidencia. Los valores visibles pueden estar desactualizados.";
+  }
+}
+
 async function refresh() {
   if (refreshing) return;
   refreshing = true;
   el("refresh").disabled = true;
   const comparisonUpdate = comparison();
   const executionUpdate = refreshExecutionQuality();
+  const evidenceUpdate = refreshEvidence();
   try {
     const [operating, performance] = await Promise.allSettled([
       Promise.all([fetchJson("/api/status"), fetchJson("/api/orders"), fetchJson("/api/trades"), fetchJson("/api/events?limit=15")]),
@@ -541,6 +580,7 @@ async function refresh() {
   } finally {
     await comparisonUpdate;
     await executionUpdate;
+    await evidenceUpdate;
     el("refresh").disabled = false;
     refreshing = false;
   }

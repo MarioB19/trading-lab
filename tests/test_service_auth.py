@@ -55,7 +55,7 @@ def credentials(monkeypatch):
 def test_auth_protects_assets_apis_readiness_and_unknown_paths(tmp_path, credentials):
     with serving(tmp_path) as port:
         for path in ("/", "/operations.js", "/operations.css", "/api/status", "/api/performance",
-                     "/api/trades", "/api/comparison", "/api/execution-quality", "/readyz", "/unknown"):
+                     "/api/trades", "/api/comparison", "/api/execution-quality", "/api/evidence", "/readyz", "/unknown"):
             status, headers, body = request(port, path)
             assert status == 401, path
             assert headers["WWW-Authenticate"] == 'Basic realm="Trading Lab", charset="UTF-8"'
@@ -86,7 +86,7 @@ def test_duplicate_authorization_headers_are_not_ambiguous(tmp_path, credentials
 
 def test_valid_unicode_credentials_allow_read_only_panel_and_api(tmp_path, credentials):
     with serving(tmp_path) as port:
-        for path in ("/", "/operations.js", "/operations.css", "/api/status", "/api/performance"):
+        for path in ("/", "/operations.js", "/operations.css", "/api/status", "/api/performance", "/api/evidence"):
             status, _, body = request(port, path, basic())
             assert status == 200, path
             assert body

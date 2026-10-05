@@ -14,6 +14,8 @@ from pathlib import Path
 
 import pandas as pd
 
+from .data_evidence import record_crypto_series, record_provider_error, record_yahoo_response
+
 ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = Path(os.environ.get("TRADING_LAB_DATA_DIR", str(ROOT / "data")))
 COINMETRICS_URL = "https://raw.githubusercontent.com/coinmetrics/data/master/csv/{asset}.csv"
@@ -41,15 +43,26 @@ def fetch_daily_closes(exchange, symbol: str, days: int = 1000,
     Usar la vela en curso sería usar un precio que todavía no existe al cierre:
     es el error de "mirar al futuro" más común en bots caseros.
     """
-    ohlcv = exchange.fetch_ohlcv(symbol, "1d", limit=days)
+    try:
+        ohlcv = exchange.fetch_ohlcv(symbol, "1d", limit=days)
+    except Exception as exc:
+        record_provider_error(str(exchange.id), symbol, exc)
+        raise
     if not ohlcv:
+        record_provider_error(str(exchange.id), symbol, RuntimeError("empty candles"))
         raise RuntimeError(f"{exchange.id} no devolvió velas para {symbol}")
-    df = pd.DataFrame(ohlcv, columns=["ts", "open", "high", "low", "close", "volume"])
-    now_ms = exchange.milliseconds() if now_ms is None else now_ms
-    df = df[df["ts"] + DAY_MS <= now_ms]
-    idx = pd.to_datetime(df["ts"], unit="ms").dt.normalize()
-    s = pd.Series(df["close"].astype(float).values, index=pd.DatetimeIndex(idx), name="close")
-    return s[~s.index.duplicated(keep="last")].sort_index()
+    try:
+        df = pd.DataFrame(ohlcv, columns=["ts", "open", "high", "low", "close", "volume"])
+        now_ms = exchange.milliseconds() if now_ms is None else now_ms
+        df = df[df["ts"] + DAY_MS <= now_ms]
+        idx = pd.to_datetime(df["ts"], unit="ms").dt.normalize()
+        s = pd.Series(df["close"].astype(float).values, index=pd.DatetimeIndex(idx), name="close")
+        result = s[~s.index.duplicated(keep="last")].sort_index()
+    except Exception as exc:
+        record_provider_error(str(exchange.id), symbol, exc)
+        raise
+    record_crypto_series(exchange, symbol, result, days=days)
+    return result
 
 
 def download_coinmetrics(asset: str = "btc") -> pd.Series:
@@ -101,15 +114,26 @@ def yahoo_daily(symbol: str, start: str = "1995-01-01", retries: int = 6) -> pd.
     params = {"period1": p1, "period2": p2, "interval": "1d", "includeAdjustedClose": "true",
               "events": "div,split"}
     for k in range(retries):
-        r = requests.get(YAHOO_URL.format(symbol=symbol), params=params, headers=YAHOO_HEADERS, timeout=30)
+        try:
+            r = requests.get(YAHOO_URL.format(symbol=symbol), params=params, headers=YAHOO_HEADERS, timeout=30)
+        except Exception as exc:
+            record_provider_error("yahoo_chart", symbol, exc)
+            raise
         if r.status_code == 429:
             time.sleep(2 ** k)
             continue
-        r.raise_for_status()
-        res = r.json()["chart"]["result"][0]
+        try:
+            r.raise_for_status()
+            res = r.json()["chart"]["result"][0]
+        except Exception as exc:
+            record_provider_error("yahoo_chart", symbol, exc)
+            raise
         ts = res.get("timestamp") or []
         ind = res["indicators"]
-        close = list((ind.get("adjclose") or [{}])[0].get("adjclose") or ind["quote"][0]["close"])
+        adjusted = (ind.get("adjclose") or [{}])[0].get("adjclose")
+        close = list(adjusted or ind["quote"][0]["close"])
+        selected_basis = "provider_adjusted_close" if adjusted else "provider_close_split_adjusted"
+        filled_from_meta = False
         meta = res.get("meta") or {}
         reg = (meta.get("currentTradingPeriod") or {}).get("regular") or {}
         if (ts and close and close[-1] is None and meta.get("regularMarketPrice") and reg.get("end")
@@ -117,9 +141,13 @@ def yahoo_daily(symbol: str, start: str = "1995-01-01", retries: int = 6) -> pd.
             # Yahoo tarda horas en llenar la barra diaria aunque la sesión ya cerró:
             # se usa el precio de cierre oficial de la sesión.
             close[-1] = float(meta["regularMarketPrice"])
+            filled_from_meta = True
         idx = pd.to_datetime(pd.Series(ts), unit="s").dt.normalize()
         s = pd.Series(close, index=pd.DatetimeIndex(idx), dtype=float, name=symbol).dropna()
+        record_yahoo_response(symbol, res, selected_basis=selected_basis,
+                              last_bar_filled_from_meta=filled_from_meta)
         return s[~s.index.duplicated(keep="last")]
+    record_provider_error("yahoo_chart", symbol, RuntimeError("rate limited"))
     raise RuntimeError(f"Yahoo limitó las solicitudes para {symbol}")
 
 

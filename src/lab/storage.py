@@ -149,12 +149,21 @@ class SQLiteStore:
         with self.connect() as db:
             return [json.loads(row[0]) for row in db.execute(f'SELECT payload FROM {table} ORDER BY rowid')]
 
-    def commit_run(self, state, trades, equity, snapshot):
+    def commit_run(self, state, trades, equity, snapshot, *, evidence=None):
         with self.transaction() as db:
             self._write(db, 'state', state)
             self._rows(db, 'trades', trades)
             self._rows(db, 'equity', equity)
             self._write(db, 'snapshot', snapshot)
+            # Evidence shares the operational commit. Capture failures must not
+            # discard already executed fills or prevent their durable journal.
+            from .evidence import persist
+            for capture in evidence or []:
+                try:
+                    persist(db, 'execution', capture)
+                except (ValueError, TypeError) as exc:
+                    db.execute('INSERT INTO events(kind,payload,created_at) VALUES(?,?,?)',
+                               ('evidence_error', dumps({'error': type(exc).__name__}), utcnow()))
 
     def commit_live(self, live, rows):
         with self.transaction() as db:
