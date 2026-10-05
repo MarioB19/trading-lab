@@ -1,8 +1,9 @@
-"""Loopback-only arena UI and narrow pause/resume API, separate from Railway."""
+"""Arena UI: loopback locally, authenticated HTTPS behind Railway."""
 import argparse
-import csv
-import io
+import base64
+import hmac
 import json
+import re
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from urllib.parse import urlparse
@@ -12,8 +13,14 @@ from .arena import ROOT, control, initialize, status
 ASSETS = ROOT / 'dashboard/arena'
 
 
-def make_server(directory, port=8874):
-    initialize(directory)
+def make_server(directory, port=8874, *, public_domain=None, username=None, password=None):
+    hosted = public_domain is not None
+    if hosted:
+        if not re.fullmatch(r'[a-z0-9][a-z0-9.-]*\.[a-z]{2,}', public_domain) or not username or not password:
+            raise ValueError('Dominio y credenciales del panel obligatorios')
+        authorization = 'Basic ' + base64.b64encode(f'{username}:{password}'.encode()).decode()
+    else:
+        initialize(directory)
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, *_):
             pass
@@ -25,18 +32,36 @@ def make_server(directory, port=8874):
             self.send_header('Content-Length', str(len(raw)))
             self.send_header('Cache-Control', 'no-store')
             self.send_header('X-Content-Type-Options', 'nosniff')
+            if code == 401:
+                self.send_header('WWW-Authenticate', 'Basic realm="Trading Lab Arena", charset="UTF-8"')
+            if hosted:
+                self.send_header('Strict-Transport-Security', 'max-age=31536000')
             self.send_header('Content-Security-Policy', "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; connect-src 'self'; frame-ancestors 'none'; base-uri 'none'")
             self.end_headers()
             self.wfile.write(raw)
 
         def valid_host(self):
+            if hosted:
+                return self.headers.get('Host') == public_domain
             return self.headers.get('Host') in (f'127.0.0.1:{self.server.server_port}', f'localhost:{self.server.server_port}')
 
+        def authenticated(self):
+            if hosted and not hmac.compare_digest(self.headers.get('Authorization', '').encode(), authorization.encode()):
+                self.send(401, {'error': 'Acceso protegido'})
+                return False
+            return True
+
         def do_GET(self):
+            path = urlparse(self.path).path
+            # Railway's deployment probe does not carry credentials or public Host.
+            if path == '/healthz':
+                self.send(200, {'status': 'ok', 'mode': 'paper'})
+                return
             if not self.valid_host():
                 self.send(403, {'error': 'Host no permitido'})
                 return
-            path = urlparse(self.path).path
+            if not self.authenticated():
+                return
             try:
                 if path == '/api/arena':
                     self.send(200, status(directory))
@@ -47,8 +72,10 @@ def make_server(directory, port=8874):
                     filename = 'index.html' if path == '/' else path[1:]
                     mime = 'text/html' if path == '/' else 'text/css' if path.endswith('.css') else 'text/javascript'
                     self.send(200, (ASSETS / filename).read_bytes(), mime + '; charset=utf-8')
-                elif path == '/healthz':
-                    self.send(200, {'status': 'ok', 'mode': 'paper'})
+                elif path == '/readyz':
+                    data = status(directory)
+                    ready = not data['stale'] and data['health']['status'] == 'ok'
+                    self.send(200 if ready else 503, {'ready': ready, 'mode': 'paper'})
                 else:
                     self.send(404, {'error': 'No encontrado'})
             except Exception:
@@ -56,9 +83,12 @@ def make_server(directory, port=8874):
 
         def do_POST(self):
             origin = self.headers.get('Origin', '')
-            if (not self.valid_host() or origin not in (f'http://127.0.0.1:{self.server.server_port}', f'http://localhost:{self.server.server_port}')
+            origins = (f'https://{public_domain}',) if hosted else (f'http://127.0.0.1:{self.server.server_port}', f'http://localhost:{self.server.server_port}')
+            if (not self.valid_host() or origin not in origins
                     or self.headers.get('Content-Type') != 'application/json'):
-                self.send(403, {'error': 'Solo solicitudes del panel local'})
+                self.send(403, {'error': 'Origen no permitido'})
+                return
+            if not self.authenticated():
                 return
             if self.path != '/api/control':
                 self.send(404, {'error': 'No encontrado'})
@@ -72,7 +102,7 @@ def make_server(directory, port=8874):
                 self.send(200, status(directory))
             except (ValueError, KeyError, TypeError):
                 self.send(400, {'error': 'Acción inválida o cartera detenida por riesgo'})
-    return ThreadingHTTPServer(('127.0.0.1', port), Handler)
+    return ThreadingHTTPServer(('0.0.0.0' if hosted else '127.0.0.1', port), Handler)
 
 
 def main():

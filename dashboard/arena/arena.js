@@ -67,7 +67,7 @@ function renderActivity(){
   $('activity-content').innerHTML=rows.length?table(['Cartera','Lado','Precio límite','BTC','Vence · CDMX'],rows):empty('Sin cotizaciones abiertas','Creación de mercado cotiza solo con efectivo e inventario disponibles.');
  }
 }
-async function refresh(){if(busy)return;busy=true;$('refresh').disabled=true;try{const response=await fetch('/api/arena');if(!response.ok)throw Error('No se pudo leer el estado');data=await response.json();render();}catch(error){$('notice').textContent='Sin conexión al proceso local. Los últimos datos visibles no se han actualizado.';$('notice').className='notice error';}finally{busy=false;$('refresh').disabled=false;}}
+async function refresh(){if(busy)return;busy=true;$('refresh').disabled=true;try{const response=await fetch('/api/arena');if(!response.ok)throw Error('No se pudo leer el estado');data=await response.json();render();}catch(error){$('notice').textContent='Sin conexión al servicio. Los últimos datos visibles no se han actualizado.';$('notice').className='notice error';}finally{busy=false;$('refresh').disabled=false;}}
 $('strategy-filter').innerHTML+=""+ids.map((id,i)=>`<option value="${id}">${names[i]}</option>`).join('');
 $('strategy-filter').addEventListener('change',e=>{filter=e.target.value;renderActivity();});
 $('refresh').addEventListener('click',refresh);

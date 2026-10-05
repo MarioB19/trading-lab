@@ -7,6 +7,7 @@ from datetime import datetime, timezone
 import hashlib
 import json
 import math
+import os
 from pathlib import Path
 import sqlite3
 import time
@@ -35,6 +36,17 @@ def plan():
 
 def now_ms():
     return int(time.time() * 1000)
+
+
+def execution_proof(commit):
+    """Same protocol gate, with a Git content/ancestry proof for immutable images."""
+    cfg = plan()
+    attestation = os.environ.get('ARENA_ATTESTATION')
+    if attestation:
+        from .research_attestation import verify_attestation
+        return verify_attestation(ROOT, Path(attestation), PLAN_PATH, PREREG_PATH,
+                                  commit, cfg, list(NAMES))
+    return verify_preregistration(ROOT, PREREG_PATH, commit, cfg['experiment_id'], cfg, list(NAMES))
 
 
 def iso(ms):
@@ -266,7 +278,7 @@ def tick(directory, frame, *, proof=None):
         if manifest['kind'] == 'paper':
             if proof is None:
                 raise ValueError('La simulación requiere preregistro aprobado y commits verificables')
-            expected = verify_preregistration(ROOT, PREREG_PATH, proof['commit'], cfg['experiment_id'], cfg, list(NAMES))
+            expected = execution_proof(proof['commit'])
             if expected != proof:
                 raise ValueError('Prueba Git inconsistente')
             frozen = manifest.get('proof')
@@ -507,7 +519,7 @@ def main():
         import fcntl
         from .arena_market import PublicFeed
         cfg = plan()
-        proof = verify_preregistration(ROOT, PREREG_PATH, args.preregistration_commit or '', cfg['experiment_id'], cfg, list(NAMES))
+        proof = execution_proof(args.preregistration_commit or '')
         with (args.directory / 'arena-worker.lock').open('a') as lock:
             fcntl.flock(lock, fcntl.LOCK_EX | fcntl.LOCK_NB)
             feed = PublicFeed()

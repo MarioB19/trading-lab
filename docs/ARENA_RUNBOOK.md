@@ -1,5 +1,10 @@
 # Arena de cuatro estrategias
 
+Actualización: Brandon solicita el traslado a Railway; el procedimiento y sus
+controles están en `docs/ARENA_RAILWAY_RUNBOOK.md`. Las instrucciones locales
+siguientes corresponden al origen anterior al corte; no reactivarlo si Railway
+ya es el propietario de la simulación.
+
 Plataforma local independiente del piloto Railway. Cuatro carteras en BTC/USD,
 **US$1,000 ficticios por estrategia, US$4,000 iniciales en total**. Todas son al
 contado, sin endeudamiento ni cortos. El capital no se repone al reiniciar.

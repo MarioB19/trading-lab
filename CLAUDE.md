@@ -82,3 +82,17 @@ Las matemáticas de señales viven en `lab.portfolio` y se prueban con datos art
 para promoción. Preregistro previo, contabilidad de intentos y validaciones siguen
 vigentes. Una base iniciada congela su versión: no cambiar código a mitad de la
 observación sin detenerla y registrar el alcance de una nueva versión.
+
+
+## Arena Railway autorizada — 4-oct-2026
+
+Brandon solicita publicar la arena en Railway después de su entrega local.
+Se autoriza preparar y desplegar un servicio/volumen independiente y trasladar
+la simulación sin reiniciar saldos. El alcance nuevo sustituye únicamente la
+restricción anterior de alojamiento local; siguen vigentes modo paper, protocolo,
+no push y ninguna llave privada de exchange. La autenticación de panel reutiliza
+referencias a las variables existentes en Railway, sin cambiar sus valores.
+Migración documentada en `docs/ARENA_RAILWAY_RUNBOOK.md`: detener propietario local,
+backup/restore, conciliación, evento explícito de cambio de identidad del código
+y activación remota. El cambio de versión es de alojamiento, sin nuevas señales
+ni parámetros ni reinicio del periodo científico.
