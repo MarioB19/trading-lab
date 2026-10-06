@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 import json
 from pathlib import Path
 import subprocess
+import sqlite3
 
 import pytest
 
@@ -150,6 +151,53 @@ def test_collection_failure_preserves_good_source_and_redacts_exception():
     assert r["arena"] == {"mode": "paper"}
     assert "pilot" not in r
     assert "secret-value" not in json.dumps(r)
+
+
+def test_arena_reader_keeps_complete_cycles_beyond_dashboard_limit(tmp_path):
+    path = tmp_path / "synthetic.sqlite3"
+    base = int(NOW.timestamp() * 1000)
+    fills = [fill("buy" if i % 2 == 0 else "sell", 100, .36, base + i) for i in range(513)]
+    with sqlite3.connect(path) as db:
+        db.execute("CREATE TABLE fills(id INTEGER PRIMARY KEY, payload TEXT)")
+        db.executemany("INSERT INTO fills(payload) VALUES(?)", [(json.dumps(f),) for f in fills])
+    before = path.read_bytes()
+    observed = sources.arena_fills_at_count(path, 512)
+    assert observed == fills[:512]  # Excludes a newer fill after the status cut.
+    assert len(ci.closed_cycles(observed, base)) == 256
+    assert path.read_bytes() == before
+    with pytest.raises(ValueError, match="incompleto"):
+        sources.arena_fills_at_count(path, 514)
+
+
+@pytest.mark.parametrize("status", ["ok", "running"])
+def test_normal_pilot_cycle_is_healthy_when_readiness_is_verified(status):
+    assert sources.pilot_is_healthy({"ready": True, "runtime": {"status": status, "errors": []}})
+
+
+@pytest.mark.parametrize("status", [{"ready": False, "runtime": {"status": "running", "errors": []}},
+    {"ready": True, "runtime": {"status": "error", "errors": []}},
+    {"ready": True, "runtime": {"status": "running", "errors": ["failure"]}},
+    {"ready": True, "runtime": {"status": "ok"}}])
+def test_in_progress_cannot_hide_missing_readiness_or_an_actual_error(status):
+    assert not sources.pilot_is_healthy(status)
+
+
+def test_collect_run_retries_once_and_retains_blocked_reading(snapshot, output, monkeypatch, capsys):
+    broken = deepcopy(snapshot)
+    broken["pilot"]["healthy"] = False
+    fetched, calls = iter([broken, snapshot]), []
+    monkeypatch.setattr(ci, "proof", lambda: {"code_commit": "synthetic"})
+    def reader():
+        calls.append(True)
+        return next(fetched)
+    original = ci.run
+    monkeypatch.setattr(sources, "collect", reader)
+    monkeypatch.setattr(ci, "run", lambda s, out, **kw: original(s, out, now=NOW, **kw))
+    ci.main(["--output", str(output), "collect-run"])
+    assert len(calls) == 2
+    events = ci.read_history(output)
+    assert [e["status"] for e in events] == ["blocked_by_data_quality", "review_complete"]
+    assert capsys.readouterr().out.find('"retried_once": true') >= 0
 
 
 @pytest.fixture

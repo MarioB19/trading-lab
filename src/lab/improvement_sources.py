@@ -2,13 +2,32 @@
 from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import json
+import inspect
 import shlex
+import sqlite3
 import subprocess
+from contextlib import closing
+from pathlib import Path
 
 PROJECT = "24021d85-bbad-4f2c-850c-e1230822e7b0"
 ENVIRONMENT = "4774e5bf-c72b-402d-ac72-f88e815e5976"
 SERVICES = {"pilot": "769ae901-e962-45e4-8666-11c3351f7249",
             "arena": "dfbea0de-ecdd-455c-bfb3-27d840d6f6b1"}
+
+
+def pilot_is_healthy(status):
+    return (status.get("ready") is True and status.get("runtime", {}).get("status") in {"ok", "running"}
+            and not status.get("runtime", {}).get("errors", ["missing"]))
+
+
+def arena_fills_at_count(path, count):
+    """Read the complete immutable prefix belonging to the status snapshot."""
+    with closing(sqlite3.connect(Path(path).resolve().as_uri() + "?mode=ro", uri=True)) as db:
+        db.execute("PRAGMA query_only=ON")
+        rows = db.execute("SELECT payload FROM fills ORDER BY id LIMIT ?", (count,)).fetchall()
+    if len(rows) != count:
+        raise ValueError("Historial de fills incompleto")
+    return [json.loads(row[0]) for row in rows]
 
 COMMON = '''
 import base64,hashlib,json,os
@@ -22,10 +41,10 @@ def get(path):
   return json.load(r)
 files_match=all(hashlib.sha256((Path('/app')/p).read_bytes()).hexdigest()==h for p,h in release['files'].items() if p!='Dockerfile')
 '''
-PILOT = COMMON + '''
+PILOT = COMMON + inspect.getsource(pilot_is_healthy) + '''
 s=get('/api/status');p=get('/api/performance');q=get('/api/execution-quality');e=get('/api/evidence')
 out={'mode':s['mode'],'as_of_utc':s['runtime']['last_success_utc'],'build_id':release['build_id'],
- 'files_match':files_match,'healthy':s['ready'] is True and s['runtime']['status']=='ok' and not s['runtime']['errors'],
+ 'files_match':files_match,'healthy':pilot_is_healthy(s),
  'reconciled':s['analysis']['valid'] is True and not s['analysis']['issues'] and s['storage']['pending_orders']==0 and s['storage']['unknown_orders']==0,
  'current':p['current'],'daily':p['daily'],'execution_quality':q,'evidence':e,
  'drawdowns':{k:v['drawdown'] for k,v in s['live']['sleeves'].items()},
@@ -40,14 +59,16 @@ from contextlib import closing
 from lab import arena
 from lab.arena_reporting import daily_report
 from lab.arena_fees import report as fees_report
+''' + inspect.getsource(arena_fills_at_count) + '''
 s=arena.status(Path('/data/arena'));d=daily_report(Path('/data/arena'));a=arena.audit(Path('/data/arena'));f=fees_report(Path('/data/arena'))
+fills=arena_fills_at_count(Path('/data/arena')/arena.DB_NAME,s['counts']['fills'])
 equity=sum(w['equity'] for w in s['wallets'])
 out={'mode':s['mode'],'as_of_utc':datetime.fromtimestamp(s['last_observed_ms']/1000,timezone.utc).isoformat(),
  'build_id':release['build_id'],'files_match':files_match,
  'healthy':s['health']['status']=='ok' and not s['stale'],
  'reconciled':d['ledger']['reconciled'] is True and a['status']=='verified' and f['fee_ledger_verified'] is True,
  'started_at_utc':s['manifest']['started_at'],'current':{'equity_usd':equity,'pnl_usd':equity-s['capital_usd']},
- 'wallets':s['wallets'],'fills':s['fills'],'daily_report':d,'audit':a,'fees':f}
+ 'wallets':s['wallets'],'fills':fills,'daily_report':d,'audit':a,'fees':f}
 print('IMPROVEMENT_SOURCE='+json.dumps(out,allow_nan=False))
 '''
 

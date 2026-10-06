@@ -463,9 +463,16 @@ def main(argv=None):
     else:
         snapshot = json.loads(args.snapshot.read_text())
     result = run(snapshot, args.output, verified_proof=verified)
+    retried = False
+    if args.action == "collect-run" and result["report"]["status"] == "blocked_by_data_quality":
+        # Keep the first blocked snapshot too. The pilot may finish its normal
+        # five-minute cycle during the second bounded read; never loop forever.
+        retried = True
+        snapshot = collect()
+        result = run(snapshot, args.output, verified_proof=verified)
     report = result["report"]
     print(json.dumps({"status": result["status"], "date": report["date"], "new_record": result["new_record"],
-                      "priorities": [i["id"] for i in report["priorities"]],
+                      "retried_once": retried, "priorities": [i["id"] for i in report["priorities"]],
                       "report": str(args.output / "latest.md"), "candidate_promoted": False,
                       "live_authorized": False}, ensure_ascii=False))
 

@@ -13,8 +13,12 @@ separados. No promete ganancias ni modifica diariamente los parámetros del bot.
 2. Validar modo paper, frescura, identidad instalada, salud, conciliación y
    cercanía temporal. Si falla una fuente, el diagnóstico se bloquea; no inventa
    valores ni continúa una investigación usando datos incompletos.
+   Un ciclo `running` es normal si ready=true y no hay errores. Ante un bloqueo,
+   `collect-run` hace una segunda lectura como máximo y conserva ambos cortes.
 3. Atribuir ciclos completos de la arena: resultado por precios, fees y neto.
    Un ciclo abierto no es una victoria; patrimonio neto no vuelve a restar fees.
+   Leer todos los fills del corte por su conteo transaccional; el límite de 250
+   movimientos del panel no se usa para reconstruir inventario ni ciclos.
 4. Priorizar integridad/calidad, inversión de ganancias brutas por costos,
    falta de ejecuciones maker y cobertura de evidencia. Usar siete días para
    ciclos y contar persistencia por fechas únicas, no por número de reintentos.
