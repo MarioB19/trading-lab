@@ -10,6 +10,7 @@ import pytest
 
 from lab import continuous_improvement as ci
 from lab import improvement_sources as sources
+from lab import runtime
 
 NOW = datetime(2026, 10, 6, 15, 0, tzinfo=timezone.utc)
 
@@ -172,6 +173,36 @@ def test_arena_reader_keeps_complete_cycles_beyond_dashboard_limit(tmp_path):
 @pytest.mark.parametrize("status", ["ok", "running"])
 def test_normal_pilot_cycle_is_healthy_when_readiness_is_verified(status):
     assert sources.pilot_is_healthy({"ready": True, "runtime": {"status": status, "errors": []}})
+
+
+def test_reader_accepts_actual_runtime_in_progress_document(tmp_path, monkeypatch):
+    # Observe the real runtime's initial write before synthetic components run.
+    documents = {"runtime_health": {"last_success_utc": NOW.isoformat()}}
+    class Store:
+        def read_document(self, key, default=None): return documents.get(key, default)
+        def write_document(self, key, value): documents[key] = deepcopy(value)
+    class Observed(Exception): pass
+    config = tmp_path / "synthetic.yaml"
+    config.write_text("mode: paper\n")
+    monkeypatch.setattr(runtime, "utc_now", lambda: NOW.isoformat())
+    def observe(command, **kwargs):
+        health = documents["runtime_health"]
+        assert health["status"] == "running" and "errors" not in health
+        ready, _ = runtime.readiness(health, True, now=NOW)
+        assert ready and sources.pilot_is_healthy({"ready": ready, "runtime": health})
+        raise Observed()
+    with pytest.raises(Observed):
+        runtime.run_cycle(config, Store(), 300, runner=observe)
+
+
+@pytest.mark.parametrize("status", [
+    {"ready": False, "runtime": {"status": "running"}},
+    {"ready": True, "runtime": {"status": "running", "errors": None}},
+    {"ready": True, "runtime": {"status": "ok", "errors": None}},
+    {"ready": True, "runtime": {"status": "running", "errors": {}}},
+])
+def test_running_without_completed_error_field_still_requires_verified_readiness(status):
+    assert not sources.pilot_is_healthy(status)
 
 
 @pytest.mark.parametrize("status", [{"ready": False, "runtime": {"status": "running", "errors": []}},

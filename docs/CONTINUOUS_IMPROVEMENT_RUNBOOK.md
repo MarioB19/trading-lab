@@ -13,7 +13,12 @@ separados. No promete ganancias ni modifica diariamente los parámetros del bot.
 2. Validar modo paper, frescura, identidad instalada, salud, conciliación y
    cercanía temporal. Si falla una fuente, el diagnóstico se bloquea; no inventa
    valores ni continúa una investigación usando datos incompletos.
-   Un ciclo `running` es normal si ready=true y no hay errores. Ante un bloqueo,
+   Un ciclo `running` es normal si ready=true y no hay errores. El runtime omite
+   temporalmente `errors` mientras corre; el lector acepta esa ausencia solo
+   con estado running y readiness verificada. Un ciclo ok debe declarar errors=[];
+   valores nulos/malformados y errores reales bloquean. Guardar health_evidence
+   permite comprobar el motivo, estado y presencia del campo en el corte.
+   Ante un bloqueo,
    `collect-run` hace una segunda lectura como máximo y conserva ambos cortes.
 3. Atribuir ciclos completos de la arena: resultado por precios, fees y neto.
    Un ciclo abierto no es una victoria; patrimonio neto no vuelve a restar fees.

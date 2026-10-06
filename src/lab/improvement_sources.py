@@ -16,8 +16,13 @@ SERVICES = {"pilot": "769ae901-e962-45e4-8666-11c3351f7249",
 
 
 def pilot_is_healthy(status):
-    return (status.get("ready") is True and status.get("runtime", {}).get("status") in {"ok", "running"}
-            and not status.get("runtime", {}).get("errors", ["missing"]))
+    runtime = status.get("runtime", {})
+    state = runtime.get("status")
+    if status.get("ready") is not True or state not in {"ok", "running"}:
+        return False
+    # run_cycle writes no errors field until completion. Only a running cycle
+    # with verified readiness may omit it; null/malformed fields still fail.
+    return runtime.get("errors", [] if state == "running" else None) == []
 
 
 def arena_fills_at_count(path, count):
@@ -45,6 +50,8 @@ PILOT = COMMON + inspect.getsource(pilot_is_healthy) + '''
 s=get('/api/status');p=get('/api/performance');q=get('/api/execution-quality');e=get('/api/evidence')
 out={'mode':s['mode'],'as_of_utc':s['runtime']['last_success_utc'],'build_id':release['build_id'],
  'files_match':files_match,'healthy':pilot_is_healthy(s),
+ 'health_evidence':{'ready':s['ready'],'reason':s.get('reason'),'runtime_status':s['runtime'].get('status'),
+                    'errors_present':'errors' in s['runtime'],'runtime_errors':s['runtime'].get('errors')},
  'reconciled':s['analysis']['valid'] is True and not s['analysis']['issues'] and s['storage']['pending_orders']==0 and s['storage']['unknown_orders']==0,
  'current':p['current'],'daily':p['daily'],'execution_quality':q,'evidence':e,
  'drawdowns':{k:v['drawdown'] for k,v in s['live']['sleeves'].items()},
