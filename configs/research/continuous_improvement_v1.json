@@ -1,0 +1,23 @@
+{
+  "experiment_id": "continuous-improvement-v1",
+  "protocol_version": 1,
+  "mode": "paper",
+  "purpose": "daily_diagnostics_and_candidate_governance",
+  "timezone": "America/Mexico_City",
+  "lookback_days": 7,
+  "minimum_closed_cycles": 10,
+  "minimum_maker_observation_hours": 72,
+  "minimum_paper_days": 28,
+  "minimum_candidate_interval_days": 7,
+  "maximum_active_candidates": 2,
+  "minimum_coverage": 0.99,
+  "pilot_max_age_seconds": 900,
+  "arena_max_age_seconds": 90,
+  "maximum_source_skew_seconds": 300,
+  "cost_inversion_minimum_cycles": 3,
+  "automatic_strategy_changes": false,
+  "automatic_deployment": false,
+  "live_authorized": false,
+  "variants": [{"id": "daily-diagnostics-v1", "kind": "diagnostics_only"}],
+  "candidate_requirements": ["walk_forward", "placebo", "bootstrap", "cost_stress", "drawdown", "causality", "multiple_testing", "execution_equivalence", "unseen_holdout"]
+}
