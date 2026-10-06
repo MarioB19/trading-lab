@@ -117,3 +117,17 @@ señales ni estrecha cotizaciones; aplica tarifas por volumen de cada cartera
 independiente. Migración explícita desde7e35212 con corte, balances conservados
 y contador propio del tramo corregido. No es promoción ni prueba de rentabilidad.
 Ver `docs/ARENA_FEES_RUNBOOK.md`. Conserva no push y ninguna llave privada.
+
+## Mejora continua diaria autorizada — 5-oct-2026
+
+Brandon solicita implementar un algoritmo y plan diario de mejora continua.
+`lab.continuous_improvement` recoge ambos pilotos en lectura, atribuye costos,
+acumula evidencia e incidencias y controla candidatas separadas. Protocolo previo
+`e0a3d3e`; ejecutar `bash scripts/research/run_continuous_improvement.sh`.
+El seguimiento diario puede completar mediciones o correcciones técnicas
+reproducibles en esta rama, con pruebas y commit local. Nuevas reglas necesitan
+su propio preregistro, grid contado, control y periodo futuro; conservar todos
+los intentos y no consultar significancia diariamente. El controlador no mueve
+capital ni cambia el runtime; incorporar estrategias exige los gates científicos
+y la revisión de su evidencia. Dinero real sigue siendo manual de Brandon.
+Ver `docs/CONTINUOUS_IMPROVEMENT_RUNBOOK.md`. Sin push ni secretos.
