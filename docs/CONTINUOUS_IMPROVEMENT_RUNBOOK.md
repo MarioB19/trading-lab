@@ -18,6 +18,14 @@ separados. No promete ganancias ni modifica diariamente los parámetros del bot.
    con estado running y readiness verificada. Un ciclo ok debe declarar errors=[];
    valores nulos/malformados y errores reales bloquean. Guardar health_evidence
    permite comprobar el motivo, estado y presencia del campo en el corte.
+   El lector de la arena verifica todos los inputs y capturas en una transacción
+   de solo lectura, serializando cada bloque compartido de velas una vez. El hash
+   sigue siendo el de la captura completa expandida; no omite historia ni amplía
+   el límite de 90 segundos. SQLite conserva integrity_check; conciliación,
+   financiación e integridad de tarifas se verifican mediante daily_report y
+   fees_report existentes. El campo audit declara alcance inputs/capturas y no
+   afirma por sí solo verificar wallets. reader_timing conserva duración de la
+   auditoría y de la lectura remota para diagnosticar cortes que caducan.
    Ante un bloqueo,
    `collect-run` hace una segunda lectura como máximo y conserva ambos cortes.
 3. Atribuir ciclos completos de la arena: resultado por precios, fees y neto.

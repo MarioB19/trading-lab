@@ -34,6 +34,49 @@ def arena_fills_at_count(path, count):
         raise ValueError("Historial de fills incompleto")
     return [json.loads(row[0]) for row in rows]
 
+def compact_capture_hash(compact, serialized_inputs):
+    """Hash the exact expanded frame without serializing shared candles again."""
+    import hashlib
+    encode = lambda value: json.dumps(value, sort_keys=True, separators=(",", ":"),
+                                     ensure_ascii=False, allow_nan=False)
+    candles = "{" + ",".join(encode(interval) + ":" + serialized_inputs[checksum]
+                             for interval, checksum in sorted(compact["candles"].items())) + "}"
+    expanded = "{" + ",".join(encode(key) + ":" + (candles if key == "candles" else encode(value))
+                              for key, value in sorted(compact.items())) + "}"
+    return hashlib.sha256(expanded.encode()).hexdigest()
+
+
+def arena_input_audit(path):
+    """Verify every archived byte in one read transaction, reusing candle JSON.
+
+    Funding, wallet reconciliation and tiered fees remain checked by the existing
+    daily_report and fees_report; this result only attests SQLite/market inputs.
+    """
+    import hashlib
+    import zlib
+    with closing(sqlite3.connect(Path(path).resolve().as_uri() + "?mode=ro", uri=True)) as db:
+        db.execute("PRAGMA query_only=ON")
+        db.execute("BEGIN")
+        if db.execute("PRAGMA integrity_check").fetchone()[0] != "ok":
+            raise ValueError("SQLite no conserva integridad")
+        serialized = {}
+        for checksum, raw in db.execute("SELECT sha,payload FROM inputs"):
+            rows = json.loads(zlib.decompress(raw))
+            canonical = json.dumps(rows, sort_keys=True, separators=(",", ":"),
+                                   ensure_ascii=False, allow_nan=False)
+            if hashlib.sha256(canonical.encode()).hexdigest() != checksum:
+                raise ValueError("Las velas archivadas fueron alteradas")
+            serialized[checksum] = canonical
+        captures = 0
+        for checksum, raw in db.execute("SELECT id,payload FROM captures"):
+            if compact_capture_hash(json.loads(raw), serialized) != checksum:
+                raise ValueError("La captura de mercado fue alterada")
+            captures += 1
+    return {"status": "verified", "captures": captures, "candle_inputs": len(serialized),
+            "scope": "sqlite_integrity_inputs_and_captures", "wallets_verified": False,
+            "profitability_verified": False, "live_authorized": False}
+
+
 COMMON = '''
 import base64,hashlib,json,os
 from pathlib import Path
@@ -66,8 +109,13 @@ from contextlib import closing
 from lab import arena
 from lab.arena_reporting import daily_report
 from lab.arena_fees import report as fees_report
-''' + inspect.getsource(arena_fills_at_count) + '''
-s=arena.status(Path('/data/arena'));d=daily_report(Path('/data/arena'));a=arena.audit(Path('/data/arena'));f=fees_report(Path('/data/arena'))
+''' + inspect.getsource(arena_fills_at_count) + inspect.getsource(compact_capture_hash) + inspect.getsource(arena_input_audit) + '''
+from time import monotonic
+started=monotonic()
+s=arena.status(Path('/data/arena'));d=daily_report(Path('/data/arena'))
+audit_started=monotonic();a=arena_input_audit(Path('/data/arena')/arena.DB_NAME)
+audit_seconds=monotonic()-audit_started
+f=fees_report(Path('/data/arena'))
 fills=arena_fills_at_count(Path('/data/arena')/arena.DB_NAME,s['counts']['fills'])
 equity=sum(w['equity'] for w in s['wallets'])
 out={'mode':s['mode'],'as_of_utc':datetime.fromtimestamp(s['last_observed_ms']/1000,timezone.utc).isoformat(),
@@ -75,7 +123,8 @@ out={'mode':s['mode'],'as_of_utc':datetime.fromtimestamp(s['last_observed_ms']/1
  'healthy':s['health']['status']=='ok' and not s['stale'],
  'reconciled':d['ledger']['reconciled'] is True and a['status']=='verified' and f['fee_ledger_verified'] is True,
  'started_at_utc':s['manifest']['started_at'],'current':{'equity_usd':equity,'pnl_usd':equity-s['capital_usd']},
- 'wallets':s['wallets'],'fills':fills,'daily_report':d,'audit':a,'fees':f}
+ 'wallets':s['wallets'],'fills':fills,'daily_report':d,'audit':a,'fees':f,
+ 'reader_timing':{'input_audit_seconds':audit_seconds,'total_seconds':monotonic()-started}}
 print('IMPROVEMENT_SOURCE='+json.dumps(out,allow_nan=False))
 '''
 

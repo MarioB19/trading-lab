@@ -64,6 +64,15 @@ def test_daily_loss_is_not_a_parameter_change_trigger(snapshot):
     assert b["candidate_promoted"] is False
 
 
+def test_arena_90_second_freshness_remains_strict_after_optimized_audit(snapshot):
+    snapshot['arena']['as_of_utc'] = (NOW - timedelta(seconds=90.001)).isoformat()
+    snapshot['arena']['audit'] = {'status': 'verified', 'scope': 'sqlite_integrity_inputs_and_captures'}
+    result = ci.diagnose(snapshot, now=NOW)
+    assert result['status'] == 'blocked_by_data_quality'
+    assert result['balances'] == {} and result['closed_cycles'] == []
+    assert any(issue['id'] == 'arena:quality' for issue in result['priorities'])
+
+
 @pytest.mark.parametrize("field,value", [("mode", "live"), ("files_match", False),
     ("healthy", False), ("reconciled", False), ("as_of_utc", "2026-10-05T00:00:00+00:00")])
 def test_bad_source_blocks_research(snapshot, field, value):
