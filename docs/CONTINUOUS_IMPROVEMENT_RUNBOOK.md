@@ -28,6 +28,16 @@ separados. No promete ganancias ni modifica diariamente los parámetros del bot.
    auditoría y de la lectura remota para diagnosticar cortes que caducan.
    Ante un bloqueo,
    `collect-run` hace una segunda lectura como máximo y conserva ambos cortes.
+   Los fallos del lector conservan diagnostic con etiquetas y números permitidos:
+   etapa process_start/transport/remote_python/response, código de salida, timeout,
+   errno y, cuando Python responde, tipo de excepción, líneas del script y endpoint
+   de la lista fija. El wrapper ejecuta el mismo lector y sale con error ante una
+   excepción; un marcador de fallo bloquea incluso si también aparece un resultado.
+   No conserva mensajes completos, variables locales, rutas, stdout, stderr ni
+   credenciales. Los observed_markers son coincidencias de etiquetas fijas de
+   transporte, no una causa raíz demostrada. No relaja salud/frescura/integridad,
+   el timeout de 90s o el máximo de un reintento automático. Una lectura aislada
+   posterior a una corrección técnica se registra aparte, sin borrar los bloqueos.
 3. Atribuir ciclos completos de la arena: resultado por precios, fees y neto.
    Un ciclo abierto no es una victoria; patrimonio neto no vuelve a restar fees.
    Leer todos los fills del corte por su conteo transaccional; el límite de 250

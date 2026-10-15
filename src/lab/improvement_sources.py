@@ -14,6 +14,72 @@ ENVIRONMENT = "4774e5bf-c72b-402d-ac72-f88e815e5976"
 SERVICES = {"pilot": "769ae901-e962-45e4-8666-11c3351f7249",
             "arena": "dfbea0de-ecdd-455c-bfb3-27d840d6f6b1"}
 
+ERROR_MARKER = "IMPROVEMENT_SOURCE_ERROR="
+ERROR_TYPES = ("KeyError", "ValueError", "TypeError", "RuntimeError", "HTTPError",
+               "URLError", "TimeoutError", "ConnectionError", "OSError", "OperationalError")
+ENDPOINTS = ("/api/status", "/api/performance", "/api/execution-quality", "/api/evidence",
+             "/api/events?limit=500", "/api/trades?limit=500")
+TRANSPORT_MARKERS = {"npm_enotempty": "ENOTEMPTY", "npm_enoent": "ENOENT",
+                     "websocket": "websocket", "permission_denied": "permission denied",
+                     "unauthorized": "unauthorized", "connection_reset": "connection reset",
+                     "connection_failed": "connection failed", "timed_out": "timed out",
+                     "python_traceback": "Traceback (most recent call last)"}
+
+
+def safe_diagnostic(value):
+    """Only fixed labels and bounded numbers may enter the immutable evidence."""
+    if not isinstance(value, dict):
+        return {}
+    out = {}
+    choices = {"stage": ("process_start", "transport", "remote_python", "response"),
+               "reason": ("timeout", "nonzero_exit", "missing_marker", "invalid_json"),
+               "exception_type": ERROR_TYPES + ("other",), "endpoint": ENDPOINTS}
+    for key, allowed in choices.items():
+        if isinstance(value.get(key), str) and value[key] in allowed:
+            out[key] = value[key]
+    for key, low, high in (("returncode", -255, 255), ("errno", 0, 4096),
+                           ("http_status", 100, 599), ("timeout_seconds", 1, 3600)):
+        item = value.get(key)
+        if type(item) is int and low <= item <= high:
+            out[key] = item
+    lines = value.get("source_lines")
+    if isinstance(lines, list):
+        out["source_lines"] = [n for n in lines if type(n) is int and 0 < n <= 10000][:8]
+    markers = value.get("observed_markers")
+    if isinstance(markers, list):
+        out["observed_markers"] = sorted({s for s in markers
+                                          if isinstance(s, str) and s in TRANSPORT_MARKERS})
+    return out
+
+
+class SourceReadError(RuntimeError):
+    def __init__(self, diagnostic):
+        super().__init__("Fuente no disponible; no se alteró la operación")
+        self.diagnostic = safe_diagnostic(diagnostic)
+
+
+def diagnostic_script(script):
+    """Run the exact reader; errors expose no values, paths or exception text."""
+    return f'''import json,sys,traceback
+from urllib.error import HTTPError
+try:
+ exec(compile({script!r}, '<trading_source>', 'exec'), {{}})
+except Exception as error:
+ kind=type(error).__name__
+ detail={{'stage':'remote_python','exception_type':kind if kind in {ERROR_TYPES!r} else 'other'}}
+ lines=[]
+ for frame,line in traceback.walk_tb(error.__traceback__):
+  if frame.f_code.co_filename=='<trading_source>':
+   lines.append(line)
+   path=frame.f_locals.get('path')
+   if isinstance(path,str) and path in {ENDPOINTS!r}: detail['endpoint']=path
+ detail['source_lines']=lines[-8:]
+ if isinstance(error,HTTPError): detail['http_status']=error.code
+ if isinstance(error,OSError) and type(error.errno) is int: detail['errno']=error.errno
+ print({ERROR_MARKER!r}+json.dumps(detail,allow_nan=False))
+ sys.exit(1)
+'''
+
 
 def pilot_is_healthy(status):
     runtime = status.get("runtime", {})
@@ -133,15 +199,36 @@ def _read(name):
     script = PILOT if name == "pilot" else ARENA
     command = ["npx", "--yes", "@railway/cli", "ssh", "--project", PROJECT,
                "--service", SERVICES[name], "--environment", ENVIRONMENT,
-               "python -c " + shlex.quote(script)]
-    result = subprocess.run(command, capture_output=True, text=True, timeout=90)
+               "python -c " + shlex.quote(diagnostic_script(script))]
+    try:
+        result = subprocess.run(command, capture_output=True, text=True, timeout=90)
+    except subprocess.TimeoutExpired:
+        raise SourceReadError({"stage": "transport", "reason": "timeout", "timeout_seconds": 90}) from None
+    except OSError as exc:
+        raise SourceReadError({"stage": "process_start", "errno": exc.errno}) from None
+    failure = next((line.split(ERROR_MARKER, 1)[1] for line in result.stdout.splitlines()
+                    if ERROR_MARKER in line and len(line) < 4096), None)
+    if failure is not None:
+        try:
+            detail = safe_diagnostic(json.loads(failure))
+        except (TypeError, ValueError):
+            detail = {}
+        # A failure marker must never be accepted as a successful snapshot.
+        raise SourceReadError({**detail, "stage": "remote_python", "returncode": result.returncode})
     if result.returncode:
-        raise RuntimeError("Railway no pudo leer " + name + "; no se alteró la operación")
+        combined = result.stdout.lower() + result.stderr.lower()
+        raise SourceReadError({"stage": "transport", "reason": "nonzero_exit",
+                               "returncode": result.returncode,
+                               "observed_markers": [key for key, text in TRANSPORT_MARKERS.items()
+                                                    if text.lower() in combined]})
     raw = next((line.split("IMPROVEMENT_SOURCE=", 1)[1] for line in result.stdout.splitlines()
                 if "IMPROVEMENT_SOURCE=" in line), None)
     if raw is None:
-        raise RuntimeError("La fuente no devolvió evidencia estructurada: " + name)
-    return json.loads(raw)
+        raise SourceReadError({"stage": "response", "reason": "missing_marker"})
+    try:
+        return json.loads(raw)
+    except ValueError:
+        raise SourceReadError({"stage": "response", "reason": "invalid_json"}) from None
 
 
 def collect(reader=_read):
@@ -153,5 +240,7 @@ def collect(reader=_read):
                 results[name] = future.result()
             except Exception as exc:
                 errors[name] = {"type": type(exc).__name__, "message": "Fuente no disponible; reintentar sin inventar datos"}
+                if isinstance(exc, SourceReadError):
+                    errors[name]["diagnostic"] = safe_diagnostic(exc.diagnostic)
     return {"schema_version": 1, "collected_at_utc": datetime.now(timezone.utc).isoformat(),
             **results, "collection_errors": errors}
