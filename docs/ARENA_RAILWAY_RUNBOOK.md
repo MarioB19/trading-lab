@@ -54,8 +54,11 @@ comprueba frescura y salud de simulación. No exponer el puerto interno directam
 
 El supervisor funciona como UID10001, propaga SIGTERM, reinicia mediante Railway
 si muere un proceso y exige volumen montado. SQLite usa transacciones y WAL;
-un lock impide dos workers sobre la misma base. Backups al iniciar y cada 24h,
-siete copias internas conservadas. El panel permite pausar cada estrategia;
+un lock impide dos workers sobre la misma base. Desde la recuperación del 15-oct,
+backups comprimidos cada 24h con programación persistente, máximo dos copias y
+presupuesto de bytes/reserva de espacio. El ejecutor se pausa ante falta de
+reserva; no se purga historial. Ver `ARENA_STORAGE_RECOVERY.md` para corte,
+migración, validación y límites. El panel permite pausar cada estrategia;
 pausar no liquida inventario. Para detener todo, quitar `/data/arena/arena.enabled`
 con `lab.arena_hosted deactivate`; antes de restores también apagar la variable
 externa. No volver a ejecutar la copia local que quedó archivada después del corte.

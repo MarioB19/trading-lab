@@ -131,3 +131,16 @@ los intentos y no consultar significancia diariamente. El controlador no mueve
 capital ni cambia el runtime; incorporar estrategias exige los gates científicos
 y la revisión de su evidencia. Dinero real sigue siendo manual de Brandon.
 Ver `docs/CONTINUOUS_IMPROVEMENT_RUNBOOK.md`. Sin push ni secretos.
+
+## Recuperación de almacenamiento autorizada — 15-oct-2026
+
+Brandon solicita restablecer la arena y borrar lo necesario para optimizarla
+dentro del volumen existente de 5000 MB. Autoriza mantenimiento, copia local
+completa verificable, retiro de respaldos/importaciones ya exportados, corrección
+de almacenamiento y despliegue/reanudación paper con pruebas y conciliación.
+No cambiar plan/capacidad, señales, tarifas, capital, frenos, mode ni secrets.
+No borrar la base/historial operativo ni restaurar un saldo viejo. Migrar solo
+mediante `lab.arena_hosted upgrade-storage --cutover-confirmed`, documentado en
+`docs/ARENA_STORAGE_RECOVERY.md`, con writer detenido y comparación de filas/hashes.
+Preservar hueco, preregistros, SHAs previos y copia original. Sin push. El piloto
+principal conserva su servicio, volumen y despliegue.

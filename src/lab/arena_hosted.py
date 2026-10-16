@@ -6,12 +6,14 @@ import json
 import os
 from pathlib import Path
 import signal
+import sqlite3
 import subprocess
 import sys
 import threading
 import time
 
 from . import arena
+from . import arena_storage
 from .arena_service import make_server
 
 PREREG = '61c6ac319f9f5421a4c1b9ad80e5d5165b2fcc72'
@@ -97,25 +99,37 @@ def run():
     http = threading.Thread(target=server.serve_forever, daemon=True)
     http.start()
     worker = None
-    last_backup = 0
+    last_backup = arena_storage.latest_backup_time(backups)
+    backup_retry_after = 0
+    storage_blocked = None
     try:
         while not stopped.wait(1):
             if not http.is_alive():
                 raise RuntimeError('Servidor HTTP detenido')
             enabled = os.environ.get('ARENA_WORKER_ALLOWED') == 'true' and (directory / 'arena.enabled').is_file()
+            enough_space = arena_storage.worker_space_available(directory)
+            if storage_blocked != (not enough_space):
+                storage_blocked = not enough_space
+                print(json.dumps({'storage_blocked': storage_blocked,
+                                  'storage': arena_storage.limits(directory)}), flush=True)
+            enabled = enabled and enough_space
             if worker is not None and worker.poll() is not None:
                 raise RuntimeError('Worker detenido; Railway debe reiniciar el supervisor')
             if worker is not None and not enabled:
                 worker.terminate()
                 worker.wait(timeout=30)
                 worker = None
-            if (directory / arena.DB_NAME).is_file() and time.time() - last_backup >= 86400:
-                target = backups / f'arena-{arena.now_ms()}.sqlite3'
-                result = arena.backup(directory, target)
-                print(json.dumps({'backup': result}), flush=True)
-                last_backup = time.time()
-                for old in sorted(backups.glob('arena-*.sqlite3'))[:-7]:
-                    old.unlink()
+            if ((directory / arena.DB_NAME).is_file() and time.time() - last_backup >= 86400
+                    and time.time() >= backup_retry_after):
+                try:
+                    result = arena_storage.backup_once(directory, backups)
+                    print(json.dumps({'backup': result}), flush=True)
+                    last_backup = result['created_ms'] / 1000
+                except (OSError, ValueError, sqlite3.Error, arena_storage.StoragePressure) as exc:
+                    # Retain the last verified copy; no restart loop or partial DBs.
+                    print(json.dumps({'backup_failed': type(exc).__name__,
+                                      'retry_seconds': 3600}), flush=True)
+                    backup_retry_after = time.time() + 3600
             if enabled and worker is None:
                 if arena.status(directory)['manifest'].get('proof') != arena.execution_proof(PREREG):
                     raise ValueError('Versión migrada no coincide con imagen')
@@ -136,7 +150,7 @@ def run():
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('action', choices=['run', 'migrate', 'activate', 'deactivate', 'upgrade-reporting', 'upgrade-fees'])
+    parser.add_argument('action', choices=['run', 'migrate', 'activate', 'deactivate', 'upgrade-reporting', 'upgrade-fees', 'upgrade-storage'])
     parser.add_argument('--directory', type=Path, default=Path('/data/arena'))
     parser.add_argument('--cutover-confirmed', action='store_true')
     args = parser.parse_args()
@@ -149,6 +163,9 @@ def main():
         print('Arena paper activada')
     elif args.action == 'upgrade-fees':
         from .arena_fees_upgrade import upgrade
+        print(json.dumps(upgrade(args.directory, cutover_confirmed=args.cutover_confirmed)))
+    elif args.action == 'upgrade-storage':
+        from .arena_storage_upgrade import upgrade
         print(json.dumps(upgrade(args.directory, cutover_confirmed=args.cutover_confirmed)))
     elif args.action == 'upgrade-reporting':
         from .arena_reporting_upgrade import upgrade
