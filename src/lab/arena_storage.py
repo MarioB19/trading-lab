@@ -34,7 +34,7 @@ def limits(path):
     usage = shutil.disk_usage(path)
     return {'free_bytes': usage.free, 'total_bytes': usage.total,
             'reserve_bytes': max(256 * MIB, min(1024 * MIB, usage.total // 5)),
-            'backup_budget_bytes': min(512 * MIB, usage.total // 10)}
+            'backup_budget_bytes': min(1024 * MIB, usage.total // 5)}
 
 
 def worker_space_available(path):

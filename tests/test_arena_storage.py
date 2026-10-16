@@ -62,6 +62,14 @@ def test_low_space_rejects_backup_before_copy_and_blocks_worker(tmp_path,monkeyp
     assert not storage.snapshots(backups)
 
 
+def test_volume_policy_allows_two_growing_copies_and_keeps_twenty_percent_free(tmp_path,monkeypatch):
+    total=4838498304
+    monkeypatch.setattr(storage.shutil,'disk_usage',lambda p:SimpleNamespace(total=total,free=4000000000))
+    policy=storage.limits(tmp_path)
+    assert policy['backup_budget_bytes']==total//5 and policy['reserve_bytes']==total//5
+    assert policy['backup_budget_bytes']>=2*400000000
+
+
 def test_corrupt_published_backup_is_not_counted_or_deleted(tmp_path):
     source,backups=setup(tmp_path);r=storage.backup_once(source,backups)
     p=Path(r['directory'])/'snapshot.sqlite3.gz';p.write_bytes(b'corrupt')

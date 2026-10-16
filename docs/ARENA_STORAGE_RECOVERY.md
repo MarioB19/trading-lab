@@ -37,7 +37,7 @@ abandonados se limpian bajo ese lock, sin glob de bases históricas.
 
 - Hasta dos copias comprimidas publicadas. Antes de crear la siguiente se puede
   retirar la más vieja, conservando siempre la más nueva verificada.
-- Presupuesto total: menor entre 512 MiB y 10% de la capacidad del filesystem.
+- Presupuesto total: menor entre 1 GiB y 20% de la capacidad del filesystem.
   Archivos ajenos también consumen presupuesto, pero no se borran automáticamente.
 - Reserva de escritura: 20% de capacidad, mínimo 256 MiB y máximo 1 GiB. En este
   volumen equivale aproximadamente a 968 MB. Sin reserva se detiene/evita iniciar
