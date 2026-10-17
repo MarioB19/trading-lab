@@ -9,6 +9,12 @@ import pytest
 from lab import improvement_sources as sources
 
 
+@pytest.fixture(autouse=True)
+def installed_cli(monkeypatch):
+    # These tests exercise SSH response/error contracts, not package resolution.
+    monkeypatch.setattr(sources, "railway_cli", lambda: ["railway"])
+
+
 def run_reader(script):
     return subprocess.run([sys.executable, "-c", sources.diagnostic_script(script)],
                           capture_output=True, text=True, timeout=10)

@@ -38,6 +38,13 @@ separados. No promete ganancias ni modifica diariamente los parámetros del bot.
    transporte, no una causa raíz demostrada. No relaja salud/frescura/integridad,
    el timeout de 90s o el máximo de un reintento automático. Una lectura aislada
    posterior a una corrección técnica se registra aparte, sin borrar los bloqueos.
+   Desde la corrección local del 17-oct se resuelve la CLI una vez antes de abrir
+   las dos lecturas SSH concurrentes: se reutiliza railway del PATH o se resuelve
+   su ejecutable con un único npm exec (30s). Ambos lectores invocan ese mismo
+   archivo directamente, sin dos instalaciones npm simultáneas. Un fallo de
+   resolución bloquea ambas fuentes con diagnóstico cli_resolution acotado;
+   nunca publica rutas, mensajes arbitrarios o credenciales. Las lecturas remotas
+   mantienen 90s, los mismos scripts y todos los gates; skew máximo sigue en300s.
 3. Atribuir ciclos completos de la arena: resultado por precios, fees y neto.
    Un ciclo abierto no es una victoria; patrimonio neto no vuelve a restar fees.
    Leer todos los fills del corte por su conteo transaccional; el límite de 250

@@ -3,7 +3,9 @@ from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 import json
 import inspect
+import os
 import shlex
+import shutil
 import sqlite3
 import subprocess
 from contextlib import closing
@@ -31,8 +33,8 @@ def safe_diagnostic(value):
     if not isinstance(value, dict):
         return {}
     out = {}
-    choices = {"stage": ("process_start", "transport", "remote_python", "response"),
-               "reason": ("timeout", "nonzero_exit", "missing_marker", "invalid_json"),
+    choices = {"stage": ("process_start", "transport", "remote_python", "response", "cli_resolution"),
+               "reason": ("timeout", "nonzero_exit", "missing_marker", "invalid_json", "invalid_cli_path"),
                "exception_type": ERROR_TYPES + ("other",), "endpoint": ENDPOINTS}
     for key, allowed in choices.items():
         if isinstance(value.get(key), str) and value[key] in allowed:
@@ -195,9 +197,39 @@ print('IMPROVEMENT_SOURCE='+json.dumps(out,allow_nan=False))
 '''
 
 
-def _read(name):
+def railway_cli():
+    """Resolve npm's executable once before concurrent SSH reads can update it."""
+    try:
+        installed = shutil.which("railway")
+        if installed:
+            return [installed]
+        result = subprocess.run(
+            ["npx", "--yes", "--package=@railway/cli", "--call", "command -v railway"],
+            capture_output=True, text=True, timeout=30)
+    except subprocess.TimeoutExpired:
+        raise SourceReadError({"stage": "cli_resolution", "reason": "timeout", "timeout_seconds": 30}) from None
+    except OSError as exc:
+        raise SourceReadError({"stage": "cli_resolution", "errno": exc.errno}) from None
+    if result.returncode:
+        combined = result.stdout.lower() + result.stderr.lower()
+        raise SourceReadError({"stage": "cli_resolution", "reason": "nonzero_exit",
+            "returncode": result.returncode,
+            "observed_markers": [key for key, text in TRANSPORT_MARKERS.items() if text.lower() in combined]})
+    candidate = result.stdout.strip()
+    try:
+        path = Path(candidate)
+        valid = ("\n" not in candidate and "\r" not in candidate and path.is_absolute()
+                 and path.is_file() and os.access(path, os.X_OK))
+    except (OSError, ValueError):
+        valid = False
+    if not valid:
+        raise SourceReadError({"stage": "cli_resolution", "reason": "invalid_cli_path"})
+    return [str(path)]
+
+
+def _read(name, *, cli=None):
     script = PILOT if name == "pilot" else ARENA
-    command = ["npx", "--yes", "@railway/cli", "ssh", "--project", PROJECT,
+    command = [*(railway_cli() if cli is None else cli), "ssh", "--project", PROJECT,
                "--service", SERVICES[name], "--environment", ENVIRONMENT,
                "python -c " + shlex.quote(diagnostic_script(script))]
     try:
@@ -231,8 +263,18 @@ def _read(name):
         raise SourceReadError({"stage": "response", "reason": "invalid_json"}) from None
 
 
-def collect(reader=_read):
+def collect(reader=None):
     results, errors = {}, {}
+    if reader is None:
+        try:
+            cli = railway_cli()
+        except SourceReadError as exc:
+            return {"schema_version": 1, "collected_at_utc": datetime.now(timezone.utc).isoformat(),
+                "collection_errors": {name: {"type": "SourceReadError",
+                    "message": "Fuente no disponible; reintentar sin inventar datos",
+                    "diagnostic": safe_diagnostic(exc.diagnostic)} for name in SERVICES}}
+        def reader(name):
+            return _read(name, cli=cli)
     with ThreadPoolExecutor(max_workers=2) as pool:
         futures = {name: pool.submit(reader, name) for name in SERVICES}
         for name, future in futures.items():
