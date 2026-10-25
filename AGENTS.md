@@ -17,9 +17,11 @@ no supera sus comisiones.
 |---|---|---|
 | Piloto cripto (US$500) | Tendencia + momentum, hasta 5 monedas, volatilidad objetivo 40%, una vez al día (00:00 UTC) contra el libro de Bitso | Railway, servicio `trading-lab` |
 | Piloto ETFs (US$500) | 60% SPY / 40% IEF, banda de 5 puntos | Mismo servicio, simulador interno |
-| Arena (US$4,000) | Cuatro estrategias BTC intradía. **Apagada el 25-oct** (DEC-031): −7.1%, con US$164.70 en comisiones. Carteras en pausa, volumen conservado | Railway, servicio `trading-arena` detenido |
+| Arena (US$4,000) | Cuatro estrategias BTC intradía. **Apagada el 25-oct** (DEC-031): −7.1%, con US$164.70 en comisiones. Respaldo final verificado en la USB y la Mac; archivo de consulta en `archive/arena-v1/` (DEC-032) | Railway, servicio `trading-arena` detenido (imagen de mantenimiento); borrarlo es decisión de Brandon |
+| Carriles de candidatas | Hasta dos candidatas contra el control en los mismos días (`research/carriles.yaml`, `lab.lanes`). Hoy vacíos | Mismo servicio, bases aparte en `/data/lanes/` |
 
-Panel: https://trading-lab-production-a56b.up.railway.app/ (autenticado). Railway: proyecto
+Panel único: https://tradinglab.inovaris.online/ (mientras el DNS no exista, https://trading-lab-production-a56b.up.railway.app/),
+autenticado y con límite de intentos. Pestañas Piloto, Investigación y Arena (archivo). Railway: proyecto
 `24021d85-bbad-4f2c-850c-e1230822e7b0`, entorno production. El estado vivo está en la SQLite
 del volumen; `state/` en Git es historial de septiembre.
 
@@ -41,7 +43,8 @@ del volumen; `state/` en Git es historial de septiembre.
   debajo de US$2,500 al mes. Bitso no tiene pares de altcoins contra BTC. Elegir exchange para dinero real es de Brandon.
 - Descartado con evidencia: táctica en ETFs, multi-mercado, operar cada hora o cada 4 h,
   reversión/ruptura de corto plazo con estos costos, versión agresiva top 3.
-- El catálogo de hipótesis vigente vive en el vault: `00 — Dirección/🧪 Backlog de hipótesis — Trading Lab.md`.
+- El catálogo de hipótesis vigente vive en `research/backlog.yaml` (fuente única). La nota del vault
+  `00 — Dirección/🧪 Backlog de hipótesis — Trading Lab.md` se genera con `python -m lab.backlog render`; no se edita a mano.
 
 ## Reglas duras
 
@@ -81,8 +84,10 @@ Registro de decisiones del vault.
 - Consistencia bot/backtest: `python -m lab.bot --replay 365 --sleeve crypto` (diferencia < 2%).
 - Investigación: `python -m lab.research_multi --describe` y `docs/RESEARCH_PROTOCOL.md`.
   Estadística: `lab.validation` (walk-forward, placebo, bootstrap, Sharpe deflactado) y `lab.research_statistics`.
-- Operación (lectura del panel, arena, Railway): `python3 scripts/claude/tl.py --help` y `docs/OPERACION_CLAUDE.md`.
-- Despliegue del piloto: `docs/RAILWAY_RUNBOOK.md` → "Entrega de código".
+- Operación (panel, Railway, despliegue con `tl.py up`, dominios, respaldo externo): `python3 scripts/claude/tl.py --help`,
+  `scripts/claude/pilot_backup.py` y `docs/OPERACION_CLAUDE.md`.
+- Atribución (mercado, estrategia y costos): `lab.attribution`, servida en `/api/attribution`; `review.py` la imprime.
+- Despliegue del piloto: `docs/OPERACION_CLAUDE.md` → "Desplegar el piloto" y `docs/RAILWAY_RUNBOOK.md`.
 
 ## Cómo se reporta
 

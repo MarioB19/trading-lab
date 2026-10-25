@@ -338,7 +338,7 @@ def cmd_deployment(env: dict, deployment_id: str, lines: int) -> None:
                 print(row["timestamp"][11:19], row["message"][:300])
 
 
-DOMAIN_FIELDS = """domain status { verified certificateStatus
+DOMAIN_FIELDS = """domain status { verified certificateStatus verificationDnsHost verificationToken
   dnsRecords { hostlabel fqdn recordType requiredValue currentValue status zone purpose } }"""
 
 
