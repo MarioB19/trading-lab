@@ -219,7 +219,7 @@ def markdown(w: dict) -> str:
     t = w["total"]
     mxn = f" (MXN {t['pnl'] * fx:+,.0f})" if fx else ""
     extra = f" + sin atribuir {_m(t['unattributed'])}" if t["unattributed"] else ""
-    lines += ["", f"Total semana: US${t['pnl']:+,.2f}{mxn} = mercado {_m(t['market'])} + estrategia "
+    lines += ["", f"Total del periodo: US${t['pnl']:+,.2f}{mxn} = mercado {_m(t['market'])} + estrategia "
                   f"{_m(t['strategy'])}{extra} − costos {t['costs']:,.2f}.",
               f"Desde el inicio: {_m(w['since_start'].get('pnl_usd'))} US$ / {_m(w['since_start'].get('pnl_mxn'))} MXN "
               f"(patrimonio {w['since_start'].get('equity_usd')}, corte {w['since_start'].get('as_of_utc')})."]
