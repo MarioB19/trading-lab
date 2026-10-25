@@ -1,0 +1,5 @@
+fecha,experimento,variante,tipo,sharpe_diario,veredicto
+2026-10-25,etapa-codex,43 intentos previos (sin Sharpe individual; usar extra_trials=43),varios,,descartados o no promovidos
+2026-10-25,sprint01-costo-cripto,v1-banda4-margen15,costo,0.07158,no aprobada
+2026-10-25,sprint01-costo-cripto,v2-semanal,costo,0.07900,no aprobada
+2026-10-25,sprint01-costo-cripto,v3-semanal-banda4-margen15,costo,0.07985,no aprobada
