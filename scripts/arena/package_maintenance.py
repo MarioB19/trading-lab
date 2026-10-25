@@ -23,9 +23,13 @@ def _git(*args):
 
 def package(destination: Path, *, allow_dirty: bool = False) -> dict:
     commit = _git('rev-parse', 'HEAD')
-    dirty = _git('status', '--porcelain', '--untracked-files=no')
+    dirty = _git('status', '--porcelain', '--untracked-files=all', '--', 'src', 'configs/arena', 'infra/arena',
+                 'requirements-runtime.txt')
     if dirty and not allow_dirty:
-        raise SystemExit('El checkout tiene cambios sin commit; no se empaqueta.')
+        raise SystemExit('El checkout tiene cambios o archivos sin commit; no se empaqueta.')
+    hosted = (ROOT / 'src/lab/arena_hosted.py').read_text()
+    if 'arena_maintenance.enabled()' not in hosted:
+        raise SystemExit('arena_hosted.run no despacha al modo mantenimiento; no se empaqueta.')
     destination.mkdir(parents=True, exist_ok=False)
     files = {'Dockerfile': ROOT / 'infra/arena/maintenance.Dockerfile',
              'requirements-runtime.txt': ROOT / 'requirements-runtime.txt'}

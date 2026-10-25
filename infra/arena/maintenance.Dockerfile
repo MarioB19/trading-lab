@@ -14,5 +14,6 @@ COPY configs/arena ./configs/arena
 COPY release.json ./
 ARG ARENA_SOURCE_COMMIT
 ENV TRADING_LAB_BUILD_ID=$ARENA_SOURCE_COMMIT
-RUN python -c 'from lab import arena_maintenance; assert arena_maintenance.enabled(); from lab.arena import plan; plan()'
+# La imagen no se construye si `run` no despacha al mantenimiento antes del worker.
+RUN python -c 'import inspect; from lab import arena_maintenance, arena_hosted; assert arena_maintenance.enabled(); src = inspect.getsource(arena_hosted.run); assert src.index("arena_maintenance.enabled()") < src.index("subprocess.Popen"); from lab.arena import plan; plan()'
 ENTRYPOINT ["python", "-m", "lab.arena_hosted", "run"]
