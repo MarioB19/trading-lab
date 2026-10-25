@@ -1,0 +1,822 @@
+[
+ {
+  "id": 1,
+  "payload": {
+   "action": "pause",
+   "strategy": "scalping-v1"
+  },
+  "ts": 1791162849398,
+  "ts_iso": "2026-10-05T01:14:09.398000Z"
+ },
+ {
+  "id": 2,
+  "payload": {
+   "action": "resume",
+   "strategy": "scalping-v1"
+  },
+  "ts": 1791162856160,
+  "ts_iso": "2026-10-05T01:14:16.160000Z"
+ },
+ {
+  "id": 3,
+  "payload": {
+   "error": "Libro viejo o futuro",
+   "observed_ms": 1791163275067,
+   "status": "error"
+  },
+  "ts": 1791163275067,
+  "ts_iso": "2026-10-05T01:21:15.067000Z"
+ },
+ {
+  "id": 4,
+  "payload": {
+   "error": "Libro viejo o futuro",
+   "observed_ms": 1791163757046,
+   "status": "error"
+  },
+  "ts": 1791163757046,
+  "ts_iso": "2026-10-05T01:29:17.046000Z"
+ },
+ {
+  "id": 5,
+  "payload": {
+   "error": "Libro viejo o futuro",
+   "observed_ms": 1791164020059,
+   "status": "error"
+  },
+  "ts": 1791164020059,
+  "ts_iso": "2026-10-05T01:33:40.059000Z"
+ },
+ {
+  "id": 6,
+  "payload": {
+   "action": "railway_cutover",
+   "balances_reset": false,
+   "new_proof": {
+    "attestation_sha256": "eb28f471e106e35b7886c3a8f73dd1b7ac842240ae04be3f7ff725ed187d5502",
+    "code_commit": "4ac103b6f3c23e5b0244e6575539602ad9259fa5",
+    "commit": "61c6ac319f9f5421a4c1b9ad80e5d5165b2fcc72",
+    "criteria": {
+     "bootstrap": "Validación futura bloqueada hasta muestra independiente suficiente; bootstrap emparejado por bloques contra BTC comprado al inicio y efectivo, intervalo 95 por ciento de exceso neto por encima de cero y corrección familiar. Longitud siete días, 10000 réplicas; 28 días no bastan para afirmar ventaja.",
+     "cost_stress": "Reportar todos los fills y comisiones; evaluar sensibilidad 1x y 2x sin afirmar que reprecificar fees reproduce otras decisiones. Precios taker contra profundidad visible; maker solo trades posteriores que atraviesan la cotización, participación máxima diez por ciento.",
+     "drawdown": "Freno permanente al veinte por ciento desde el máximo y pausa hasta el siguiente día UTC al tres por ciento diario; no garantizan pérdida máxima y se conserva inventario si faltan datos o profundidad.",
+     "placebo": "Validación futura bloqueada hasta disponer de suficientes entradas causales y libro/trades archivados. Exigir p menor que 0.05 con Holm para cuatro comparaciones; no sustituir por una prueba sobre precios sin ejecución.",
+     "walk_forward": "Sin optimización; cuatro ventanas consecutivas de siete días futuros. Reportar cada una, sin seleccionar ganadora ni promover con solo 28 días; exigir protocolo histórico operable independiente antes de promoción."
+    },
+    "metadata": {
+     "config_sha256": "da87a899233efafcddee05403d9780881bf2671854bdd02baba691a84ab2143a",
+     "criteria": {
+      "bootstrap": "Validación futura bloqueada hasta muestra independiente suficiente; bootstrap emparejado por bloques contra BTC comprado al inicio y efectivo, intervalo 95 por ciento de exceso neto por encima de cero y corrección familiar. Longitud siete días, 10000 réplicas; 28 días no bastan para afirmar ventaja.",
+      "cost_stress": "Reportar todos los fills y comisiones; evaluar sensibilidad 1x y 2x sin afirmar que reprecificar fees reproduce otras decisiones. Precios taker contra profundidad visible; maker solo trades posteriores que atraviesan la cotización, participación máxima diez por ciento.",
+      "drawdown": "Freno permanente al veinte por ciento desde el máximo y pausa hasta el siguiente día UTC al tres por ciento diario; no garantizan pérdida máxima y se conserva inventario si faltan datos o profundidad.",
+      "placebo": "Validación futura bloqueada hasta disponer de suficientes entradas causales y libro/trades archivados. Exigir p menor que 0.05 con Holm para cuatro comparaciones; no sustituir por una prueba sobre precios sin ejecución.",
+      "walk_forward": "Sin optimización; cuatro ventanas consecutivas de siete días futuros. Reportar cada una, sin seleccionar ganadora ni promover con solo 28 días; exigir protocolo histórico operable independiente antes de promoción."
+     },
+     "evaluation_window": "28 días futuros completos desde la activación aprobada; los datos previos solo calientan señales, no generan operaciones retrospectivas.",
+     "experiment_id": "four-strategy-arena-v1",
+     "hypothesis": "Las cuatro familias pueden compararse con capital independiente y ejecución financiada; ninguna se presume rentable.",
+     "protocol_version": 1,
+     "status": "approved",
+     "variant_ids": [
+      "scalping-v1",
+      "swing-v1",
+      "mean-reversion-v1",
+      "market-making-v1"
+     ]
+    },
+    "path": "reports/four_strategy_arena_v1_preregistro.md",
+    "proof_kind": "git-content-ancestry-v1",
+    "sha256": "9d3c3e5df860a5fa8433b9f0ed81b43cda79af506453054709712c38954db73c"
+   },
+   "previous_proof": {
+    "code_commit": "7c3afe42cffaa87d2e19c8f0de48723ea3d8ab63",
+    "commit": "61c6ac319f9f5421a4c1b9ad80e5d5165b2fcc72",
+    "criteria": {
+     "bootstrap": "Validación futura bloqueada hasta muestra independiente suficiente; bootstrap emparejado por bloques contra BTC comprado al inicio y efectivo, intervalo 95 por ciento de exceso neto por encima de cero y corrección familiar. Longitud siete días, 10000 réplicas; 28 días no bastan para afirmar ventaja.",
+     "cost_stress": "Reportar todos los fills y comisiones; evaluar sensibilidad 1x y 2x sin afirmar que reprecificar fees reproduce otras decisiones. Precios taker contra profundidad visible; maker solo trades posteriores que atraviesan la cotización, participación máxima diez por ciento.",
+     "drawdown": "Freno permanente al veinte por ciento desde el máximo y pausa hasta el siguiente día UTC al tres por ciento diario; no garantizan pérdida máxima y se conserva inventario si faltan datos o profundidad.",
+     "placebo": "Validación futura bloqueada hasta disponer de suficientes entradas causales y libro/trades archivados. Exigir p menor que 0.05 con Holm para cuatro comparaciones; no sustituir por una prueba sobre precios sin ejecución.",
+     "walk_forward": "Sin optimización; cuatro ventanas consecutivas de siete días futuros. Reportar cada una, sin seleccionar ganadora ni promover con solo 28 días; exigir protocolo histórico operable independiente antes de promoción."
+    },
+    "metadata": {
+     "config_sha256": "da87a899233efafcddee05403d9780881bf2671854bdd02baba691a84ab2143a",
+     "criteria": {
+      "bootstrap": "Validación futura bloqueada hasta muestra independiente suficiente; bootstrap emparejado por bloques contra BTC comprado al inicio y efectivo, intervalo 95 por ciento de exceso neto por encima de cero y corrección familiar. Longitud siete días, 10000 réplicas; 28 días no bastan para afirmar ventaja.",
+      "cost_stress": "Reportar todos los fills y comisiones; evaluar sensibilidad 1x y 2x sin afirmar que reprecificar fees reproduce otras decisiones. Precios taker contra profundidad visible; maker solo trades posteriores que atraviesan la cotización, participación máxima diez por ciento.",
+      "drawdown": "Freno permanente al veinte por ciento desde el máximo y pausa hasta el siguiente día UTC al tres por ciento diario; no garantizan pérdida máxima y se conserva inventario si faltan datos o profundidad.",
+      "placebo": "Validación futura bloqueada hasta disponer de suficientes entradas causales y libro/trades archivados. Exigir p menor que 0.05 con Holm para cuatro comparaciones; no sustituir por una prueba sobre precios sin ejecución.",
+      "walk_forward": "Sin optimización; cuatro ventanas consecutivas de siete días futuros. Reportar cada una, sin seleccionar ganadora ni promover con solo 28 días; exigir protocolo histórico operable independiente antes de promoción."
+     },
+     "evaluation_window": "28 días futuros completos desde la activación aprobada; los datos previos solo calientan señales, no generan operaciones retrospectivas.",
+     "experiment_id": "four-strategy-arena-v1",
+     "hypothesis": "Las cuatro familias pueden compararse con capital independiente y ejecución financiada; ninguna se presume rentable.",
+     "protocol_version": 1,
+     "status": "approved",
+     "variant_ids": [
+      "scalping-v1",
+      "swing-v1",
+      "mean-reversion-v1",
+      "market-making-v1"
+     ]
+    },
+    "path": "reports/four_strategy_arena_v1_preregistro.md",
+    "sha256": "9d3c3e5df860a5fa8433b9f0ed81b43cda79af506453054709712c38954db73c"
+   },
+   "rule_change": false
+  },
+  "ts": 1791164271027,
+  "ts_iso": "2026-10-05T01:37:51.027000Z"
+ },
+ {
+  "id": 7,
+  "payload": {
+   "action": "daily_reporting_upgrade",
+   "balances_reset": false,
+   "frozen_engine_verified": true,
+   "new_proof": {
+    "attestation_sha256": "3cc4071de269f3f25658b1445eaf83abde859efba74380f29d4114df5b9080e0",
+    "code_commit": "7e35212032ab604f1aabdc66d370a706af0685c9",
+    "commit": "61c6ac319f9f5421a4c1b9ad80e5d5165b2fcc72",
+    "criteria": {
+     "bootstrap": "Validación futura bloqueada hasta muestra independiente suficiente; bootstrap emparejado por bloques contra BTC comprado al inicio y efectivo, intervalo 95 por ciento de exceso neto por encima de cero y corrección familiar. Longitud siete días, 10000 réplicas; 28 días no bastan para afirmar ventaja.",
+     "cost_stress": "Reportar todos los fills y comisiones; evaluar sensibilidad 1x y 2x sin afirmar que reprecificar fees reproduce otras decisiones. Precios taker contra profundidad visible; maker solo trades posteriores que atraviesan la cotización, participación máxima diez por ciento.",
+     "drawdown": "Freno permanente al veinte por ciento desde el máximo y pausa hasta el siguiente día UTC al tres por ciento diario; no garantizan pérdida máxima y se conserva inventario si faltan datos o profundidad.",
+     "placebo": "Validación futura bloqueada hasta disponer de suficientes entradas causales y libro/trades archivados. Exigir p menor que 0.05 con Holm para cuatro comparaciones; no sustituir por una prueba sobre precios sin ejecución.",
+     "walk_forward": "Sin optimización; cuatro ventanas consecutivas de siete días futuros. Reportar cada una, sin seleccionar ganadora ni promover con solo 28 días; exigir protocolo histórico operable independiente antes de promoción."
+    },
+    "metadata": {
+     "config_sha256": "da87a899233efafcddee05403d9780881bf2671854bdd02baba691a84ab2143a",
+     "criteria": {
+      "bootstrap": "Validación futura bloqueada hasta muestra independiente suficiente; bootstrap emparejado por bloques contra BTC comprado al inicio y efectivo, intervalo 95 por ciento de exceso neto por encima de cero y corrección familiar. Longitud siete días, 10000 réplicas; 28 días no bastan para afirmar ventaja.",
+      "cost_stress": "Reportar todos los fills y comisiones; evaluar sensibilidad 1x y 2x sin afirmar que reprecificar fees reproduce otras decisiones. Precios taker contra profundidad visible; maker solo trades posteriores que atraviesan la cotización, participación máxima diez por ciento.",
+      "drawdown": "Freno permanente al veinte por ciento desde el máximo y pausa hasta el siguiente día UTC al tres por ciento diario; no garantizan pérdida máxima y se conserva inventario si faltan datos o profundidad.",
+      "placebo": "Validación futura bloqueada hasta disponer de suficientes entradas causales y libro/trades archivados. Exigir p menor que 0.05 con Holm para cuatro comparaciones; no sustituir por una prueba sobre precios sin ejecución.",
+      "walk_forward": "Sin optimización; cuatro ventanas consecutivas de siete días futuros. Reportar cada una, sin seleccionar ganadora ni promover con solo 28 días; exigir protocolo histórico operable independiente antes de promoción."
+     },
+     "evaluation_window": "28 días futuros completos desde la activación aprobada; los datos previos solo calientan señales, no generan operaciones retrospectivas.",
+     "experiment_id": "four-strategy-arena-v1",
+     "hypothesis": "Las cuatro familias pueden compararse con capital independiente y ejecución financiada; ninguna se presume rentable.",
+     "protocol_version": 1,
+     "status": "approved",
+     "variant_ids": [
+      "scalping-v1",
+      "swing-v1",
+      "mean-reversion-v1",
+      "market-making-v1"
+     ]
+    },
+    "path": "reports/four_strategy_arena_v1_preregistro.md",
+    "proof_kind": "git-content-ancestry-v1",
+    "sha256": "9d3c3e5df860a5fa8433b9f0ed81b43cda79af506453054709712c38954db73c"
+   },
+   "previous_proof": {
+    "attestation_sha256": "eb28f471e106e35b7886c3a8f73dd1b7ac842240ae04be3f7ff725ed187d5502",
+    "code_commit": "4ac103b6f3c23e5b0244e6575539602ad9259fa5",
+    "commit": "61c6ac319f9f5421a4c1b9ad80e5d5165b2fcc72",
+    "criteria": {
+     "bootstrap": "Validación futura bloqueada hasta muestra independiente suficiente; bootstrap emparejado por bloques contra BTC comprado al inicio y efectivo, intervalo 95 por ciento de exceso neto por encima de cero y corrección familiar. Longitud siete días, 10000 réplicas; 28 días no bastan para afirmar ventaja.",
+     "cost_stress": "Reportar todos los fills y comisiones; evaluar sensibilidad 1x y 2x sin afirmar que reprecificar fees reproduce otras decisiones. Precios taker contra profundidad visible; maker solo trades posteriores que atraviesan la cotización, participación máxima diez por ciento.",
+     "drawdown": "Freno permanente al veinte por ciento desde el máximo y pausa hasta el siguiente día UTC al tres por ciento diario; no garantizan pérdida máxima y se conserva inventario si faltan datos o profundidad.",
+     "placebo": "Validación futura bloqueada hasta disponer de suficientes entradas causales y libro/trades archivados. Exigir p menor que 0.05 con Holm para cuatro comparaciones; no sustituir por una prueba sobre precios sin ejecución.",
+     "walk_forward": "Sin optimización; cuatro ventanas consecutivas de siete días futuros. Reportar cada una, sin seleccionar ganadora ni promover con solo 28 días; exigir protocolo histórico operable independiente antes de promoción."
+    },
+    "metadata": {
+     "config_sha256": "da87a899233efafcddee05403d9780881bf2671854bdd02baba691a84ab2143a",
+     "criteria": {
+      "bootstrap": "Validación futura bloqueada hasta muestra independiente suficiente; bootstrap emparejado por bloques contra BTC comprado al inicio y efectivo, intervalo 95 por ciento de exceso neto por encima de cero y corrección familiar. Longitud siete días, 10000 réplicas; 28 días no bastan para afirmar ventaja.",
+      "cost_stress": "Reportar todos los fills y comisiones; evaluar sensibilidad 1x y 2x sin afirmar que reprecificar fees reproduce otras decisiones. Precios taker contra profundidad visible; maker solo trades posteriores que atraviesan la cotización, participación máxima diez por ciento.",
+      "drawdown": "Freno permanente al veinte por ciento desde el máximo y pausa hasta el siguiente día UTC al tres por ciento diario; no garantizan pérdida máxima y se conserva inventario si faltan datos o profundidad.",
+      "placebo": "Validación futura bloqueada hasta disponer de suficientes entradas causales y libro/trades archivados. Exigir p menor que 0.05 con Holm para cuatro comparaciones; no sustituir por una prueba sobre precios sin ejecución.",
+      "walk_forward": "Sin optimización; cuatro ventanas consecutivas de siete días futuros. Reportar cada una, sin seleccionar ganadora ni promover con solo 28 días; exigir protocolo histórico operable independiente antes de promoción."
+     },
+     "evaluation_window": "28 días futuros completos desde la activación aprobada; los datos previos solo calientan señales, no generan operaciones retrospectivas.",
+     "experiment_id": "four-strategy-arena-v1",
+     "hypothesis": "Las cuatro familias pueden compararse con capital independiente y ejecución financiada; ninguna se presume rentable.",
+     "protocol_version": 1,
+     "status": "approved",
+     "variant_ids": [
+      "scalping-v1",
+      "swing-v1",
+      "mean-reversion-v1",
+      "market-making-v1"
+     ]
+    },
+    "path": "reports/four_strategy_arena_v1_preregistro.md",
+    "proof_kind": "git-content-ancestry-v1",
+    "sha256": "9d3c3e5df860a5fa8433b9f0ed81b43cda79af506453054709712c38954db73c"
+   },
+   "rule_change": false
+  },
+  "ts": 1791165859047,
+  "ts_iso": "2026-10-05T02:04:19.047000Z"
+ },
+ {
+  "id": 8,
+  "payload": {
+   "action": "fee_model_upgrade",
+   "balances_reset": false,
+   "cost_model_changed": true,
+   "fee_policy": {
+    "activated_ms": 1791209508638,
+    "after_fill_id": 9,
+    "model_id": "bitso-usd-20261005-v2",
+    "opening_wallets": {
+     "market-making-v1": {
+      "cash": 749.0729231229,
+      "cost_basis": 250.9270768771,
+      "equity": 998.3254817479,
+      "fees": 0.9000971271,
+      "peak": 1000.0,
+      "qty": 0.00288425,
+      "realized": 0.0
+     },
+     "mean-reversion-v1": {
+      "cash": 1000.0,
+      "cost_basis": 0.0,
+      "equity": 1000.0,
+      "fees": 0.0,
+      "peak": 1000.0,
+      "qty": 0.0,
+      "realized": 0.0
+     },
+     "scalping-v1": {
+      "cash": 744.3614893598522,
+      "cost_basis": 249.369768206208,
+      "equity": 993.1664001548522,
+      "fees": 6.281658590148,
+      "peak": 1000.0,
+      "qty": 0.00287907,
+      "realized": -6.2687424339400195
+     },
+     "swing-v1": {
+      "cash": 96.661653251708,
+      "cost_basis": 903.338346748292,
+      "equity": 993.971728486708,
+      "fees": 3.240352778292,
+      "peak": 1000.0,
+      "qty": 0.01038331,
+      "realized": 0.0
+     }
+    },
+    "proof": {
+     "attestation_sha256": "c8517a49e6255d0915d802d1920999bf4e44069326665eb13539381d2a696472",
+     "code_commit": "1a1d3b9e25cf376d33f49571545616972eac67e4",
+     "commit": "d26ee0b693bafb607ff030cb709dd25b41887259",
+     "criteria": {
+      "bootstrap": "Pendiente de muestra prospectiva independiente y corrección familiar; no se reinterpreta el pasado como fuera de muestra.",
+      "cost_stress": "Comparar tarifas sobre las mismas ejecuciones registradas, sin reconstruir señales ni asumir fills maker factibles. No equivale a otro portafolio ni a rendimiento alternativo.",
+      "drawdown": "Se mantienen frenos, picos, contadores, capital y posiciones existentes; no se reinician riesgos ni pérdidas.",
+      "placebo": "Pendiente de protocolo y muestra suficiente; ningún diagnóstico de tarifas satisface este criterio.",
+      "walk_forward": "No se ejecuta ni se afirma una validación de rentabilidad. Cualquier promoción requiere un protocolo independiente y walk-forward fuera de muestra."
+     },
+     "metadata": {
+      "config_sha256": "5e8a4cf98081dcbbfb39e51a37588f93c45941c9e01de08b830275f4df365b47",
+      "criteria": {
+       "bootstrap": "Pendiente de muestra prospectiva independiente y corrección familiar; no se reinterpreta el pasado como fuera de muestra.",
+       "cost_stress": "Comparar tarifas sobre las mismas ejecuciones registradas, sin reconstruir señales ni asumir fills maker factibles. No equivale a otro portafolio ni a rendimiento alternativo.",
+       "drawdown": "Se mantienen frenos, picos, contadores, capital y posiciones existentes; no se reinician riesgos ni pérdidas.",
+       "placebo": "Pendiente de protocolo y muestra suficiente; ningún diagnóstico de tarifas satisface este criterio.",
+       "walk_forward": "No se ejecuta ni se afirma una validación de rentabilidad. Cualquier promoción requiere un protocolo independiente y walk-forward fuera de muestra."
+      },
+      "evaluation_window": "Solo ejecuciones futuras desde el corte registrado; el tramo corregido inicia su propio contador de 28 días y conserva íntegro el historial anterior.",
+      "experiment_id": "arena-fees-v2",
+      "hypothesis": "Corregir el modelo de costos según la tabla pública de Bitso, sin seleccionar señales por sus resultados recientes ni afirmar rentabilidad.",
+      "protocol_version": 1,
+      "status": "approved",
+      "variant_ids": [
+       "scalping-v1",
+       "swing-v1",
+       "mean-reversion-v1",
+       "market-making-v1"
+      ]
+     },
+     "path": "reports/arena_fees_v2_preregistro.md",
+     "proof_kind": "git-content-ancestry-v1",
+     "sha256": "c0c0aa47bf81453a4dca3b09ae6ae21b29f03289aebbfb505852cd67b250ca42"
+    },
+    "schedule_sha256": "5e8a4cf98081dcbbfb39e51a37588f93c45941c9e01de08b830275f4df365b47",
+    "scope": "per_strategy"
+   },
+   "historical_fees_rewritten": false,
+   "new_proof": {
+    "attestation_sha256": "1f01618ad11cddfb90004301b0fe73098ddc19aace9a298844b9ef29b9cdd61d",
+    "code_commit": "1a1d3b9e25cf376d33f49571545616972eac67e4",
+    "commit": "61c6ac319f9f5421a4c1b9ad80e5d5165b2fcc72",
+    "criteria": {
+     "bootstrap": "Validación futura bloqueada hasta muestra independiente suficiente; bootstrap emparejado por bloques contra BTC comprado al inicio y efectivo, intervalo 95 por ciento de exceso neto por encima de cero y corrección familiar. Longitud siete días, 10000 réplicas; 28 días no bastan para afirmar ventaja.",
+     "cost_stress": "Reportar todos los fills y comisiones; evaluar sensibilidad 1x y 2x sin afirmar que reprecificar fees reproduce otras decisiones. Precios taker contra profundidad visible; maker solo trades posteriores que atraviesan la cotización, participación máxima diez por ciento.",
+     "drawdown": "Freno permanente al veinte por ciento desde el máximo y pausa hasta el siguiente día UTC al tres por ciento diario; no garantizan pérdida máxima y se conserva inventario si faltan datos o profundidad.",
+     "placebo": "Validación futura bloqueada hasta disponer de suficientes entradas causales y libro/trades archivados. Exigir p menor que 0.05 con Holm para cuatro comparaciones; no sustituir por una prueba sobre precios sin ejecución.",
+     "walk_forward": "Sin optimización; cuatro ventanas consecutivas de siete días futuros. Reportar cada una, sin seleccionar ganadora ni promover con solo 28 días; exigir protocolo histórico operable independiente antes de promoción."
+    },
+    "metadata": {
+     "config_sha256": "da87a899233efafcddee05403d9780881bf2671854bdd02baba691a84ab2143a",
+     "criteria": {
+      "bootstrap": "Validación futura bloqueada hasta muestra independiente suficiente; bootstrap emparejado por bloques contra BTC comprado al inicio y efectivo, intervalo 95 por ciento de exceso neto por encima de cero y corrección familiar. Longitud siete días, 10000 réplicas; 28 días no bastan para afirmar ventaja.",
+      "cost_stress": "Reportar todos los fills y comisiones; evaluar sensibilidad 1x y 2x sin afirmar que reprecificar fees reproduce otras decisiones. Precios taker contra profundidad visible; maker solo trades posteriores que atraviesan la cotización, participación máxima diez por ciento.",
+      "drawdown": "Freno permanente al veinte por ciento desde el máximo y pausa hasta el siguiente día UTC al tres por ciento diario; no garantizan pérdida máxima y se conserva inventario si faltan datos o profundidad.",
+      "placebo": "Validación futura bloqueada hasta disponer de suficientes entradas causales y libro/trades archivados. Exigir p menor que 0.05 con Holm para cuatro comparaciones; no sustituir por una prueba sobre precios sin ejecución.",
+      "walk_forward": "Sin optimización; cuatro ventanas consecutivas de siete días futuros. Reportar cada una, sin seleccionar ganadora ni promover con solo 28 días; exigir protocolo histórico operable independiente antes de promoción."
+     },
+     "evaluation_window": "28 días futuros completos desde la activación aprobada; los datos previos solo calientan señales, no generan operaciones retrospectivas.",
+     "experiment_id": "four-strategy-arena-v1",
+     "hypothesis": "Las cuatro familias pueden compararse con capital independiente y ejecución financiada; ninguna se presume rentable.",
+     "protocol_version": 1,
+     "status": "approved",
+     "variant_ids": [
+      "scalping-v1",
+      "swing-v1",
+      "mean-reversion-v1",
+      "market-making-v1"
+     ]
+    },
+    "path": "reports/four_strategy_arena_v1_preregistro.md",
+    "proof_kind": "git-content-ancestry-v1",
+    "sha256": "9d3c3e5df860a5fa8433b9f0ed81b43cda79af506453054709712c38954db73c"
+   },
+   "previous_proof": {
+    "attestation_sha256": "3cc4071de269f3f25658b1445eaf83abde859efba74380f29d4114df5b9080e0",
+    "code_commit": "7e35212032ab604f1aabdc66d370a706af0685c9",
+    "commit": "61c6ac319f9f5421a4c1b9ad80e5d5165b2fcc72",
+    "criteria": {
+     "bootstrap": "Validación futura bloqueada hasta muestra independiente suficiente; bootstrap emparejado por bloques contra BTC comprado al inicio y efectivo, intervalo 95 por ciento de exceso neto por encima de cero y corrección familiar. Longitud siete días, 10000 réplicas; 28 días no bastan para afirmar ventaja.",
+     "cost_stress": "Reportar todos los fills y comisiones; evaluar sensibilidad 1x y 2x sin afirmar que reprecificar fees reproduce otras decisiones. Precios taker contra profundidad visible; maker solo trades posteriores que atraviesan la cotización, participación máxima diez por ciento.",
+     "drawdown": "Freno permanente al veinte por ciento desde el máximo y pausa hasta el siguiente día UTC al tres por ciento diario; no garantizan pérdida máxima y se conserva inventario si faltan datos o profundidad.",
+     "placebo": "Validación futura bloqueada hasta disponer de suficientes entradas causales y libro/trades archivados. Exigir p menor que 0.05 con Holm para cuatro comparaciones; no sustituir por una prueba sobre precios sin ejecución.",
+     "walk_forward": "Sin optimización; cuatro ventanas consecutivas de siete días futuros. Reportar cada una, sin seleccionar ganadora ni promover con solo 28 días; exigir protocolo histórico operable independiente antes de promoción."
+    },
+    "metadata": {
+     "config_sha256": "da87a899233efafcddee05403d9780881bf2671854bdd02baba691a84ab2143a",
+     "criteria": {
+      "bootstrap": "Validación futura bloqueada hasta muestra independiente suficiente; bootstrap emparejado por bloques contra BTC comprado al inicio y efectivo, intervalo 95 por ciento de exceso neto por encima de cero y corrección familiar. Longitud siete días, 10000 réplicas; 28 días no bastan para afirmar ventaja.",
+      "cost_stress": "Reportar todos los fills y comisiones; evaluar sensibilidad 1x y 2x sin afirmar que reprecificar fees reproduce otras decisiones. Precios taker contra profundidad visible; maker solo trades posteriores que atraviesan la cotización, participación máxima diez por ciento.",
+      "drawdown": "Freno permanente al veinte por ciento desde el máximo y pausa hasta el siguiente día UTC al tres por ciento diario; no garantizan pérdida máxima y se conserva inventario si faltan datos o profundidad.",
+      "placebo": "Validación futura bloqueada hasta disponer de suficientes entradas causales y libro/trades archivados. Exigir p menor que 0.05 con Holm para cuatro comparaciones; no sustituir por una prueba sobre precios sin ejecución.",
+      "walk_forward": "Sin optimización; cuatro ventanas consecutivas de siete días futuros. Reportar cada una, sin seleccionar ganadora ni promover con solo 28 días; exigir protocolo histórico operable independiente antes de promoción."
+     },
+     "evaluation_window": "28 días futuros completos desde la activación aprobada; los datos previos solo calientan señales, no generan operaciones retrospectivas.",
+     "experiment_id": "four-strategy-arena-v1",
+     "hypothesis": "Las cuatro familias pueden compararse con capital independiente y ejecución financiada; ninguna se presume rentable.",
+     "protocol_version": 1,
+     "status": "approved",
+     "variant_ids": [
+      "scalping-v1",
+      "swing-v1",
+      "mean-reversion-v1",
+      "market-making-v1"
+     ]
+    },
+    "path": "reports/four_strategy_arena_v1_preregistro.md",
+    "proof_kind": "git-content-ancestry-v1",
+    "sha256": "9d3c3e5df860a5fa8433b9f0ed81b43cda79af506453054709712c38954db73c"
+   },
+   "signal_rules_changed": false
+  },
+  "ts": 1791209508638,
+  "ts_iso": "2026-10-05T14:11:48.638000Z"
+ },
+ {
+  "id": 9,
+  "payload": {
+   "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+   "observed_ms": 1791219915247,
+   "status": "error"
+  },
+  "ts": 1791219915247,
+  "ts_iso": "2026-10-05T17:05:15.247000Z"
+ },
+ {
+  "id": 10,
+  "payload": {
+   "error": "HTTPSConnectionPool(host='bitso.com', port=443): Read timed out. (read timeout=20)",
+   "observed_ms": 1791340088160,
+   "status": "error"
+  },
+  "ts": 1791340088160,
+  "ts_iso": "2026-10-07T02:28:08.160000Z"
+ },
+ {
+  "id": 11,
+  "payload": {
+   "error": "HTTPSConnectionPool(host='bitso.com', port=443): Read timed out. (read timeout=20)",
+   "observed_ms": 1791341410940,
+   "status": "error"
+  },
+  "ts": 1791341410940,
+  "ts_iso": "2026-10-07T02:50:10.940000Z"
+ },
+ {
+  "id": 12,
+  "payload": {
+   "error": "HTTPSConnectionPool(host='bitso.com', port=443): Read timed out. (read timeout=20)",
+   "observed_ms": 1791341446448,
+   "status": "error"
+  },
+  "ts": 1791341446448,
+  "ts_iso": "2026-10-07T02:50:46.448000Z"
+ },
+ {
+  "id": 13,
+  "payload": {
+   "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+   "observed_ms": 1791474300655,
+   "status": "error"
+  },
+  "ts": 1791474300655,
+  "ts_iso": "2026-10-08T15:45:00.655000Z"
+ },
+ {
+  "id": 14,
+  "payload": {
+   "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+   "observed_ms": 1791618000110,
+   "status": "error"
+  },
+  "ts": 1791618000111,
+  "ts_iso": "2026-10-10T07:40:00.111000Z"
+ },
+ {
+  "id": 15,
+  "payload": {
+   "error": "HTTPSConnectionPool(host='bitso.com', port=443): Read timed out. (read timeout=20)",
+   "observed_ms": 1791642588388,
+   "status": "error"
+  },
+  "ts": 1791642588388,
+  "ts_iso": "2026-10-10T14:29:48.388000Z"
+ },
+ {
+  "id": 16,
+  "payload": {
+   "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+   "observed_ms": 1791654009149,
+   "status": "error"
+  },
+  "ts": 1791654009149,
+  "ts_iso": "2026-10-10T17:40:09.149000Z"
+ },
+ {
+  "id": 17,
+  "payload": {
+   "error": "HTTPSConnectionPool(host='bitso.com', port=443): Read timed out. (read timeout=20)",
+   "observed_ms": 1791744440588,
+   "status": "error"
+  },
+  "ts": 1791744440588,
+  "ts_iso": "2026-10-11T18:47:20.588000Z"
+ },
+ {
+  "id": 18,
+  "payload": {
+   "error": "500 Server Error: Internal Server Error for url: https://bitso.com/api/v3/order_book/?book=btc_usd&aggregate=true",
+   "observed_ms": 1791791434338,
+   "status": "error"
+  },
+  "ts": 1791791434338,
+  "ts_iso": "2026-10-12T07:50:34.338000Z"
+ },
+ {
+  "id": 19,
+  "payload": {
+   "error": "500 Server Error: Internal Server Error for url: https://bitso.com/api/v3/order_book/?book=btc_usd&aggregate=true",
+   "observed_ms": 1791791449752,
+   "status": "error"
+  },
+  "ts": 1791791449752,
+  "ts_iso": "2026-10-12T07:50:49.752000Z"
+ },
+ {
+  "id": 20,
+  "payload": {
+   "error": "500 Server Error: Internal Server Error for url: https://bitso.com/api/v3/order_book/?book=btc_usd&aggregate=true",
+   "observed_ms": 1791791465152,
+   "status": "error"
+  },
+  "ts": 1791791465152,
+  "ts_iso": "2026-10-12T07:51:05.152000Z"
+ },
+ {
+  "id": 21,
+  "payload": {
+   "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+   "observed_ms": 1791824106018,
+   "status": "error"
+  },
+  "ts": 1791824106018,
+  "ts_iso": "2026-10-12T16:55:06.018000Z"
+ },
+ {
+  "id": 22,
+  "payload": {
+   "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+   "observed_ms": 1791856508934,
+   "status": "error"
+  },
+  "ts": 1791856508934,
+  "ts_iso": "2026-10-13T01:55:08.934000Z"
+ },
+ {
+  "id": 23,
+  "payload": {
+   "error": "HTTPSConnectionPool(host='bitso.com', port=443): Read timed out. (read timeout=20)",
+   "observed_ms": 1791886632304,
+   "status": "error"
+  },
+  "ts": 1791886632304,
+  "ts_iso": "2026-10-13T10:17:12.304000Z"
+ },
+ {
+  "id": 24,
+  "payload": {
+   "error": "HTTPSConnectionPool(host='api.kraken.com', port=443): Read timed out. (read timeout=20)",
+   "observed_ms": 1791924324285,
+   "status": "error"
+  },
+  "ts": 1791924324285,
+  "ts_iso": "2026-10-13T20:45:24.285000Z"
+ },
+ {
+  "id": 25,
+  "payload": {
+   "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+   "observed_ms": 1792029308042,
+   "status": "error"
+  },
+  "ts": 1792029308042,
+  "ts_iso": "2026-10-15T01:55:08.042000Z"
+ },
+ {
+  "id": 26,
+  "payload": {
+   "action": "storage_recovery_upgrade",
+   "at_ms": 1792126349432,
+   "balances_reset": false,
+   "frozen_sources_verified": 50,
+   "gap_is_not_continuous_paper": true,
+   "history_removed": false,
+   "new_fee_proof": {
+    "attestation_sha256": "c7e0eb1e458a07b72da5e642f1a555329412b76795537fd722488cf5be187b68",
+    "code_commit": "eacdd9998a62812a083ec6189772391c8e39796f",
+    "commit": "d26ee0b693bafb607ff030cb709dd25b41887259",
+    "criteria": {
+     "bootstrap": "Pendiente de muestra prospectiva independiente y corrección familiar; no se reinterpreta el pasado como fuera de muestra.",
+     "cost_stress": "Comparar tarifas sobre las mismas ejecuciones registradas, sin reconstruir señales ni asumir fills maker factibles. No equivale a otro portafolio ni a rendimiento alternativo.",
+     "drawdown": "Se mantienen frenos, picos, contadores, capital y posiciones existentes; no se reinician riesgos ni pérdidas.",
+     "placebo": "Pendiente de protocolo y muestra suficiente; ningún diagnóstico de tarifas satisface este criterio.",
+     "walk_forward": "No se ejecuta ni se afirma una validación de rentabilidad. Cualquier promoción requiere un protocolo independiente y walk-forward fuera de muestra."
+    },
+    "metadata": {
+     "config_sha256": "5e8a4cf98081dcbbfb39e51a37588f93c45941c9e01de08b830275f4df365b47",
+     "criteria": {
+      "bootstrap": "Pendiente de muestra prospectiva independiente y corrección familiar; no se reinterpreta el pasado como fuera de muestra.",
+      "cost_stress": "Comparar tarifas sobre las mismas ejecuciones registradas, sin reconstruir señales ni asumir fills maker factibles. No equivale a otro portafolio ni a rendimiento alternativo.",
+      "drawdown": "Se mantienen frenos, picos, contadores, capital y posiciones existentes; no se reinician riesgos ni pérdidas.",
+      "placebo": "Pendiente de protocolo y muestra suficiente; ningún diagnóstico de tarifas satisface este criterio.",
+      "walk_forward": "No se ejecuta ni se afirma una validación de rentabilidad. Cualquier promoción requiere un protocolo independiente y walk-forward fuera de muestra."
+     },
+     "evaluation_window": "Solo ejecuciones futuras desde el corte registrado; el tramo corregido inicia su propio contador de 28 días y conserva íntegro el historial anterior.",
+     "experiment_id": "arena-fees-v2",
+     "hypothesis": "Corregir el modelo de costos según la tabla pública de Bitso, sin seleccionar señales por sus resultados recientes ni afirmar rentabilidad.",
+     "protocol_version": 1,
+     "status": "approved",
+     "variant_ids": [
+      "scalping-v1",
+      "swing-v1",
+      "mean-reversion-v1",
+      "market-making-v1"
+     ]
+    },
+    "path": "reports/arena_fees_v2_preregistro.md",
+    "proof_kind": "git-content-ancestry-v1",
+    "sha256": "c0c0aa47bf81453a4dca3b09ae6ae21b29f03289aebbfb505852cd67b250ca42"
+   },
+   "new_proof": {
+    "attestation_sha256": "b2bccaaddf9e95ec3198700d633596e9d059c3ad7845e2ab4197f43f135ba340",
+    "code_commit": "eacdd9998a62812a083ec6189772391c8e39796f",
+    "commit": "61c6ac319f9f5421a4c1b9ad80e5d5165b2fcc72",
+    "criteria": {
+     "bootstrap": "Validación futura bloqueada hasta muestra independiente suficiente; bootstrap emparejado por bloques contra BTC comprado al inicio y efectivo, intervalo 95 por ciento de exceso neto por encima de cero y corrección familiar. Longitud siete días, 10000 réplicas; 28 días no bastan para afirmar ventaja.",
+     "cost_stress": "Reportar todos los fills y comisiones; evaluar sensibilidad 1x y 2x sin afirmar que reprecificar fees reproduce otras decisiones. Precios taker contra profundidad visible; maker solo trades posteriores que atraviesan la cotización, participación máxima diez por ciento.",
+     "drawdown": "Freno permanente al veinte por ciento desde el máximo y pausa hasta el siguiente día UTC al tres por ciento diario; no garantizan pérdida máxima y se conserva inventario si faltan datos o profundidad.",
+     "placebo": "Validación futura bloqueada hasta disponer de suficientes entradas causales y libro/trades archivados. Exigir p menor que 0.05 con Holm para cuatro comparaciones; no sustituir por una prueba sobre precios sin ejecución.",
+     "walk_forward": "Sin optimización; cuatro ventanas consecutivas de siete días futuros. Reportar cada una, sin seleccionar ganadora ni promover con solo 28 días; exigir protocolo histórico operable independiente antes de promoción."
+    },
+    "metadata": {
+     "config_sha256": "da87a899233efafcddee05403d9780881bf2671854bdd02baba691a84ab2143a",
+     "criteria": {
+      "bootstrap": "Validación futura bloqueada hasta muestra independiente suficiente; bootstrap emparejado por bloques contra BTC comprado al inicio y efectivo, intervalo 95 por ciento de exceso neto por encima de cero y corrección familiar. Longitud siete días, 10000 réplicas; 28 días no bastan para afirmar ventaja.",
+      "cost_stress": "Reportar todos los fills y comisiones; evaluar sensibilidad 1x y 2x sin afirmar que reprecificar fees reproduce otras decisiones. Precios taker contra profundidad visible; maker solo trades posteriores que atraviesan la cotización, participación máxima diez por ciento.",
+      "drawdown": "Freno permanente al veinte por ciento desde el máximo y pausa hasta el siguiente día UTC al tres por ciento diario; no garantizan pérdida máxima y se conserva inventario si faltan datos o profundidad.",
+      "placebo": "Validación futura bloqueada hasta disponer de suficientes entradas causales y libro/trades archivados. Exigir p menor que 0.05 con Holm para cuatro comparaciones; no sustituir por una prueba sobre precios sin ejecución.",
+      "walk_forward": "Sin optimización; cuatro ventanas consecutivas de siete días futuros. Reportar cada una, sin seleccionar ganadora ni promover con solo 28 días; exigir protocolo histórico operable independiente antes de promoción."
+     },
+     "evaluation_window": "28 días futuros completos desde la activación aprobada; los datos previos solo calientan señales, no generan operaciones retrospectivas.",
+     "experiment_id": "four-strategy-arena-v1",
+     "hypothesis": "Las cuatro familias pueden compararse con capital independiente y ejecución financiada; ninguna se presume rentable.",
+     "protocol_version": 1,
+     "status": "approved",
+     "variant_ids": [
+      "scalping-v1",
+      "swing-v1",
+      "mean-reversion-v1",
+      "market-making-v1"
+     ]
+    },
+    "path": "reports/four_strategy_arena_v1_preregistro.md",
+    "proof_kind": "git-content-ancestry-v1",
+    "sha256": "9d3c3e5df860a5fa8433b9f0ed81b43cda79af506453054709712c38954db73c"
+   },
+   "previous_fee_proof": {
+    "attestation_sha256": "c8517a49e6255d0915d802d1920999bf4e44069326665eb13539381d2a696472",
+    "code_commit": "1a1d3b9e25cf376d33f49571545616972eac67e4",
+    "commit": "d26ee0b693bafb607ff030cb709dd25b41887259",
+    "criteria": {
+     "bootstrap": "Pendiente de muestra prospectiva independiente y corrección familiar; no se reinterpreta el pasado como fuera de muestra.",
+     "cost_stress": "Comparar tarifas sobre las mismas ejecuciones registradas, sin reconstruir señales ni asumir fills maker factibles. No equivale a otro portafolio ni a rendimiento alternativo.",
+     "drawdown": "Se mantienen frenos, picos, contadores, capital y posiciones existentes; no se reinician riesgos ni pérdidas.",
+     "placebo": "Pendiente de protocolo y muestra suficiente; ningún diagnóstico de tarifas satisface este criterio.",
+     "walk_forward": "No se ejecuta ni se afirma una validación de rentabilidad. Cualquier promoción requiere un protocolo independiente y walk-forward fuera de muestra."
+    },
+    "metadata": {
+     "config_sha256": "5e8a4cf98081dcbbfb39e51a37588f93c45941c9e01de08b830275f4df365b47",
+     "criteria": {
+      "bootstrap": "Pendiente de muestra prospectiva independiente y corrección familiar; no se reinterpreta el pasado como fuera de muestra.",
+      "cost_stress": "Comparar tarifas sobre las mismas ejecuciones registradas, sin reconstruir señales ni asumir fills maker factibles. No equivale a otro portafolio ni a rendimiento alternativo.",
+      "drawdown": "Se mantienen frenos, picos, contadores, capital y posiciones existentes; no se reinician riesgos ni pérdidas.",
+      "placebo": "Pendiente de protocolo y muestra suficiente; ningún diagnóstico de tarifas satisface este criterio.",
+      "walk_forward": "No se ejecuta ni se afirma una validación de rentabilidad. Cualquier promoción requiere un protocolo independiente y walk-forward fuera de muestra."
+     },
+     "evaluation_window": "Solo ejecuciones futuras desde el corte registrado; el tramo corregido inicia su propio contador de 28 días y conserva íntegro el historial anterior.",
+     "experiment_id": "arena-fees-v2",
+     "hypothesis": "Corregir el modelo de costos según la tabla pública de Bitso, sin seleccionar señales por sus resultados recientes ni afirmar rentabilidad.",
+     "protocol_version": 1,
+     "status": "approved",
+     "variant_ids": [
+      "scalping-v1",
+      "swing-v1",
+      "mean-reversion-v1",
+      "market-making-v1"
+     ]
+    },
+    "path": "reports/arena_fees_v2_preregistro.md",
+    "proof_kind": "git-content-ancestry-v1",
+    "sha256": "c0c0aa47bf81453a4dca3b09ae6ae21b29f03289aebbfb505852cd67b250ca42"
+   },
+   "previous_proof": {
+    "attestation_sha256": "1f01618ad11cddfb90004301b0fe73098ddc19aace9a298844b9ef29b9cdd61d",
+    "code_commit": "1a1d3b9e25cf376d33f49571545616972eac67e4",
+    "commit": "61c6ac319f9f5421a4c1b9ad80e5d5165b2fcc72",
+    "criteria": {
+     "bootstrap": "Validación futura bloqueada hasta muestra independiente suficiente; bootstrap emparejado por bloques contra BTC comprado al inicio y efectivo, intervalo 95 por ciento de exceso neto por encima de cero y corrección familiar. Longitud siete días, 10000 réplicas; 28 días no bastan para afirmar ventaja.",
+     "cost_stress": "Reportar todos los fills y comisiones; evaluar sensibilidad 1x y 2x sin afirmar que reprecificar fees reproduce otras decisiones. Precios taker contra profundidad visible; maker solo trades posteriores que atraviesan la cotización, participación máxima diez por ciento.",
+     "drawdown": "Freno permanente al veinte por ciento desde el máximo y pausa hasta el siguiente día UTC al tres por ciento diario; no garantizan pérdida máxima y se conserva inventario si faltan datos o profundidad.",
+     "placebo": "Validación futura bloqueada hasta disponer de suficientes entradas causales y libro/trades archivados. Exigir p menor que 0.05 con Holm para cuatro comparaciones; no sustituir por una prueba sobre precios sin ejecución.",
+     "walk_forward": "Sin optimización; cuatro ventanas consecutivas de siete días futuros. Reportar cada una, sin seleccionar ganadora ni promover con solo 28 días; exigir protocolo histórico operable independiente antes de promoción."
+    },
+    "metadata": {
+     "config_sha256": "da87a899233efafcddee05403d9780881bf2671854bdd02baba691a84ab2143a",
+     "criteria": {
+      "bootstrap": "Validación futura bloqueada hasta muestra independiente suficiente; bootstrap emparejado por bloques contra BTC comprado al inicio y efectivo, intervalo 95 por ciento de exceso neto por encima de cero y corrección familiar. Longitud siete días, 10000 réplicas; 28 días no bastan para afirmar ventaja.",
+      "cost_stress": "Reportar todos los fills y comisiones; evaluar sensibilidad 1x y 2x sin afirmar que reprecificar fees reproduce otras decisiones. Precios taker contra profundidad visible; maker solo trades posteriores que atraviesan la cotización, participación máxima diez por ciento.",
+      "drawdown": "Freno permanente al veinte por ciento desde el máximo y pausa hasta el siguiente día UTC al tres por ciento diario; no garantizan pérdida máxima y se conserva inventario si faltan datos o profundidad.",
+      "placebo": "Validación futura bloqueada hasta disponer de suficientes entradas causales y libro/trades archivados. Exigir p menor que 0.05 con Holm para cuatro comparaciones; no sustituir por una prueba sobre precios sin ejecución.",
+      "walk_forward": "Sin optimización; cuatro ventanas consecutivas de siete días futuros. Reportar cada una, sin seleccionar ganadora ni promover con solo 28 días; exigir protocolo histórico operable independiente antes de promoción."
+     },
+     "evaluation_window": "28 días futuros completos desde la activación aprobada; los datos previos solo calientan señales, no generan operaciones retrospectivas.",
+     "experiment_id": "four-strategy-arena-v1",
+     "hypothesis": "Las cuatro familias pueden compararse con capital independiente y ejecución financiada; ninguna se presume rentable.",
+     "protocol_version": 1,
+     "status": "approved",
+     "variant_ids": [
+      "scalping-v1",
+      "swing-v1",
+      "mean-reversion-v1",
+      "market-making-v1"
+     ]
+    },
+    "path": "reports/four_strategy_arena_v1_preregistro.md",
+    "proof_kind": "git-content-ancestry-v1",
+    "sha256": "9d3c3e5df860a5fa8433b9f0ed81b43cda79af506453054709712c38954db73c"
+   },
+   "rule_change": false
+  },
+  "ts": 1792126349432,
+  "ts_iso": "2026-10-16T04:52:29.432000Z"
+ },
+ {
+  "id": 27,
+  "payload": {
+   "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+   "observed_ms": 1792138670513,
+   "status": "error"
+  },
+  "ts": 1792138670513,
+  "ts_iso": "2026-10-16T08:17:50.513000Z"
+ },
+ {
+  "id": 28,
+  "payload": {
+   "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+   "observed_ms": 1792139667753,
+   "status": "error"
+  },
+  "ts": 1792139667753,
+  "ts_iso": "2026-10-16T08:34:27.753000Z"
+ },
+ {
+  "id": 29,
+  "payload": {
+   "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+   "observed_ms": 1792226713999,
+   "status": "error"
+  },
+  "ts": 1792226713999,
+  "ts_iso": "2026-10-17T08:45:13.999000Z"
+ },
+ {
+  "id": 30,
+  "payload": {
+   "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+   "observed_ms": 1792365311792,
+   "status": "error"
+  },
+  "ts": 1792365311793,
+  "ts_iso": "2026-10-18T23:15:11.793000Z"
+ },
+ {
+  "id": 31,
+  "payload": {
+   "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+   "observed_ms": 1792428604250,
+   "status": "error"
+  },
+  "ts": 1792428604251,
+  "ts_iso": "2026-10-19T16:50:04.251000Z"
+ },
+ {
+  "id": 32,
+  "payload": {
+   "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+   "observed_ms": 1792510801196,
+   "status": "error"
+  },
+  "ts": 1792510801196,
+  "ts_iso": "2026-10-20T15:40:01.196000Z"
+ },
+ {
+  "id": 33,
+  "payload": {
+   "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+   "observed_ms": 1792651207058,
+   "status": "error"
+  },
+  "ts": 1792651207058,
+  "ts_iso": "2026-10-22T06:40:07.058000Z"
+ },
+ {
+  "id": 34,
+  "payload": {
+   "error": "('Connection aborted.', ConnectionResetError(104, 'Connection reset by peer'))",
+   "observed_ms": 1792782609249,
+   "status": "error"
+  },
+  "ts": 1792782609250,
+  "ts_iso": "2026-10-23T19:10:09.250000Z"
+ },
+ {
+  "id": 35,
+  "payload": {
+   "action": "pause",
+   "strategy": "scalping-v1"
+  },
+  "ts": 1792957179369,
+  "ts_iso": "2026-10-25T19:39:39.369000Z"
+ },
+ {
+  "id": 36,
+  "payload": {
+   "action": "pause",
+   "strategy": "swing-v1"
+  },
+  "ts": 1792957180614,
+  "ts_iso": "2026-10-25T19:39:40.614000Z"
+ },
+ {
+  "id": 37,
+  "payload": {
+   "action": "pause",
+   "strategy": "mean-reversion-v1"
+  },
+  "ts": 1792957181603,
+  "ts_iso": "2026-10-25T19:39:41.603000Z"
+ },
+ {
+  "id": 38,
+  "payload": {
+   "action": "pause",
+   "strategy": "market-making-v1"
+  },
+  "ts": 1792957182756,
+  "ts_iso": "2026-10-25T19:39:42.756000Z"
+ }
+]

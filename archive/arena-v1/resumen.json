@@ -1,0 +1,73 @@
+{
+ "as_of": "2026-10-25T19:40:14.459000Z",
+ "benchmark_equity_usd_per_1000": 925.3489380850094,
+ "final_mark_usd": 80504.5,
+ "live_authorized": false,
+ "mode": "paper",
+ "profitability_verified": false,
+ "strategies": [
+  {
+   "equity_usd": 848.0357538463755,
+   "fees_usd": 127.41407823462137,
+   "fills": 216,
+   "id": "scalping-v1",
+   "initial_usd": 1000.0,
+   "maker_fills": 0,
+   "name": "Day trading / scalping",
+   "pnl_usd": -151.96424615362446,
+   "qty_btc": 0.0,
+   "realized_usd": -151.96424615362434,
+   "status": "paused",
+   "taker_fills": 216
+  },
+  {
+   "equity_usd": 907.3985978657938,
+   "fees_usd": 14.556876426268982,
+   "fills": 5,
+   "id": "swing-v1",
+   "initial_usd": 1000.0,
+   "maker_fills": 0,
+   "name": "Swing / tendencias",
+   "pnl_usd": -92.60140213420618,
+   "qty_btc": 0.01016669,
+   "realized_usd": -81.39422532527226,
+   "status": "paused",
+   "taker_fills": 5
+  },
+  {
+   "equity_usd": 978.6923451604669,
+   "fees_usd": 21.094457446490633,
+   "fills": 26,
+   "id": "mean-reversion-v1",
+   "initial_usd": 1000.0,
+   "maker_fills": 0,
+   "name": "Reversión a la media",
+   "pnl_usd": -21.307654839533143,
+   "qty_btc": 0.0,
+   "realized_usd": -21.30765483953283,
+   "status": "paused",
+   "taker_fills": 26
+  },
+  {
+   "equity_usd": 979.9775412984834,
+   "fees_usd": 1.6316837902167,
+   "fills": 20,
+   "id": "market-making-v1",
+   "initial_usd": 1000.0,
+   "maker_fills": 19,
+   "name": "Creación de mercado",
+   "pnl_usd": -20.022458701516598,
+   "qty_btc": 0.004223240000000001,
+   "realized_usd": -2.7575140540177117,
+   "status": "paused",
+   "taker_fills": 1
+  }
+ ],
+ "total": {
+  "equity_usd": 3714.1042381711195,
+  "fees_usd": 164.69709589759768,
+  "fills": 267,
+  "initial_usd": 4000.0,
+  "pnl_usd": -285.8957618288805
+ }
+}

@@ -1,0 +1,74 @@
+{
+ "as_of": "2026-10-25T19:40:14.459000Z",
+ "curve_sampling": "último punto de cada hora UTC por estrategia, más el primero y el último",
+ "excluded": {
+  "captures": 113152,
+  "equity_rows": 452608,
+  "inputs": 6312,
+  "note": "capturas crudas de mercado; viven en el respaldo de la USB"
+ },
+ "files": {
+  "auditoria_diaria.json": "8182bcc2e8667be7cfa6d9ca46b8acc050e9ae2d7f1f384e22de3367c788b0e3",
+  "carteras_finales.json": "712cb17d88d7de8be804c2019293d30de99144f75b21a59c726d669cc448bf49",
+  "comisiones.json": "363321e89606112d25d628f6963d0c419917f620127db091170080967185058c",
+  "curva.csv": "d64a8df0f7d33eea6b170446cb3d04ec60ec9b7c7a4f5a0753f1ac63de7edca7",
+  "decisiones.csv": "104da17cb3ceacde371b291b75a1c425950c83cbec126a397d24100759e2af0c",
+  "eventos.json": "90f593e4bf5988e556886e34d1e709ee17c43ea5949c1f7673da87106077633d",
+  "operaciones.csv": "ce9bb47183c0777d11c38aaddccb12c82af84bea409e99e8bc6967a1e0b6b3d9",
+  "preregistros/arena_fees_v2_preregistro.md": "c0c0aa47bf81453a4dca3b09ae6ae21b29f03289aebbfb505852cd67b250ca42",
+  "preregistros/bitso_fees_v2.json": "006a32da3f95ab7a8b1fec372dad885a56a53c78c92053df61302f849ae5ab27",
+  "preregistros/four_strategies_v1.json": "f88dc06936d29e82a763f678cdb461a6b2a8dc61597d6f504d3acf74aae87bac",
+  "preregistros/four_strategy_arena_v1_preregistro.md": "9d3c3e5df860a5fa8433b9f0ed81b43cda79af506453054709712c38954db73c",
+  "resumen.json": "c1abda7222896d8ca75b02e4c381fa7d3f0c36cd521aafffad211e05b11d9ff8"
+ },
+ "generated_from_counts": {
+  "captures": 113152,
+  "decisions": 484,
+  "equity": 452608,
+  "events": 38,
+  "fills": 267,
+  "inputs": 6312,
+  "meta": 2,
+  "wallets": 4
+ },
+ "kind": "arena-archive-v1",
+ "live_authorized": false,
+ "mode": "paper",
+ "period": {
+  "first_capture_iso": "2026-10-05T01:16:51.529000Z",
+  "last_capture_iso": "2026-10-25T19:40:14.459000Z"
+ },
+ "preregistrations": [
+  {
+   "file": "preregistros/four_strategy_arena_v1_preregistro.md",
+   "origin": "reports/four_strategy_arena_v1_preregistro.md"
+  },
+  {
+   "file": "preregistros/arena_fees_v2_preregistro.md",
+   "origin": "reports/arena_fees_v2_preregistro.md"
+  },
+  {
+   "file": "preregistros/four_strategies_v1.json",
+   "origin": "configs/arena/four_strategies_v1.json"
+  },
+  {
+   "file": "preregistros/bitso_fees_v2.json",
+   "origin": "configs/arena/bitso_fees_v2.json"
+  },
+  {
+   "commit": "61c6ac319f9f5421a4c1b9ad80e5d5165b2fcc72",
+   "protocol": "four-strategy-arena-v1"
+  },
+  {
+   "commit": "d26ee0b693bafb607ff030cb709dd25b41887259",
+   "protocol": "arena-fees-v2"
+  }
+ ],
+ "source": {
+  "backup_bytes": 1598734336,
+  "backup_directory": "arena-final/20261025T211352Z",
+  "backup_sha256": "c2518e14ac51b388bac2b26e6ce5efab53f690cbdddd0fce9be002a1db9de9ec",
+  "method": "lab.arena.backup",
+  "restored_and_audited": true
+ }
+}

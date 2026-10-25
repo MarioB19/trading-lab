@@ -1,0 +1,255 @@
+{
+ "account_fees_verified": false,
+ "active": true,
+ "comparison": "same_recorded_fills_cost_only",
+ "cutover": {
+  "activated_ms": 1791209508638,
+  "after_fill_id": 9,
+  "model_id": "bitso-usd-20261005-v2",
+  "opening_wallets": {
+   "market-making-v1": {
+    "cash": 749.0729231229,
+    "cost_basis": 250.9270768771,
+    "equity": 998.3254817479,
+    "fees": 0.9000971271,
+    "peak": 1000.0,
+    "qty": 0.00288425,
+    "realized": 0.0
+   },
+   "mean-reversion-v1": {
+    "cash": 1000.0,
+    "cost_basis": 0.0,
+    "equity": 1000.0,
+    "fees": 0.0,
+    "peak": 1000.0,
+    "qty": 0.0,
+    "realized": 0.0
+   },
+   "scalping-v1": {
+    "cash": 744.3614893598522,
+    "cost_basis": 249.369768206208,
+    "equity": 993.1664001548522,
+    "fees": 6.281658590148,
+    "peak": 1000.0,
+    "qty": 0.00287907,
+    "realized": -6.2687424339400195
+   },
+   "swing-v1": {
+    "cash": 96.661653251708,
+    "cost_basis": 903.338346748292,
+    "equity": 993.971728486708,
+    "fees": 3.240352778292,
+    "peak": 1000.0,
+    "qty": 0.01038331,
+    "realized": 0.0
+   }
+  },
+  "proof": {
+   "attestation_sha256": "c7e0eb1e458a07b72da5e642f1a555329412b76795537fd722488cf5be187b68",
+   "code_commit": "eacdd9998a62812a083ec6189772391c8e39796f",
+   "commit": "d26ee0b693bafb607ff030cb709dd25b41887259",
+   "criteria": {
+    "bootstrap": "Pendiente de muestra prospectiva independiente y corrección familiar; no se reinterpreta el pasado como fuera de muestra.",
+    "cost_stress": "Comparar tarifas sobre las mismas ejecuciones registradas, sin reconstruir señales ni asumir fills maker factibles. No equivale a otro portafolio ni a rendimiento alternativo.",
+    "drawdown": "Se mantienen frenos, picos, contadores, capital y posiciones existentes; no se reinician riesgos ni pérdidas.",
+    "placebo": "Pendiente de protocolo y muestra suficiente; ningún diagnóstico de tarifas satisface este criterio.",
+    "walk_forward": "No se ejecuta ni se afirma una validación de rentabilidad. Cualquier promoción requiere un protocolo independiente y walk-forward fuera de muestra."
+   },
+   "metadata": {
+    "config_sha256": "5e8a4cf98081dcbbfb39e51a37588f93c45941c9e01de08b830275f4df365b47",
+    "criteria": {
+     "bootstrap": "Pendiente de muestra prospectiva independiente y corrección familiar; no se reinterpreta el pasado como fuera de muestra.",
+     "cost_stress": "Comparar tarifas sobre las mismas ejecuciones registradas, sin reconstruir señales ni asumir fills maker factibles. No equivale a otro portafolio ni a rendimiento alternativo.",
+     "drawdown": "Se mantienen frenos, picos, contadores, capital y posiciones existentes; no se reinician riesgos ni pérdidas.",
+     "placebo": "Pendiente de protocolo y muestra suficiente; ningún diagnóstico de tarifas satisface este criterio.",
+     "walk_forward": "No se ejecuta ni se afirma una validación de rentabilidad. Cualquier promoción requiere un protocolo independiente y walk-forward fuera de muestra."
+    },
+    "evaluation_window": "Solo ejecuciones futuras desde el corte registrado; el tramo corregido inicia su propio contador de 28 días y conserva íntegro el historial anterior.",
+    "experiment_id": "arena-fees-v2",
+    "hypothesis": "Corregir el modelo de costos según la tabla pública de Bitso, sin seleccionar señales por sus resultados recientes ni afirmar rentabilidad.",
+    "protocol_version": 1,
+    "status": "approved",
+    "variant_ids": [
+     "scalping-v1",
+     "swing-v1",
+     "mean-reversion-v1",
+     "market-making-v1"
+    ]
+   },
+   "path": "reports/arena_fees_v2_preregistro.md",
+   "proof_kind": "git-content-ancestry-v1",
+   "sha256": "c0c0aa47bf81453a4dca3b09ae6ae21b29f03289aebbfb505852cd67b250ca42"
+  },
+  "schedule_sha256": "5e8a4cf98081dcbbfb39e51a37588f93c45941c9e01de08b830275f4df365b47",
+  "scope": "per_strategy"
+ },
+ "fee_ledger_verified": true,
+ "generated_at_ms": 1792957214459,
+ "last_observed_ms": 1792957214459,
+ "mode": "paper",
+ "model_id": "bitso-usd-20261005-v2",
+ "note": "Comparación de comisiones sobre las mismas cantidades y precios desde el corte. No simula fills maker alternativos ni mide rentabilidad.",
+ "scope": "per_strategy",
+ "source_url": "https://bitso.com/fees?l=en",
+ "stale": false,
+ "strategies": [
+  {
+   "all_maker_fees_usd": 85.71972656738987,
+   "all_taker_fees_usd": 121.13241964447337,
+   "fee_difference_usd": 50.92547912748711,
+   "fixed_fees_usd": 172.05789877196048,
+   "historical_fees_usd": 6.281658590148,
+   "id": "scalping-v1",
+   "maker_fills": 0,
+   "name": "Day trading / scalping",
+   "new_fees_usd": 121.13241964447337,
+   "new_fills": 209,
+   "next_above_usd": 50000,
+   "recorded_fees_usd": 127.41407823462137,
+   "taker_fills": 216,
+   "tier": {
+    "above_usd": 10000,
+    "maker": 0.00171,
+    "taker": 0.00243
+   },
+   "volume_30d_usd": 49538.76593391901,
+   "volume_to_threshold_usd": 461.2340660809968
+  },
+  {
+   "all_maker_fees_usd": 8.469966536124621,
+   "all_taker_fees_usd": 11.316523647976982,
+   "fee_difference_usd": 0.673576249457593,
+   "fixed_fees_usd": 11.990099897434575,
+   "historical_fees_usd": 3.240352778292,
+   "id": "swing-v1",
+   "maker_fills": 0,
+   "name": "Swing / tendencias",
+   "new_fees_usd": 11.316523647976982,
+   "new_fills": 4,
+   "next_above_usd": 5000,
+   "recorded_fees_usd": 14.556876426268982,
+   "taker_fills": 5,
+   "tier": {
+    "above_usd": 1000,
+    "maker": 0.00239,
+    "taker": 0.00333
+   },
+   "volume_30d_usd": 4230.681298812938,
+   "volume_to_threshold_usd": 769.3187011870626
+  },
+  {
+   "all_maker_fees_usd": 15.690845806789971,
+   "all_taker_fees_usd": 21.094457446490633,
+   "fee_difference_usd": 2.023754891468311,
+   "fixed_fees_usd": 23.118212337958944,
+   "historical_fees_usd": 0.0,
+   "id": "mean-reversion-v1",
+   "maker_fills": 0,
+   "name": "Reversión a la media",
+   "new_fees_usd": 21.094457446490633,
+   "new_fills": 26,
+   "next_above_usd": 10000,
+   "recorded_fees_usd": 21.094457446490633,
+   "taker_fills": 26,
+   "tier": {
+    "above_usd": 5000,
+    "maker": 0.00205,
+    "taker": 0.00282
+   },
+   "volume_30d_usd": 6421.725649433042,
+   "volume_to_threshold_usd": 3578.2743505669578
+  },
+  {
+   "all_maker_fees_usd": 0.7315866631167,
+   "all_taker_fees_usd": 0.87790399574004,
+   "fee_difference_usd": 0.0,
+   "fixed_fees_usd": 0.7315866631167,
+   "historical_fees_usd": 0.9000971271,
+   "id": "market-making-v1",
+   "maker_fills": 19,
+   "name": "Creación de mercado",
+   "new_fees_usd": 0.7315866631167,
+   "new_fills": 19,
+   "next_above_usd": 1000,
+   "recorded_fees_usd": 1.6316837902167,
+   "taker_fills": 1,
+   "tier": {
+    "above_usd": 0,
+    "maker": 0.003,
+    "taker": 0.0036
+   },
+   "volume_30d_usd": 493.8892007889,
+   "volume_to_threshold_usd": 506.1107992111
+  }
+ ],
+ "tiers": [
+  {
+   "above_usd": 0,
+   "maker": 0.003,
+   "taker": 0.0036
+  },
+  {
+   "above_usd": 1000,
+   "maker": 0.00239,
+   "taker": 0.00333
+  },
+  {
+   "above_usd": 5000,
+   "maker": 0.00205,
+   "taker": 0.00282
+  },
+  {
+   "above_usd": 10000,
+   "maker": 0.00171,
+   "taker": 0.00243
+  },
+  {
+   "above_usd": 50000,
+   "maker": 0.00137,
+   "taker": 0.00205
+  },
+  {
+   "above_usd": 100000,
+   "maker": 0.00114,
+   "taker": 0.00154
+  },
+  {
+   "above_usd": 1000000,
+   "maker": 0.00085,
+   "taker": 0.00095
+  },
+  {
+   "above_usd": 5000000,
+   "maker": 0.00072,
+   "taker": 0.00082
+  },
+  {
+   "above_usd": 10000000,
+   "maker": 0.0006,
+   "taker": 0.00069
+  },
+  {
+   "above_usd": 20000000,
+   "maker": 0.0005,
+   "taker": 0.0006
+  },
+  {
+   "above_usd": 30000000,
+   "maker": 0.0004,
+   "taker": 0.0005
+  }
+ ],
+ "totals": {
+  "all_maker_fees_usd": 110.61212557342117,
+  "all_taker_fees_usd": 154.42130473468103,
+  "fee_difference_usd": 53.62281026841301,
+  "fixed_fees_usd": 207.8977976704707,
+  "historical_fees_usd": 10.42210849554,
+  "maker_fills": 19,
+  "new_fees_usd": 154.2749874020577,
+  "new_fills": 258,
+  "recorded_fees_usd": 164.69709589759768,
+  "taker_fills": 248
+ },
+ "verified_on": "2026-10-05"
+}
