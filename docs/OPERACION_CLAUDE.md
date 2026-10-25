@@ -38,7 +38,16 @@ python3 scripts/claude/tl.py snapshot       # JSON crudo en runtime-data/claude/
 
 El snapshot guarda `/api/status`, `/api/performance`, `/api/execution-quality`, trades, equity y
 eventos del piloto, y `/api/arena`, `/api/daily-audit` y `/api/fees` si la arena sigue viva.
-Los análisis se hacen con código sobre ese JSON, nunca leyendo cifras a ojo.
+Los análisis se hacen con código sobre ese JSON, nunca leyendo cifras a ojo:
+
+```sh
+python3 scripts/claude/review.py alerts  runtime-data/claude/snapshots/<archivo>.json   # código 1 si hay alertas
+python3 scripts/claude/review.py weekly  runtime-data/claude/snapshots/<archivo>.json   # tabla con atribución
+```
+
+`weekly` reparte el resultado de cada bloque en mercado (beta × referencia del propio bot),
+estrategia (lo que aportó la regla antes de costos) y costos (comisión + diferencia contra el
+precio de referencia), sin contar aportaciones ni retiros.
 
 Señales de alerta en `status`: `ready=false`, `mode` distinto de `paper`, `pending_orders` o
 `unknown_orders` > 0, último ciclo con error, datos viejos. Kill switch: cripto se apaga a −45% y
