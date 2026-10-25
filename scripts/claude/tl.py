@@ -1,0 +1,219 @@
+#!/usr/bin/env python3
+"""Herramienta de Claude para leer y operar Trading Lab en Railway (solo simulado).
+
+Solo usa la biblioteca estándar, así que funciona con Python 3.10+ en la Mac,
+en la VM del equipo o en la nube, sin instalar el proyecto.
+
+Credenciales (nunca en Git). Se leen, en este orden, de:
+  1. variables de entorno ya definidas;
+  2. el archivo indicado en TL_ENV;
+  3. <vault>/Projects/Trading Lab/.secretos/claude.env (junto al repo);
+  4. ~/.config/trading-lab/claude.env.
+
+Claves:
+  TL_PANEL_USER, TL_PANEL_PASSWORD   usuario y contraseña del panel (mismos en piloto y arena)
+  RAILWAY_API_TOKEN                  token de cuenta Railway (railway.com/account/tokens)
+
+Comandos:
+  tl.py check                     qué credenciales hay y si los servicios responden
+  tl.py snapshot [--out DIR]      guarda JSON crudo del piloto (y de la arena si sigue viva)
+  tl.py arena-pause-all           pausa las cuatro carteras de la arena (conserva inventario)
+  tl.py services                  servicios del proyecto Railway y su último deployment
+  tl.py stop SERVICE              detiene el deployment activo del servicio (el volumen se conserva)
+  tl.py redeploy SERVICE          vuelve a desplegar la última imagen del servicio
+  tl.py gql 'query { me { email } }'   consulta GraphQL libre (solo para diagnóstico)
+
+Nada aquí cambia `mode`, secretos ni variables: el dinero real sigue siendo manual de Brandon.
+"""
+from __future__ import annotations
+
+import argparse
+import base64
+import datetime as dt
+import json
+import os
+import pathlib
+import sys
+import urllib.error
+import urllib.request
+
+REPO = pathlib.Path(__file__).resolve().parents[2]
+PILOT_URL = "https://trading-lab-production-a56b.up.railway.app"
+ARENA_URL = "https://trading-arena-production-5c21.up.railway.app"
+ARENA_STRATEGIES = ("scalping-v1", "swing-v1", "mean-reversion-v1", "market-making-v1")
+RAILWAY_GQL = "https://backboard.railway.com/graphql/v2"
+RAILWAY_PROJECT = "24021d85-bbad-4f2c-850c-e1230822e7b0"
+RAILWAY_ENV = "4774e5bf-c72b-402d-ac72-f88e815e5976"
+PILOT_ENDPOINTS = ("status", "performance", "execution-quality", "trades?limit=500",
+                   "equity?limit=500", "events?limit=100")
+ARENA_ENDPOINTS = ("arena", "daily-audit", "fees")
+
+
+def load_env() -> dict:
+    env: dict[str, str] = {}
+    candidates = [os.environ.get("TL_ENV"), REPO.parent / ".secretos" / "claude.env",
+                  pathlib.Path.home() / ".config" / "trading-lab" / "claude.env"]
+    for c in candidates:
+        if c and pathlib.Path(c).is_file():
+            for line in pathlib.Path(c).read_text(encoding="utf-8").splitlines():
+                line = line.strip()
+                if line and not line.startswith("#") and "=" in line:
+                    k, v = line.split("=", 1)
+                    env.setdefault(k.strip(), v.strip().strip('"').strip("'"))
+            break
+    for k in ("TL_PANEL_USER", "TL_PANEL_PASSWORD", "RAILWAY_API_TOKEN"):
+        if os.environ.get(k):
+            env[k] = os.environ[k]
+    return env
+
+
+def _request(url: str, *, headers: dict | None = None, data: bytes | None = None, timeout: int = 60):
+    req = urllib.request.Request(url, data=data, headers=headers or {}, method="POST" if data else "GET")
+    try:
+        with urllib.request.urlopen(req, timeout=timeout) as r:
+            return r.status, r.read()
+    except urllib.error.HTTPError as e:
+        return e.code, e.read()
+
+
+def _panel_headers(env: dict) -> dict:
+    user, pw = env.get("TL_PANEL_USER"), env.get("TL_PANEL_PASSWORD")
+    if not (user and pw):
+        sys.exit("Faltan TL_PANEL_USER / TL_PANEL_PASSWORD (ver docstring).")
+    token = base64.b64encode(f"{user}:{pw}".encode()).decode()
+    return {"Authorization": f"Basic {token}", "Accept": "application/json"}
+
+
+def get_json(base: str, path: str, env: dict):
+    code, body = _request(f"{base}/api/{path}", headers=_panel_headers(env))
+    try:
+        payload = json.loads(body or b"null")
+    except json.JSONDecodeError:
+        payload = {"raw": body[:500].decode(errors="replace")}
+    return code, payload
+
+
+def gql(query: str, variables: dict | None, env: dict) -> dict:
+    token = env.get("RAILWAY_API_TOKEN")
+    if not token:
+        sys.exit("Falta RAILWAY_API_TOKEN (ver docstring).")
+    body = json.dumps({"query": query, "variables": variables or {}}).encode()
+    code, raw = _request(RAILWAY_GQL, data=body, headers={
+        "Authorization": f"Bearer {token}", "Content-Type": "application/json"})
+    out = json.loads(raw or b"{}")
+    if code != 200 or out.get("errors"):
+        sys.exit(f"Railway respondió {code}: {json.dumps(out.get('errors') or out)[:800]}")
+    return out["data"]
+
+
+def services(env: dict) -> list[dict]:
+    q = """query($id: String!) { project(id: $id) { name services { edges { node { id name
+      serviceInstances { edges { node { environmentId numReplicas
+        latestDeployment { id status createdAt } } } } } } } } }"""
+    data = gql(q, {"id": RAILWAY_PROJECT}, env)
+    rows = []
+    for edge in data["project"]["services"]["edges"]:
+        node = edge["node"]
+        for inst in node["serviceInstances"]["edges"]:
+            i = inst["node"]
+            if i["environmentId"] != RAILWAY_ENV:
+                continue
+            dep = i.get("latestDeployment") or {}
+            rows.append({"service": node["name"], "service_id": node["id"], "replicas": i.get("numReplicas"),
+                         "deployment_id": dep.get("id"), "status": dep.get("status"),
+                         "created_at": dep.get("createdAt")})
+    return rows
+
+
+def find_service(name: str, env: dict) -> dict:
+    for row in services(env):
+        if row["service"] == name:
+            return row
+    sys.exit(f"No existe el servicio {name!r} en production.")
+
+
+def cmd_check(env: dict) -> None:
+    print("panel:", "sí" if env.get("TL_PANEL_USER") and env.get("TL_PANEL_PASSWORD") else "NO")
+    print("railway token:", "sí" if env.get("RAILWAY_API_TOKEN") else "NO")
+    for name, base in (("piloto", PILOT_URL), ("arena", ARENA_URL)):
+        code, _ = _request(f"{base}/healthz")
+        print(f"{name} /healthz -> {code}")
+    if env.get("TL_PANEL_USER"):
+        code, payload = get_json(PILOT_URL, "status", env)
+        if isinstance(payload, dict):
+            print(f"piloto /api/status -> {code} ready={payload.get('ready')} mode={payload.get('mode')} "
+                  f"motivo={payload.get('reason')!r}")
+    if env.get("RAILWAY_API_TOKEN"):
+        me = gql("query { me { email } }", None, env)
+        print("railway cuenta:", me["me"]["email"])
+
+
+def cmd_snapshot(env: dict, out: pathlib.Path | None) -> None:
+    stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    out = out or REPO / "runtime-data" / "claude" / "snapshots"
+    out.mkdir(parents=True, exist_ok=True)
+    snap: dict = {"taken_at_utc": stamp, "pilot": {}, "arena": {}}
+    for ep in PILOT_ENDPOINTS:
+        code, payload = get_json(PILOT_URL, ep, env)
+        snap["pilot"][ep.split("?")[0]] = {"http": code, "data": payload}
+    code, _ = _request(f"{ARENA_URL}/healthz")
+    if code in (200, 401):
+        for ep in ARENA_ENDPOINTS:
+            code, payload = get_json(ARENA_URL, ep, env)
+            snap["arena"][ep] = {"http": code, "data": payload}
+    else:
+        snap["arena"] = {"offline": code}
+    path = out / f"{stamp}.json"
+    path.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
+    bad = [f"pilot/{k}" for k, v in snap["pilot"].items() if v["http"] != 200]
+    bad += [f"arena/{k}" for k, v in snap["arena"].items() if isinstance(v, dict) and v.get("http", 200) != 200]
+    print(path)
+    print("endpoints con error:", ", ".join(bad) if bad else "ninguno")
+
+
+def cmd_arena_pause_all(env: dict) -> None:
+    headers = _panel_headers(env) | {"Content-Type": "application/json", "Origin": ARENA_URL}
+    for s in ARENA_STRATEGIES:
+        body = json.dumps({"strategy": s, "action": "pause"}).encode()
+        code, raw = _request(f"{ARENA_URL}/api/control", headers=headers, data=body)
+        print(f"{s}: {code} {raw[:160].decode(errors='replace') if code != 200 else 'pausada'}")
+
+
+def main() -> None:
+    p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
+    sub = p.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("check")
+    s = sub.add_parser("snapshot")
+    s.add_argument("--out", type=pathlib.Path)
+    sub.add_parser("arena-pause-all")
+    sub.add_parser("services")
+    for name in ("stop", "redeploy"):
+        sub.add_parser(name).add_argument("service")
+    sub.add_parser("gql").add_argument("query")
+    a = p.parse_args()
+    env = load_env()
+    if a.cmd == "check":
+        cmd_check(env)
+    elif a.cmd == "snapshot":
+        cmd_snapshot(env, a.out)
+    elif a.cmd == "arena-pause-all":
+        cmd_arena_pause_all(env)
+    elif a.cmd == "services":
+        print(json.dumps(services(env), indent=1))
+    elif a.cmd == "stop":
+        row = find_service(a.service, env)
+        if row["service"] == "trading-lab":
+            sys.exit("El piloto no se detiene desde aquí: pausa con TRADING_WORKER_ALLOWED (ver RAILWAY_RUNBOOK).")
+        ok = gql("mutation($id: String!) { deploymentStop(id: $id) }", {"id": row["deployment_id"]}, env)
+        print(json.dumps({"service": row["service"], "deployment": row["deployment_id"], "stopped": ok}))
+    elif a.cmd == "redeploy":
+        row = find_service(a.service, env)
+        ok = gql("mutation($e: String!, $s: String!) { serviceInstanceRedeploy(environmentId: $e, serviceId: $s) }",
+                 {"e": RAILWAY_ENV, "s": row["service_id"]}, env)
+        print(json.dumps({"service": row["service"], "redeploy": ok}))
+    elif a.cmd == "gql":
+        print(json.dumps(gql(a.query, None, env), indent=1))
+
+
+if __name__ == "__main__":
+    main()

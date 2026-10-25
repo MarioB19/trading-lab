@@ -15,6 +15,8 @@ La candidata agresiva **falló los siete criterios**: CAGR cripto neto 17.08% fr
 
 ## Empezar aquí
 
+- **Agentes (Claude):** reglas y misión en [AGENTS.md](AGENTS.md); lectura del panel, arena y despliegue en [docs/OPERACION_CLAUDE.md](docs/OPERACION_CLAUDE.md).
+
 0. [Despliegue, corte y recuperación en Railway](docs/RAILWAY_RUNBOOK.md).
 1. [Lista única de conexión y criterios GO/NO GO](docs/CONNECT_CHECKLIST.md).
 2. [Runbook de instalación, corte y recuperación GCP](docs/GCP_RUNBOOK.md).
