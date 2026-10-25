@@ -7,7 +7,7 @@ Uso:
 
 Atribución semanal por bloque, con flujos de capital excluidos:
   resultado = mercado + estrategia − costos
-  mercado    = beta × rendimiento de la referencia × patrimonio inicial
+  mercado    = Σ días beta × rendimiento diario de la referencia × patrimonio del día anterior
                (beta de los últimos 90 cierres; referencia = `benchmark_price` del propio bot:
                 BTC para cripto, SPY para ETFs)
   costos     = comisión + diferencia contra el precio de referencia (`cost_bps` × importe);
@@ -149,7 +149,15 @@ def weekly(snap: dict, end: str | None, days: int) -> dict:
         p0, p1 = _f(r0.get("benchmark_price")), _f(r1.get("benchmark_price"))
         bench = (p1 / p0 - 1) if p0 and p1 else None
         b, n = beta(_returns(rows), end)
-        market = b * bench * e0 if (b is not None and bench is not None) else None
+        # Mercado día a día sobre el patrimonio del día anterior: respeta aportaciones y retiros.
+        market = None
+        if b is not None:
+            market, prev = 0.0, r0
+            for r in inside:
+                pa, pb, ea = _f(prev.get("benchmark_price")), _f(r.get("benchmark_price")), _f(prev.get("equity"))
+                if pa and pb and ea:
+                    market += b * (pb / pa - 1) * ea
+                prev = r
         st_trades = [t for t in trades if t.get("sleeve") == sleeve and start < str(t.get("candle", ""))[:10] <= end]
         costs = 0.0
         for t in st_trades:
@@ -160,7 +168,7 @@ def weekly(snap: dict, end: str | None, days: int) -> dict:
         maker = sum(_f(t.get("maker_value_usd")) or 0.0 for t in st_trades)
         result["sleeves"][sleeve] = {
             "start_equity": e0, "end_equity": e1, "flows": flows, "pnl_usd": pnl,
-            "pnl_pct": pnl / e0 if e0 else None, "benchmark_return": bench, "beta": b, "beta_obs": n,
+            "pnl_pct": pnl / (e0 + max(flows, 0.0)) if e0 else None, "benchmark_return": bench, "beta": b, "beta_obs": n,
             "market_usd": market, "strategy_usd": strategy, "costs_usd": costs,
             "trades": len(st_trades), "traded_usd": traded,
             "cost_bps_weighted": costs / traded * 1e4 if traded else None,

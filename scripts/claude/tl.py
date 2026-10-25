@@ -22,6 +22,7 @@ Comandos:
   tl.py arena-pause-all           pausa las cuatro carteras de la arena (conserva inventario)
   tl.py services                  servicios del proyecto Railway y su último deployment
   tl.py stop SERVICE              detiene el deployment activo del servicio (el volumen se conserva)
+                                  (la arena se detuvo así el 25-oct-2026; ver DEC-031)
   tl.py redeploy SERVICE          vuelve a desplegar la última imagen del servicio
   tl.py gql 'query { me { email } }'   consulta GraphQL libre (solo para diagnóstico)
 
@@ -91,6 +92,19 @@ def _request(url: str, *, headers: dict | None = None, data: bytes | None = None
             return r.status, r.read()
     except urllib.error.HTTPError as e:
         return e.code, e.read()
+    except (urllib.error.URLError, TimeoutError, OSError):
+        return 0, b""  # servicio apagado o sin red
+
+
+def server_time() -> dt.datetime:
+    """Hora del servidor del piloto (cabecera Date): el reloj de la VM puede estar desfasado."""
+    req = urllib.request.Request(f"{PILOT_URL}/healthz", headers={"User-Agent": "trading-lab-claude/1.0"})
+    try:
+        with urllib.request.urlopen(req, timeout=30, context=_ssl_context()) as r:
+            from email.utils import parsedate_to_datetime
+            return parsedate_to_datetime(r.headers["Date"]).astimezone(dt.timezone.utc)
+    except Exception:
+        return dt.datetime.now(dt.timezone.utc)
 
 
 def _panel_headers(env: dict) -> dict:
@@ -219,8 +233,8 @@ def cmd_check(env: dict) -> None:
     print("panel:", "sí" if env.get("TL_PANEL_USER") and env.get("TL_PANEL_PASSWORD") else "NO")
     print("railway token:", "sí" if env.get("RAILWAY_API_TOKEN") else "NO")
     for name, base in (("piloto", PILOT_URL), ("arena", ARENA_URL)):
-        code, _ = _request(f"{base}/healthz")
-        print(f"{name} /healthz -> {code}")
+        code, _ = _request(f"{base}/healthz", timeout=20)
+        print(f"{name} /healthz -> {code or 'sin respuesta (apagado)'}")
     if env.get("TL_PANEL_USER"):
         code, payload = get_json(PILOT_URL, "status", env)
         if isinstance(payload, dict):
@@ -233,14 +247,14 @@ def cmd_check(env: dict) -> None:
 
 
 def cmd_snapshot(env: dict, out: pathlib.Path | None) -> None:
-    stamp = dt.datetime.now(dt.timezone.utc).strftime("%Y%m%dT%H%M%SZ")
+    stamp = server_time().strftime("%Y%m%dT%H%M%SZ")
     out = out or REPO / "runtime-data" / "claude" / "snapshots"
     out.mkdir(parents=True, exist_ok=True)
     snap: dict = {"taken_at_utc": stamp, "pilot": {}, "arena": {}}
     for ep in PILOT_ENDPOINTS:
         code, payload = get_json(PILOT_URL, ep, env)
         snap["pilot"][ep.split("?")[0]] = {"http": code, "data": payload}
-    code, _ = _request(f"{ARENA_URL}/healthz")
+    code, _ = _request(f"{ARENA_URL}/healthz", timeout=20)
     if code in (200, 401):
         for ep in ARENA_ENDPOINTS:
             code, payload = get_json(ARENA_URL, ep, env)
