@@ -28,11 +28,12 @@ import tl  # noqa: E402
 PART = 8 * 1024 * 1024
 
 
-def _get(env: dict, path: str) -> tuple[bytes, dict]:
+def _get(env: dict, path: str):
+    """Cuerpo y cabeceras; las cabeceras no distinguen mayúsculas (el borde de Railway las pasa en minúsculas)."""
     req = urllib.request.Request(f"{tl.pilot_url()}{path}",
                                  headers={**tl._panel_headers(env), "User-Agent": "trading-lab-claude/1.0"})
     with urllib.request.urlopen(req, timeout=120, context=tl._ssl_context()) as r:
-        return r.read(), dict(r.headers)
+        return r.read(), r.headers
 
 
 def download(env: dict, latest: dict, kind: str, size: int, target: Path) -> str:
