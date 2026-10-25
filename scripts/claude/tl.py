@@ -287,6 +287,15 @@ def cmd_snapshot(env: dict, out: pathlib.Path | None) -> None:
 BUNDLE_PROFILES = {"trading-lab": "operational-paper", "trading-arena": "arena-maintenance-read-only"}
 
 
+def _normalize(info):
+    """Permisos de imagen, no los de la USB: en la VM los archivos se ven 0600 y el UID 10001 del
+    contenedor no podría leer el código (así falló el despliegue del 25-oct, 16:35 CDMX)."""
+    info.uid = info.gid = 0
+    info.uname = info.gname = ""
+    info.mode = 0o755 if info.isdir() else 0o644
+    return info
+
+
 def _tarball(bundle: pathlib.Path) -> bytes:
     """Mismo formato que `railway up --path-as-root`: entradas `./ruta`, sin .git ni node_modules."""
     import io
@@ -297,7 +306,7 @@ def _tarball(bundle: pathlib.Path) -> bytes:
             rel = path.relative_to(bundle)
             if path.is_symlink() or any(part in (".git", "node_modules", "__pycache__") for part in rel.parts):
                 continue
-            tar.add(path, arcname=f"./{rel.as_posix()}", recursive=False)
+            tar.add(path, arcname=f"./{rel.as_posix()}", recursive=False, filter=_normalize)
     return buf.getvalue()
 
 

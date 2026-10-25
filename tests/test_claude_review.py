@@ -54,3 +54,20 @@ def test_weekly_review_prints_the_api_attribution_without_recomputing_it():
 
 def test_old_snapshot_without_attribution_is_rejected():
     assert "tl.py snapshot" in review.markdown(review.weekly({"pilot": {}}))
+
+
+def test_tl_up_tarball_normalizes_permissions(tmp_path):
+    """La USB se ve 0600 en la VM; la imagen necesita 0644/0755 para el UID 10001 (25-oct)."""
+    import io
+    import sys
+    import tarfile
+    sys.path.insert(0, str(ROOT / "scripts/claude"))
+    import tl
+    (tmp_path / "src/lab").mkdir(parents=True)
+    (tmp_path / "src/lab/hosted.py").write_text("x = 1\n")
+    (tmp_path / "src/lab/hosted.py").chmod(0o600)
+    (tmp_path / "src/lab").chmod(0o700)
+    with tarfile.open(fileobj=io.BytesIO(tl._tarball(tmp_path))) as tar:
+        modes = {m.name: m.mode for m in tar.getmembers()}
+        owners = {(m.uid, m.gid) for m in tar.getmembers()}
+    assert modes == {"./src": 0o755, "./src/lab": 0o755, "./src/lab/hosted.py": 0o644} and owners == {(0, 0)}
