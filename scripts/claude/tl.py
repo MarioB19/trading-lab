@@ -15,6 +15,8 @@ Claves:
   RAILWAY_API_TOKEN                  token de cuenta Railway (railway.com/account/tokens)
 
 Comandos:
+  tl.py setup                     configura credenciales (pide el token de Railway oculto y saca el
+                                  usuario y la contraseña del panel de Railway, sin mostrarlos)
   tl.py check                     qué credenciales hay y si los servicios responden
   tl.py snapshot [--out DIR]      guarda JSON crudo del piloto (y de la arena si sigue viva)
   tl.py arena-pause-all           pausa las cuatro carteras de la arena (conserva inventario)
@@ -32,7 +34,9 @@ import base64
 import datetime as dt
 import json
 import os
+import getpass
 import pathlib
+import ssl
 import sys
 import urllib.error
 import urllib.request
@@ -67,10 +71,23 @@ def load_env() -> dict:
     return env
 
 
+def _ssl_context():
+    # En la Mac, el Python de python.org no trae certificados del sistema: usa certifi si existe.
+    # En la nube o la VM se respeta SSL_CERT_FILE (proxy con su propia CA).
+    if sys.platform == "darwin" and not os.environ.get("SSL_CERT_FILE"):
+        try:
+            import certifi
+            return ssl.create_default_context(cafile=certifi.where())
+        except ImportError:
+            pass
+    return ssl.create_default_context()
+
+
 def _request(url: str, *, headers: dict | None = None, data: bytes | None = None, timeout: int = 60):
-    req = urllib.request.Request(url, data=data, headers=headers or {}, method="POST" if data else "GET")
+    headers = {"User-Agent": "trading-lab-claude/1.0", **(headers or {})}  # Cloudflare bloquea Python-urllib
+    req = urllib.request.Request(url, data=data, headers=headers, method="POST" if data else "GET")
     try:
-        with urllib.request.urlopen(req, timeout=timeout) as r:
+        with urllib.request.urlopen(req, timeout=timeout, context=_ssl_context()) as r:
             return r.status, r.read()
     except urllib.error.HTTPError as e:
         return e.code, e.read()
@@ -104,6 +121,72 @@ def gql(query: str, variables: dict | None, env: dict) -> dict:
     if code != 200 or out.get("errors"):
         sys.exit(f"Railway respondió {code}: {json.dumps(out.get('errors') or out)[:800]}")
     return out["data"]
+
+
+def _gql_try(query: str, variables: dict | None, token: str):
+    body = json.dumps({"query": query, "variables": variables or {}}).encode()
+    try:
+        code, raw = _request(RAILWAY_GQL, data=body, headers={
+            "Authorization": f"Bearer {token}", "Content-Type": "application/json"})
+        out = json.loads(raw or b"{}")
+    except (urllib.error.URLError, json.JSONDecodeError, OSError) as e:
+        return None, f"sin conexión con Railway ({type(e).__name__})"
+    if code != 200 or out.get("errors"):
+        msg = "; ".join(str(e.get("message", e)) for e in out.get("errors") or []) or f"HTTP {code}"
+        return None, msg[:300]
+    return out.get("data"), None
+
+
+PILOT_SERVICE_ID = "769ae901-e962-45e4-8666-11c3351f7249"
+ENV_FILE = REPO.parent / ".secretos" / "claude.env"
+
+
+def cmd_setup() -> None:
+    print("Configuración de credenciales de Claude para Trading Lab.")
+    print("1) Abre https://railway.com/account/tokens, crea un token (nombre: claude-trading-lab;")
+    print("   en «Workspace» deja tu cuenta personal / sin equipo) y cópialo.")
+    if sys.platform == "darwin":
+        os.system("open https://railway.com/account/tokens >/dev/null 2>&1")
+    token = getpass.getpass("2) Pega el token aquí (no se verá) y presiona Enter: ").strip()
+    if not token:
+        sys.exit("No se pegó ningún token. Vuelve a correr el comando.")
+    data, err = _gql_try("query { me { email } }", None, token)
+    if err:
+        data, err2 = _gql_try("query($id: String!) { project(id: $id) { name } }", {"id": RAILWAY_PROJECT}, token)
+        if err2:
+            sys.exit(f"Railway rechazó el token: {err} / {err2}. Crea uno nuevo y repite.")
+        print("   Token válido para el proyecto", data["project"]["name"])
+    else:
+        print("   Token válido para la cuenta", data["me"]["email"])
+    user = pw = None
+    data, err = _gql_try("query($p: String!, $e: String!, $s: String!) { variables(projectId: $p, "
+                         "environmentId: $e, serviceId: $s) }",
+                         {"p": RAILWAY_PROJECT, "e": RAILWAY_ENV, "s": PILOT_SERVICE_ID}, token)
+    if data and isinstance(data.get("variables"), dict):
+        user = data["variables"].get("TRADING_DASHBOARD_USER")
+        pw = data["variables"].get("TRADING_DASHBOARD_PASSWORD")
+    if user and pw:
+        print("3) Usuario y contraseña del panel obtenidos de Railway (no se muestran).")
+    else:
+        print(f"3) No pude leerlos de Railway ({err or 'variables ausentes'}). Escríbelos:")
+        user = input("   Usuario del panel [brandon]: ").strip() or "brandon"
+        pw = getpass.getpass("   Contraseña del panel (no se verá): ").strip()
+    code, _ = _request(f"{PILOT_URL}/api/status", headers=_panel_headers(
+        {"TL_PANEL_USER": user, "TL_PANEL_PASSWORD": pw}))
+    if code != 200:
+        sys.exit(f"El panel respondió {code} con ese usuario y contraseña; no guardé nada. Repite.")
+    ENV_FILE.parent.mkdir(parents=True, exist_ok=True)
+    old = os.umask(0o077)
+    try:
+        ENV_FILE.write_text("# Credenciales de Claude para Trading Lab. No va a Git ni al chat.\n"
+                            f"TL_PANEL_USER={user}\nTL_PANEL_PASSWORD={pw}\nRAILWAY_API_TOKEN={token}\n",
+                            encoding="utf-8")
+    finally:
+        os.umask(old)
+    os.chmod(ENV_FILE, 0o600)
+    print(f"4) Guardado en {ENV_FILE} (solo tú puedes leerlo). Verificación:")
+    cmd_check(load_env())
+    print("Listo. Dile a Claude: «ya quedó el archivo».")
 
 
 def services(env: dict) -> list[dict]:
@@ -144,8 +227,9 @@ def cmd_check(env: dict) -> None:
             print(f"piloto /api/status -> {code} ready={payload.get('ready')} mode={payload.get('mode')} "
                   f"motivo={payload.get('reason')!r}")
     if env.get("RAILWAY_API_TOKEN"):
-        me = gql("query { me { email } }", None, env)
-        print("railway cuenta:", me["me"]["email"])
+        data, err = _gql_try("query($id: String!) { project(id: $id) { name } }",
+                             {"id": RAILWAY_PROJECT}, env["RAILWAY_API_TOKEN"])
+        print("railway proyecto:", data["project"]["name"] if data else f"ERROR {err}")
 
 
 def cmd_snapshot(env: dict, out: pathlib.Path | None) -> None:
@@ -182,6 +266,7 @@ def cmd_arena_pause_all(env: dict) -> None:
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
+    sub.add_parser("setup")
     sub.add_parser("check")
     s = sub.add_parser("snapshot")
     s.add_argument("--out", type=pathlib.Path)
@@ -191,6 +276,9 @@ def main() -> None:
         sub.add_parser(name).add_argument("service")
     sub.add_parser("gql").add_argument("query")
     a = p.parse_args()
+    if a.cmd == "setup":
+        cmd_setup()
+        return
     env = load_env()
     if a.cmd == "check":
         cmd_check(env)
