@@ -27,6 +27,8 @@ Comandos:
                                   trading-lab solo acepta perfil operational-paper y trading-arena
                                   solo el mantenimiento de solo lectura
   tl.py deployment ID [--logs N]  estado de un deployment y sus últimas líneas de log
+  tl.py domains                   dominios del piloto y los registros DNS que pide Railway
+  tl.py domain-add DOMINIO        agrega un dominio propio al piloto y muestra el CNAME y el TXT
   tl.py gql 'query { me { email } }'   consulta GraphQL libre (solo para diagnóstico)
 
 Nada aquí cambia `mode`, secretos ni variables: el dinero real sigue siendo manual de Brandon.
@@ -336,6 +338,26 @@ def cmd_deployment(env: dict, deployment_id: str, lines: int) -> None:
                 print(row["timestamp"][11:19], row["message"][:300])
 
 
+DOMAIN_FIELDS = """domain status { verified certificateStatus
+  dnsRecords { hostlabel fqdn recordType requiredValue currentValue status zone purpose } }"""
+
+
+def cmd_domains(env: dict) -> None:
+    q = f"""query($p: String!, $e: String!, $s: String!) {{ domains(projectId: $p, environmentId: $e, serviceId: $s) {{
+      serviceDomains {{ domain }} customDomains {{ id {DOMAIN_FIELDS} }} }} }}"""
+    data = gql(q, {"p": RAILWAY_PROJECT, "e": RAILWAY_ENV, "s": PILOT_SERVICE_ID}, env)
+    print(json.dumps(data["domains"], indent=1, ensure_ascii=False))
+
+
+def cmd_domain_add(env: dict, domain: str) -> None:
+    if domain != "tradinglab.inovaris.online":
+        sys.exit("Solo está aprobado tradinglab.inovaris.online (plan del 25-oct, F6).")
+    q = f"""mutation($i: CustomDomainCreateInput!) {{ customDomainCreate(input: $i) {{ id {DOMAIN_FIELDS} }} }}"""
+    data = gql(q, {"i": {"domain": domain, "projectId": RAILWAY_PROJECT, "environmentId": RAILWAY_ENV,
+                         "serviceId": PILOT_SERVICE_ID}}, env)
+    print(json.dumps(data["customDomainCreate"], indent=1, ensure_ascii=False))
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -350,6 +372,8 @@ def main() -> None:
     u = sub.add_parser("up")
     u.add_argument("service")
     u.add_argument("bundle", type=pathlib.Path)
+    sub.add_parser("domains")
+    sub.add_parser("domain-add").add_argument("domain")
     d = sub.add_parser("deployment")
     d.add_argument("id")
     d.add_argument("--logs", type=int, default=0)
@@ -377,6 +401,10 @@ def main() -> None:
         print(json.dumps({"service": row["service"], "redeploy": ok}))
     elif a.cmd == "up":
         cmd_up(env, a.service, a.bundle)
+    elif a.cmd == "domains":
+        cmd_domains(env)
+    elif a.cmd == "domain-add":
+        cmd_domain_add(env, a.domain)
     elif a.cmd == "deployment":
         cmd_deployment(env, a.id, a.logs)
     elif a.cmd == "gql":
