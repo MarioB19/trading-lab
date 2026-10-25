@@ -17,7 +17,7 @@ no supera sus comisiones.
 |---|---|---|
 | Piloto cripto (US$500) | Tendencia + momentum, hasta 5 monedas, volatilidad objetivo 40%, una vez al día (00:00 UTC) contra el libro de Bitso | Railway, servicio `trading-lab` |
 | Piloto ETFs (US$500) | 60% SPY / 40% IEF, banda de 5 puntos | Mismo servicio, simulador interno |
-| Arena (US$4,000) | Cuatro estrategias BTC intradía. **Se apaga por decisión del 25-oct** (perdía en comisiones por diseño) | Railway, servicio `trading-arena` |
+| Arena (US$4,000) | Cuatro estrategias BTC intradía. **Apagada el 25-oct** (DEC-031): −7.1%, con US$164.70 en comisiones. Carteras en pausa, volumen conservado | Railway, servicio `trading-arena` detenido |
 
 Panel: https://trading-lab-production-a56b.up.railway.app/ (autenticado). Railway: proyecto
 `24021d85-bbad-4f2c-850c-e1230822e7b0`, entorno production. El estado vivo está en la SQLite
@@ -34,6 +34,11 @@ del volumen; `state/` en Git es historial de septiembre.
   (`reports/tiempo_real_informe.md`, con 0.45% por operación). Bajar la rotación es
   la palanca con mejor evidencia: `cost-aware-v1` (margen 15% / banda 4pp) dio US$3,756 contra
   US$3,057 del control en 2021–2026, pero falló placebo y comparación múltiple, así que no se promovió.
+- Sprint 01 (25-oct, `reports/sprint01_costo_cripto_resultado.md`): en 2019–2026 el control rinde ≈43% anual
+  con −37% de caída máxima (BTC: +49% con −77%), rota ~30 veces al año y paga ≈11% anual en costos. Ninguna
+  variante de menor rotación fue concluyente; el rebalanceo semanal empeora las caídas.
+- Comisiones (25-oct): Bitso USD 0.30%/0.36% (MXN 0.60%/0.78%); Binance 0.10%; Kraken Pro 0.40%/0.80% por
+  debajo de US$2,500 al mes. Bitso no tiene pares de altcoins contra BTC. Elegir exchange para dinero real es de Brandon.
 - Descartado con evidencia: táctica en ETFs, multi-mercado, operar cada hora o cada 4 h,
   reversión/ruptura de corto plazo con estos costos, versión agresiva top 3.
 - El catálogo de hipótesis vigente vive en el vault: `00 — Dirección/🧪 Backlog de hipótesis — Trading Lab.md`.
