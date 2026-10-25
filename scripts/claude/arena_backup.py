@@ -97,6 +97,11 @@ def cmd_download(env: dict, dest: Path, budget: float, part_mib: int) -> None:
         if ledger['sha256'] != item['sha256'] or ledger['part_bytes'] != part:
             sys.exit(f'{item["path"]}: el registro de tramos no corresponde a este inventario.')
         partial = target.with_name(target.name + '.descargando')
+        if item['size'] == 0 and not target.exists():  # p. ej. un .lock vacío: no hay tramos que pedir
+            if hashlib.sha256(b'').hexdigest() != item['sha256']:
+                sys.exit(f'{item["path"]}: tamaño cero con huella distinta.')
+            target.write_bytes(b'')
+            print(f'{item["path"]}: vacío, verificado', flush=True)
         if target.exists():
             n = -(-item['size'] // part)
             done_total += n; parts_total += n

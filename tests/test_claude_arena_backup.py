@@ -21,6 +21,7 @@ def test_download_resumes_by_parts_and_verifies_whole_file(tmp_path, monkeypatch
     cli = load()
     blobs = {'arena-final/20261025T000000Z/arena.sqlite3': bytes(range(256)) * 5000,
              'arena-backups/arena-1-aa/snapshot.sqlite3.gz': b'x' * 3000,
+             'arena-backups/.backup.lock': b'',
              'arena/arena.sqlite3': b'viva'}
     files = [{'path': k, 'size': len(v), 'sha256': hashlib.sha256(v).hexdigest()} for k, v in blobs.items()]
     (tmp_path / 'inventario-contenedor.json').write_text(json.dumps({'phase': 'ready', 'inventory_after': {'files': files}}))
@@ -39,10 +40,11 @@ def test_download_resumes_by_parts_and_verifies_whole_file(tmp_path, monkeypatch
     monkeypatch.setattr(cli.time, 'monotonic', lambda: 0)
     cli.cmd_download({}, tmp_path, budget=10, part_mib=1)
     assert not (tmp_path / 'arena/arena.sqlite3').exists()  # la base viva no se baja
-    for rel in list(blobs)[:2]:
+    for rel in list(blobs)[:3]:
         assert (tmp_path / rel).read_bytes() == blobs[rel]
-        ledger = json.loads((tmp_path / (rel + '.partes.json')).read_text())
-        assert all(len(p['sha256']) == 64 for p in ledger['parts'].values())
+        if blobs[rel]:
+            ledger = json.loads((tmp_path / (rel + '.partes.json')).read_text())
+            assert all(len(p['sha256']) == 64 for p in ledger['parts'].values())
     assert cli.cmd_verify(tmp_path) == 0
 
 
