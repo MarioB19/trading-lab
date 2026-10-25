@@ -43,9 +43,14 @@ del volumen; `state/` en Git es historial de septiembre.
 1. **Dinero real: nunca.** No cambiar `mode`, no agregar `--live`, no escribir `.env` ni secretos.
    Pasar a real lo decide y lo hace Brandon a mano, después de 4 semanas en simulado de la estrategia exacta.
 2. Nada de retiros, transferencias, apalancamiento, margen, futuros ni cortos.
-3. **Nunca cambiar la estrategia por el rendimiento de unos días.** Se cambia solo con una hipótesis
-   escrita antes de correr (preregistro con su propio commit) que pase walk-forward fuera de muestra,
-   placebo (p < 0.05), bootstrap por bloques contra el control y el estrés de costos.
+3. **Nunca cambiar la estrategia por el rendimiento de unos días.** Todo cambio parte de una hipótesis
+   escrita antes de correr (preregistro con su propio commit). Hay dos tipos y cada uno tiene su barra:
+   - **Cambio de costo** (misma señal, menos fricción: bandas, orden mínima, frecuencia de rebalanceo,
+     ejecución maker): mejora neta en la mayoría de los años del walk-forward, bootstrap por bloques de
+     la diferencia neta > 0 con 90% de confianza, caída máxima no peor por más de 2 puntos, y estrés de
+     costos ×1.5. El placebo no aplica: no se afirma un mejor timing.
+   - **Cambio de señal** (se afirma ventaja nueva): walk-forward fuera de muestra, placebo (p < 0.05),
+     bootstrap contra el control, Sharpe deflactado con todos los intentos y estrés de costos ×1.5.
 4. Cada variante probada se registra (grid de `research_multi` o tabla de intentos del preregistro):
    todas cuentan para el Sharpe deflactado. No esconder intentos fallidos.
 5. Señales solo con datos hasta el cierre. Toda estrategia nueva lleva su prueba de "sin mirar al futuro".
@@ -60,7 +65,9 @@ del volumen; `state/` en Git es historial de septiembre.
 En simulado, Claude tiene acceso total: puede hacer commits y push a `main`, desplegar en Railway,
 pausar o detener servicios y cambiar parámetros **si se cumplen las reglas de arriba**. Antes de
 desplegar: pruebas en verde y respaldo reciente. Después: verificar salud y el siguiente ciclo.
-Todo cambio de estrategia queda en el Registro de decisiones del vault.
+Una candidata que pasa su barra puede reemplazar al control en el piloto simulado; con eso, el reloj
+de 4 semanas para considerar dinero real vuelve a empezar. Todo cambio de estrategia queda en el
+Registro de decisiones del vault.
 
 ## Comandos
 
