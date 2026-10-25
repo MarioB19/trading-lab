@@ -24,6 +24,10 @@ Comandos:
   tl.py stop SERVICE              detiene el deployment activo del servicio (el volumen se conserva)
                                   (la arena se detuvo así el 25-oct-2026; ver DEC-031)
   tl.py redeploy SERVICE          vuelve a desplegar la última imagen del servicio
+  tl.py up SERVICE BUNDLE         sube un paquete (lo mismo que `railway up --path-as-root`, sin CLI):
+                                  trading-lab solo acepta perfil operational-paper y trading-arena
+                                  solo el mantenimiento de solo lectura
+  tl.py deployment ID [--logs N]  estado de un deployment y sus últimas líneas de log
   tl.py gql 'query { me { email } }'   consulta GraphQL libre (solo para diagnóstico)
 
 Nada aquí cambia `mode`, secretos ni variables: el dinero real sigue siendo manual de Brandon.
@@ -277,6 +281,60 @@ def cmd_arena_pause_all(env: dict) -> None:
         print(f"{s}: {code} {raw[:160].decode(errors='replace') if code != 200 else 'pausada'}")
 
 
+BUNDLE_PROFILES = {"trading-lab": "operational-paper", "trading-arena": "arena-maintenance-read-only"}
+
+
+def _tarball(bundle: pathlib.Path) -> bytes:
+    """Mismo formato que `railway up --path-as-root`: entradas `./ruta`, sin .git ni node_modules."""
+    import io
+    import tarfile
+    buf = io.BytesIO()
+    with tarfile.open(fileobj=buf, mode="w:gz") as tar:
+        for path in sorted(bundle.rglob("*")):
+            rel = path.relative_to(bundle)
+            if path.is_symlink() or any(part in (".git", "node_modules", "__pycache__") for part in rel.parts):
+                continue
+            tar.add(path, arcname=f"./{rel.as_posix()}", recursive=False)
+    return buf.getvalue()
+
+
+def cmd_up(env: dict, service: str, bundle: pathlib.Path) -> None:
+    if service not in BUNDLE_PROFILES:
+        sys.exit(f"Servicio sin perfil permitido: {service!r}")
+    release = json.loads((bundle / "release.json").read_text(encoding="utf-8"))
+    if release.get("profile") != BUNDLE_PROFILES[service]:
+        sys.exit(f"{service} solo acepta paquetes {BUNDLE_PROFILES[service]!r}; este es {release.get('profile')!r}.")
+    if release.get("source_has_uncommitted_changes") or release.get("dirty"):
+        sys.exit("El paquete salió de un checkout con cambios sin commit; no se sube.")
+    if not (bundle / "Dockerfile").is_file():
+        sys.exit("El paquete no trae Dockerfile en la raíz.")
+    row = find_service(service, env)
+    body = _tarball(bundle)
+    url = (f"https://backboard.railway.com/project/{RAILWAY_PROJECT}/environment/{RAILWAY_ENV}/up"
+           f"?serviceId={row['service_id']}")
+    code, raw = _request(url, data=body, timeout=150, headers={
+        "Authorization": f"Bearer {env['RAILWAY_API_TOKEN']}", "Content-Type": "application/gzip"})
+    if code != 200:
+        sys.exit(f"Railway rechazó la subida ({code}): {raw[:300].decode(errors='replace')}")
+    out = json.loads(raw)
+    print(json.dumps({"service": service, "build_id": release.get("build_id"),
+                      "source": release.get("source_commit") or release.get("source_head"),
+                      "deployment": out.get("deploymentId"), "bytes": len(body)}))
+
+
+def cmd_deployment(env: dict, deployment_id: str, lines: int) -> None:
+    data = gql("query($id: String!) { deployment(id: $id) { id status createdAt staticUrl } }",
+               {"id": deployment_id}, env)
+    print(json.dumps(data["deployment"]))
+    if lines:
+        for kind in ("buildLogs", "deploymentLogs"):
+            logs = gql(f"query($id: String!, $n: Int) {{ {kind}(deploymentId: $id, limit: $n) {{ timestamp message }} }}",
+                       {"id": deployment_id, "n": lines}, env)[kind]
+            print(f"--- {kind}")
+            for row in logs[-lines:]:
+                print(row["timestamp"][11:19], row["message"][:300])
+
+
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     sub = p.add_subparsers(dest="cmd", required=True)
@@ -289,6 +347,12 @@ def main() -> None:
     for name in ("stop", "redeploy"):
         sub.add_parser(name).add_argument("service")
     sub.add_parser("gql").add_argument("query")
+    u = sub.add_parser("up")
+    u.add_argument("service")
+    u.add_argument("bundle", type=pathlib.Path)
+    d = sub.add_parser("deployment")
+    d.add_argument("id")
+    d.add_argument("--logs", type=int, default=0)
     a = p.parse_args()
     if a.cmd == "setup":
         cmd_setup()
@@ -313,6 +377,10 @@ def main() -> None:
         ok = gql("mutation($e: String!, $s: String!) { serviceInstanceRedeploy(environmentId: $e, serviceId: $s) }",
                  {"e": RAILWAY_ENV, "s": row["service_id"]}, env)
         print(json.dumps({"service": row["service"], "redeploy": ok}))
+    elif a.cmd == "up":
+        cmd_up(env, a.service, a.bundle)
+    elif a.cmd == "deployment":
+        cmd_deployment(env, a.id, a.logs)
     elif a.cmd == "gql":
         print(json.dumps(gql(a.query, None, env), indent=1))
 
