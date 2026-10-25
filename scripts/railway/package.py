@@ -21,8 +21,14 @@ def package(destination: Path) -> dict:
     for path in sorted((ROOT / "src/lab").rglob("*.py")):
         if "__pycache__" not in path.parts:
             files[str(path.relative_to(ROOT))] = path
-    for name in ("operations.html", "operations.js", "operations.css"):
+    for name in ("operations.html", "operations.js", "tabs.js", "operations.css"):
         files[f"dashboard/{name}"] = ROOT / "dashboard" / name
+    # Panel único (F3): investigación (fuente única del backlog) y archivo fijo de la arena.
+    for name in ("backlog.yaml", "semaforo.yaml", "carriles.yaml"):
+        files[f"research/{name}"] = ROOT / "research" / name
+    for path in sorted((ROOT / "archive/arena-v1").rglob("*")):
+        if path.is_file():
+            files[str(path.relative_to(ROOT))] = path
     if any(path.is_symlink() or any(parent.is_symlink() for parent in path.parents
                                    if parent != ROOT and ROOT in parent.parents)
            for path in files.values()):

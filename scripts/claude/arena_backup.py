@@ -29,7 +29,8 @@ from urllib.parse import quote
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 import tl  # noqa: E402
 
-ARENA = tl.ARENA_URL
+# Solo para el mantenimiento de F1; tl.py ya no lee el dominio de la arena (DEC-032).
+ARENA = "https://trading-arena-production-5c21.up.railway.app"
 PREFIXES = ('arena-final/', 'arena-backups/', 'arena-imports/')
 
 

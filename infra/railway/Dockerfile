@@ -9,6 +9,8 @@ RUN pip install --no-cache-dir -r requirements-runtime.txt \
 COPY src ./src
 COPY config.yaml ./config.yaml
 COPY dashboard ./dashboard
+COPY research ./research
+COPY archive ./archive
 COPY release.json ./release.json
 RUN python -c 'import yaml; from lab.runtime import validate_config; validate_config(yaml.safe_load(open("config.yaml")))'
 # Root only prepares the mounted directories; entrypoint drops UID/GID before

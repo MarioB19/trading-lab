@@ -164,6 +164,14 @@ def run_cycle(config: Path, store, interval: int, *, timeout: int = 900, runner=
     store.write_document("runtime_health", health)
     store.record_event("runtime_cycle", health)
     log("runtime_cycle", **health)
+    # Carriles de candidatas (F4): después de cerrar el ciclo del piloto, en procesos y bases aparte.
+    # Sin carriles activos no corre nada; un carril que falla no cambia el ciclo ya escrito.
+    try:
+        from .lanes import run_active
+        for item in run_active(Path(store.path).parent.parent / "lanes", runner=runner, timeout=min(timeout, 600)):
+            log("lane_cycle", **item)
+    except Exception as exc:  # noqa: BLE001 - un carril nunca tumba el ciclo del piloto
+        log("lane_cycle", status="error", detail=type(exc).__name__)
     # Public data collection has its own health and retry budget. It cannot
     # authorize trading or turn a healthy operational ledger into an error.
     try:

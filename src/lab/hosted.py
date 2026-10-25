@@ -179,7 +179,8 @@ def supervise(config: Path, data_dir: Path, backup_dir: Path, *, port: int,
     stop = stop if stop is not None else threading.Event()
     env = os.environ if environ is None else environ
     factory = server_factory or make_server
-    server = factory(data_dir, host="0.0.0.0", port=port, config_path=config, require_auth=True)
+    server = factory(data_dir, host="0.0.0.0", port=port, config_path=config, require_auth=True,
+                     backup_dir=backup_dir)
     server.daemon_threads = True
     server.block_on_close = False
     api_error = []

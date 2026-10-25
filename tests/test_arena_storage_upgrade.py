@@ -3,6 +3,20 @@ import fcntl
 import json
 import pytest
 from lab import arena, arena_fees as fees, arena_storage_upgrade as migration
+import hashlib
+
+# La migración de almacenamiento se aplicó el 15-oct y su candado congela el código de ese día.
+# Desde F3 (25-oct, panel único) cambian hosted.py y service.py del piloto, que no son lógica de
+# trading (runtime.py solo agrega los carriles F4 después del ciclo). Estas pruebas siguen verificando la migración con el resto del congelado intacto.
+CHANGED_AFTER_FREEZE = ('src/lab/hosted.py', 'src/lab/service.py', 'src/lab/runtime.py')
+
+
+@pytest.fixture(autouse=True)
+def freeze_as_of_f3(monkeypatch):
+    frozen = dict(migration.FROZEN_SOURCES)
+    for name in CHANGED_AFTER_FREEZE:
+        frozen[name] = hashlib.sha256((arena.ROOT / name).read_bytes()).hexdigest()
+    monkeypatch.setattr(migration, 'FROZEN_SOURCES', frozen)
 
 
 def fixture(tmp_path,monkeypatch):

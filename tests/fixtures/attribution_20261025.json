@@ -1,0 +1,933 @@
+{
+"equity": [
+{
+"benchmark_price": 80771.9,
+"date": "2026-10-24",
+"drawdown": -0.1447,
+"equity": 433.95,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 81086.2,
+"date": "2026-10-23",
+"drawdown": -0.1372,
+"equity": 437.77,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 759.969971,
+"date": "2026-10-23",
+"drawdown": -0.0073,
+"equity": 499.4,
+"flow": "",
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 81315.9,
+"date": "2026-10-22",
+"drawdown": -0.1306,
+"equity": 441.12,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 763.960022,
+"date": "2026-10-22",
+"drawdown": -0.0035,
+"equity": 501.29,
+"flow": "",
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 84022.5,
+"date": "2026-10-21",
+"drawdown": -0.1023,
+"equity": 455.49,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 773.090027,
+"date": "2026-10-21",
+"drawdown": -0.0008,
+"equity": 502.68,
+"flow": "",
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 82936.1,
+"date": "2026-10-20",
+"drawdown": -0.1134,
+"equity": 449.85,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 769.049988,
+"date": "2026-10-20",
+"drawdown": -0.0038,
+"equity": 501.15,
+"flow": "",
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 81843.7,
+"date": "2026-10-19",
+"drawdown": -0.1227,
+"equity": 445.12,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 766.47998,
+"date": "2026-10-19",
+"drawdown": -0.0065,
+"equity": 499.77,
+"flow": "",
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 82001.7,
+"date": "2026-10-18",
+"drawdown": -0.1227,
+"equity": 445.13,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 81382.0,
+"date": "2026-10-17",
+"drawdown": -0.1291,
+"equity": 441.89,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 81500.8,
+"date": "2026-10-16",
+"drawdown": -0.119,
+"equity": 447.01,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 763.25,
+"date": "2026-10-16",
+"drawdown": -0.0075,
+"equity": 499.27,
+"flow": "",
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 82133.7,
+"date": "2026-10-15",
+"drawdown": -0.1104,
+"equity": 451.39,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 771.789978,
+"date": "2026-10-15",
+"drawdown": -0.0012,
+"equity": 502.44,
+"flow": "",
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 81576.4,
+"date": "2026-10-14",
+"drawdown": -0.123,
+"equity": 444.98,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 769.599976,
+"date": "2026-10-14",
+"drawdown": -0.0058,
+"equity": 500.16,
+"flow": "",
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 83101.2,
+"date": "2026-10-13",
+"drawdown": -0.1046,
+"equity": 454.3,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 778.01001,
+"date": "2026-10-13",
+"drawdown": 0.0,
+"equity": 503.06,
+"flow": "",
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 81737.1,
+"date": "2026-10-12",
+"drawdown": -0.1176,
+"equity": 447.74,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 778.099976,
+"date": "2026-10-12",
+"drawdown": -0.0002,
+"equity": 502.85,
+"flow": "",
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 83675.6,
+"date": "2026-10-11",
+"drawdown": -0.0739,
+"equity": 469.87,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 82912.7,
+"date": "2026-10-10",
+"drawdown": -0.0916,
+"equity": 460.91,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 82559.4,
+"date": "2026-10-09",
+"drawdown": -0.1048,
+"equity": 454.24,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 778.570007,
+"date": "2026-10-09",
+"drawdown": 0.0,
+"equity": 502.96,
+"flow": "",
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 81683.8,
+"date": "2026-10-08",
+"drawdown": -0.1177,
+"equity": 447.68,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 773.929993,
+"date": "2026-10-08",
+"drawdown": -0.0026,
+"equity": 501.27,
+"flow": "",
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 83276.1,
+"date": "2026-10-07",
+"drawdown": -0.0678,
+"equity": 472.97,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 777.219971,
+"date": "2026-10-07",
+"drawdown": -0.0015,
+"equity": 501.79,
+"flow": "",
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 85542.1,
+"date": "2026-10-06",
+"drawdown": -0.0407,
+"equity": 486.71,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 779.090027,
+"date": "2026-10-06",
+"drawdown": 0.0,
+"equity": 502.55,
+"flow": "",
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 85751.5,
+"date": "2026-10-05",
+"drawdown": -0.0282,
+"equity": 493.08,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 774.830017,
+"date": "2026-10-05",
+"drawdown": -0.0023,
+"equity": 500.44,
+"flow": "",
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 86510.4,
+"date": "2026-10-04",
+"drawdown": -0.0281,
+"equity": 493.11,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 84740.0,
+"date": "2026-10-03",
+"drawdown": -0.0358,
+"equity": 489.25,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 84503.7,
+"date": "2026-10-02",
+"drawdown": -0.0451,
+"equity": 484.53,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 769.640015,
+"date": "2026-10-02",
+"drawdown": -0.0057,
+"equity": 498.7,
+"flow": "",
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 84849.1,
+"date": "2026-10-01",
+"drawdown": -0.0314,
+"equity": 491.44,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 763.98999,
+"date": "2026-10-01",
+"drawdown": -0.009,
+"equity": 497.05,
+"flow": "",
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 83564.7,
+"date": "2026-09-30",
+"drawdown": -0.0254,
+"equity": 494.48,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 762.630005,
+"date": "2026-09-30",
+"drawdown": -0.01,
+"equity": 496.54,
+"flow": "",
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 83633.4,
+"date": "2026-09-29",
+"drawdown": -0.0303,
+"equity": 491.99,
+"flow": "",
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 764.200012,
+"date": "2026-09-29",
+"drawdown": -0.0082,
+"equity": 497.47,
+"flow": "",
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 83462.7,
+"date": "2026-09-28",
+"drawdown": -0.0163,
+"equity": 499.1,
+"flow": null,
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 765.609985,
+"date": "2026-09-28",
+"drawdown": -0.0067,
+"equity": 498.2,
+"flow": -200.0,
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 84444.2,
+"date": "2026-09-27",
+"drawdown": -0.0008,
+"equity": 506.98,
+"flow": 200.0,
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 84426.7,
+"date": "2026-09-26",
+"drawdown": -0.0019,
+"equity": 306.72,
+"flow": null,
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 771.35,
+"date": "2026-09-25",
+"drawdown": 0.0,
+"equity": 702.89,
+"flow": null,
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 84090.5,
+"date": "2026-09-25",
+"drawdown": -0.0012,
+"equity": 306.01,
+"flow": null,
+"mode": "paper",
+"sleeve": "crypto"
+},
+{
+"benchmark_price": 767.179993,
+"date": "2026-09-24",
+"drawdown": -0.0005,
+"equity": 699.65,
+"flow": null,
+"mode": "paper",
+"sleeve": "stocks"
+},
+{
+"benchmark_price": 84380.0,
+"date": "2026-09-24",
+"drawdown": -0.0022,
+"equity": 299.34,
+"flow": null,
+"mode": "paper",
+"sleeve": "crypto"
+}
+],
+"fx_usd_mxn": 18.6565,
+"source": "runtime-data/claude/snapshots/20261025T194306Z.json (revisi\u00f3n semanal del 25-oct)",
+"trades": [
+{
+"asset": "BTC",
+"candle": "2026-10-22",
+"cost_bps": 29.9,
+"fee": 0.0769,
+"maker_value_usd": 25.62541158,
+"side": "sell",
+"sleeve": "crypto",
+"status": "filled",
+"value": 25.63
+},
+{
+"asset": "SOL",
+"candle": "2026-10-14",
+"cost_bps": 28.1,
+"fee": 0.0321,
+"maker_value_usd": 10.69588516,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 10.7
+},
+{
+"asset": "LINK",
+"candle": "2026-10-14",
+"cost_bps": 26.9,
+"fee": 0.0358,
+"maker_value_usd": 0.0,
+"side": "sell",
+"sleeve": "crypto",
+"status": "filled",
+"value": 9.94
+},
+{
+"asset": "SOL",
+"candle": "2026-10-12",
+"cost_bps": 28.3,
+"fee": 0.0557,
+"maker_value_usd": 18.56896541,
+"side": "sell",
+"sleeve": "crypto",
+"status": "filled",
+"value": 18.57
+},
+{
+"asset": "BTC",
+"candle": "2026-10-11",
+"cost_bps": 35.2,
+"fee": 0.4588,
+"maker_value_usd": 0.0,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 127.45
+},
+{
+"asset": "LTC",
+"candle": "2026-10-11",
+"cost_bps": 38.7,
+"fee": 0.2778,
+"maker_value_usd": 0.0,
+"side": "sell",
+"sleeve": "crypto",
+"status": "filled",
+"value": 77.18
+},
+{
+"asset": "LTC",
+"candle": "2026-10-10",
+"cost_bps": 38.0,
+"fee": 0.2753,
+"maker_value_usd": 0.0,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 76.48
+},
+{
+"asset": "BTC",
+"candle": "2026-10-10",
+"cost_bps": 29.3,
+"fee": 0.3633,
+"maker_value_usd": 121.09743228,
+"side": "sell",
+"sleeve": "crypto",
+"status": "filled",
+"value": 121.1
+},
+{
+"asset": "BTC",
+"candle": "2026-10-08",
+"cost_bps": 38.5,
+"fee": 0.4298,
+"maker_value_usd": 0.0,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 119.38
+},
+{
+"asset": "SOL",
+"candle": "2026-10-08",
+"cost_bps": 45.0,
+"fee": 0.047,
+"maker_value_usd": 0.0,
+"side": "sell",
+"sleeve": "crypto",
+"status": "filled",
+"value": 13.07
+},
+{
+"asset": "LTC",
+"candle": "2026-10-08",
+"cost_bps": 43.2,
+"fee": 0.2712,
+"maker_value_usd": 0.0,
+"side": "sell",
+"sleeve": "crypto",
+"status": "filled",
+"value": 75.34
+},
+{
+"asset": "LTC",
+"candle": "2026-10-07",
+"cost_bps": 40.2,
+"fee": 0.2834,
+"maker_value_usd": 0.0,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 78.72
+},
+{
+"asset": "ETH",
+"candle": "2026-10-07",
+"cost_bps": 36.2,
+"fee": 0.3947,
+"maker_value_usd": 0.0,
+"side": "sell",
+"sleeve": "crypto",
+"status": "filled",
+"value": 109.64
+},
+{
+"asset": "ETH",
+"candle": "2026-10-06",
+"cost_bps": 29.1,
+"fee": 0.3446,
+"maker_value_usd": 114.85800646,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 114.86
+},
+{
+"asset": "LTC",
+"candle": "2026-10-06",
+"cost_bps": 44.9,
+"fee": 0.306,
+"maker_value_usd": 0.0,
+"side": "sell",
+"sleeve": "crypto",
+"status": "filled",
+"value": 85.01
+},
+{
+"asset": "SPY",
+"candle": "2026-10-05",
+"cost_bps": 5.0,
+"fee": 0.0,
+"side": "sell",
+"sleeve": "stocks",
+"status": "filled",
+"value": 1.0
+},
+{
+"asset": "LTC",
+"candle": "2026-10-02",
+"cost_bps": 49.3,
+"fee": 0.3108,
+"maker_value_usd": 2.33213533,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 86.73
+},
+{
+"asset": "SOL",
+"candle": "2026-10-02",
+"cost_bps": 28.3,
+"fee": 0.0301,
+"maker_value_usd": 10.04446814,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 10.04
+},
+{
+"asset": "ETH",
+"candle": "2026-10-02",
+"cost_bps": 37.3,
+"fee": 0.403,
+"maker_value_usd": 0.0,
+"side": "sell",
+"sleeve": "crypto",
+"status": "filled",
+"value": 111.95
+},
+{
+"asset": "SOL",
+"candle": "2026-09-29",
+"cost_bps": 36.5,
+"fee": 0.3068,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 87.01
+},
+{
+"asset": "LTC",
+"candle": "2026-09-29",
+"cost_bps": 44.5,
+"fee": 0.2856,
+"side": "sell",
+"sleeve": "crypto",
+"status": "filled",
+"value": 79.34
+},
+{
+"asset": "ETH",
+"candle": "2026-09-28",
+"cost_bps": 29.2,
+"fee": 0.3351,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 111.71
+},
+{
+"asset": "LINK",
+"candle": "2026-09-28",
+"cost_bps": 19.7,
+"fee": 0.0414,
+"side": "sell",
+"sleeve": "crypto",
+"status": "filled",
+"value": 13.81
+},
+{
+"asset": "SOL",
+"candle": "2026-09-28",
+"cost_bps": 25.8,
+"fee": 0.265,
+"side": "sell",
+"sleeve": "crypto",
+"status": "filled",
+"value": 88.34
+},
+{
+"asset": "IEF",
+"candle": "2026-09-28",
+"cost_bps": 5.0,
+"fee": 0.0,
+"side": "sell",
+"sleeve": "stocks",
+"status": "filled",
+"value": 80.14
+},
+{
+"asset": "SPY",
+"candle": "2026-09-28",
+"cost_bps": 5.0,
+"fee": 0.0,
+"side": "sell",
+"sleeve": "stocks",
+"status": "filled",
+"value": 117.66
+},
+{
+"asset": "SOL",
+"candle": "2026-09-27",
+"cost_bps": 39.9,
+"fee": 0.3322,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 92.27
+},
+{
+"asset": "LTC",
+"candle": "2026-09-27",
+"cost_bps": 46.5,
+"fee": 0.1285,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 35.7
+},
+{
+"asset": "LINK",
+"candle": "2026-09-27",
+"cost_bps": 44.2,
+"fee": 0.1117,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 31.02
+},
+{
+"asset": "UNI",
+"candle": "2026-09-27",
+"cost_bps": 43.7,
+"fee": 0.0726,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 20.18
+},
+{
+"asset": "NEAR",
+"candle": "2026-09-27",
+"cost_bps": 55.3,
+"fee": 0.0558,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 15.5
+},
+{
+"asset": "ETH",
+"candle": "2026-09-27",
+"cost_bps": 28.1,
+"fee": 0.1949,
+"side": "sell",
+"sleeve": "crypto",
+"status": "filled",
+"value": 64.96
+},
+{
+"asset": "ETH",
+"candle": "2026-09-26",
+"cost_bps": 36.2,
+"fee": 0.2353,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 65.36
+},
+{
+"asset": "SOL",
+"candle": "2026-09-26",
+"cost_bps": 40.0,
+"fee": 0.1982,
+"side": "sell",
+"sleeve": "crypto",
+"status": "filled",
+"value": 55.05
+},
+{
+"asset": "SOL",
+"candle": "2026-09-25",
+"cost_bps": null,
+"fee": 0.0557,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 55.75
+},
+{
+"asset": "ETH",
+"candle": "2026-09-25",
+"cost_bps": null,
+"fee": 0.0635,
+"side": "sell",
+"sleeve": "crypto",
+"status": "filled",
+"value": 63.49
+},
+{
+"asset": "SPY",
+"candle": "2026-09-24",
+"cost_bps": null,
+"fee": 0.0,
+"side": "buy",
+"sleeve": "stocks",
+"status": "filled",
+"value": 417.76
+},
+{
+"asset": "IEF",
+"candle": "2026-09-24",
+"cost_bps": null,
+"fee": 0.0,
+"side": "buy",
+"sleeve": "stocks",
+"status": "filled",
+"value": 280.14
+},
+{
+"asset": "ETH",
+"candle": "2026-09-24",
+"cost_bps": null,
+"fee": 0.0636,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 63.65
+},
+{
+"asset": "LTC",
+"candle": "2026-09-24",
+"cost_bps": null,
+"fee": 0.0491,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 49.07
+},
+{
+"asset": "LINK",
+"candle": "2026-09-24",
+"cost_bps": null,
+"fee": 0.0484,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 48.44
+},
+{
+"asset": "UNI",
+"candle": "2026-09-24",
+"cost_bps": null,
+"fee": 0.03,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 29.97
+},
+{
+"asset": "NEAR",
+"candle": "2026-09-24",
+"cost_bps": null,
+"fee": 0.0289,
+"side": "buy",
+"sleeve": "crypto",
+"status": "filled",
+"value": 28.85
+}
+]
+}

@@ -1,0 +1,23 @@
+# Carriles de candidatas en simulado (F4). Fuente única; la lee lab.lanes.
+# Una candidata que pasa su barra entra a un carril, no al piloto: corre contra el control en los
+# mismos días y con las mismas funciones de lab.portfolio (lab.paper_comparison), en su propia base.
+# Ojo: paper_comparison simula con comisión y deslizamiento fijos del plan, no contra el libro de
+# Bitso; medir el costo real por operación de una candidata necesita extenderlo (S04).
+# Activar un carril exige plan preregistrado (commit propio) y un DEC. No cambia el piloto.
+version: 1
+max_activos: 2
+capital_usd: 500
+nota: Carriles listos y vacíos. La primera candidata posible sale del sprint S03 (H1b, 8-nov).
+carriles:
+  - id: carril-1
+    estado: vacio
+    hipotesis: null
+    plan: null
+    preregistro_commit: null
+    desde: null
+  - id: carril-2
+    estado: vacio
+    hipotesis: null
+    plan: null
+    preregistro_commit: null
+    desde: null

@@ -1,13 +1,15 @@
-"""La revisión de Claude cuadra resultado = mercado + estrategia − costos y detecta alertas."""
+"""La revisión de Claude toma la atribución de la API (una sola fórmula) y detecta alertas."""
 import importlib.util
+import json
 import pathlib
 
-import pytest
+from lab.attribution import windows
 
-SPEC = importlib.util.spec_from_file_location(
-    "claude_review", pathlib.Path(__file__).resolve().parents[1] / "scripts/claude/review.py")
+ROOT = pathlib.Path(__file__).resolve().parents[1]
+SPEC = importlib.util.spec_from_file_location("claude_review", ROOT / "scripts/claude/review.py")
 review = importlib.util.module_from_spec(SPEC)
 SPEC.loader.exec_module(review)
+FIXTURE = json.loads((ROOT / "tests/fixtures/attribution_20261025.json").read_text())
 
 
 def _snapshot(drawdown=-0.05, ready=True, mode="paper", flow_day=None):
@@ -33,18 +35,22 @@ def _snapshot(drawdown=-0.05, ready=True, mode="paper", flow_day=None):
         "performance": ok | {"data": {"fx": {"rate": 18.0}, "current": {}}}}}
 
 
-def test_weekly_identity_and_costs():
-    w = review.weekly(_snapshot(flow_day="2026-11-05"), None, 7)
-    s = w["sleeves"]["crypto"]
-    assert s["flows"] == pytest.approx(100.0)
-    assert s["costs_usd"] == pytest.approx(7 * 0.20)  # 40 pb de US$50 por día
-    assert s["pnl_usd"] == pytest.approx(s["market_usd"] + s["strategy_usd"] - s["costs_usd"])
-    assert s["beta"] == pytest.approx(0.5, abs=0.05)
-    assert s["maker_share"] == pytest.approx(0.2)
-
-
 def test_alerts():
     assert review.alerts(_snapshot()) == []
     found = " ".join(review.alerts(_snapshot(drawdown=-0.41, ready=False, mode="live")))
     assert "MODO" in found and "no listo" in found and "Kill switch crypto" in found
     assert review.alerts({"pilot": {}})[0].startswith("No se pudo leer")
+
+
+def test_weekly_review_prints_the_api_attribution_without_recomputing_it():
+    api = json.loads(json.dumps(windows(FIXTURE["equity"], FIXTURE["trades"], fx=FIXTURE["fx_usd_mxn"])))
+    snap = {"pilot": {"attribution": {"http": 200, "data": api},
+                      "performance": {"http": 200, "data": {"current": {"pnl_usd": -66.5}}}}}
+    text = review.markdown(review.weekly(snap))
+    assert "mercado -4.90 + estrategia -2.84 − costos 0.08" in text
+    assert "| crypto | -7.94 |" in text and "28 días" in text
+    assert not hasattr(review, "beta")  # una sola fórmula: la del servidor
+
+
+def test_old_snapshot_without_attribution_is_rejected():
+    assert "tl.py snapshot" in review.markdown(review.weekly({"pilot": {}}))

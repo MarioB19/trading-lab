@@ -3,17 +3,11 @@
 
 Uso:
   review.py alerts   SNAPSHOT.json            # salud y kill switches; código 1 si hay alertas
-  review.py weekly   SNAPSHOT.json [--end YYYY-MM-DD] [--days 7] [--json]
+  review.py weekly   SNAPSHOT.json [--json]   # atribución de la semana, 28 días y desde el primer cierre
 
-Atribución semanal por bloque, con flujos de capital excluidos:
-  resultado = mercado + estrategia − costos
-  mercado    = Σ días beta × rendimiento diario de la referencia × patrimonio del día anterior
-               (beta de los últimos 90 cierres; referencia = `benchmark_price` del propio bot:
-                BTC para cripto, SPY para ETFs)
-  costos     = comisión + diferencia contra el precio de referencia (`cost_bps` × importe);
-               si falta `cost_bps`, solo la comisión
-  estrategia = resultado − mercado + costos   (lo que la regla aportó antes de costos)
-Las cifras se calculan con los datos del snapshot: no se inventa ningún precio.
+La atribución (mercado + estrategia − costos) ya no se calcula aquí: sale de `/api/attribution`, que usa
+`lab.attribution` en el servidor. Así el panel y la revisión dan la misma cifra (una sola fórmula, DEC-032).
+Un snapshot anterior al 25-oct sin `attribution` no sirve para `weekly`: toma uno nuevo con `tl.py snapshot`.
 """
 from __future__ import annotations
 
@@ -21,7 +15,6 @@ import argparse
 import datetime as dt
 import json
 import pathlib
-import statistics
 import sys
 
 KILL = {"crypto": 0.45, "stocks": 0.25}
@@ -97,100 +90,15 @@ def alerts(snap: dict) -> list[str]:
     return found
 
 
-def _returns(rows: list[dict]) -> list[tuple[str, float, float]]:
-    """(fecha, rendimiento del bloque sin flujos, rendimiento de la referencia)."""
-    out = []
-    for a, b in zip(rows, rows[1:]):
-        ea, eb = _f(a.get("equity")), _f(b.get("equity"))
-        pa, pb = _f(a.get("benchmark_price")), _f(b.get("benchmark_price"))
-        flow = _f(b.get("flow")) or 0.0
-        if ea and eb is not None and pa and pb:
-            out.append((b["date"], (eb - flow - ea) / ea, pb / pa - 1))
-    return out
-
-
-def beta(rets: list[tuple[str, float, float]], end: str, n: int = 90) -> tuple[float | None, int]:
-    pts = [(r, m) for d, r, m in rets if d <= end][-n:]
-    pts = [(r, m) for r, m in pts if m != 0 or r != 0]  # días sin cierre (ETF en fin de semana)
-    if len(pts) < 10:
-        return None, len(pts)
-    rs, ms = [p[0] for p in pts], [p[1] for p in pts]
-    var = statistics.pvariance(ms)
-    if var == 0:
-        return None, len(pts)
-    mr, mm = statistics.fmean(rs), statistics.fmean(ms)
-    cov = sum((r - mr) * (m - mm) for r, m in pts) / len(pts)
-    return cov / var, len(pts)
-
-
-def weekly(snap: dict, end: str | None, days: int) -> dict:
-    eq = equity_by_sleeve(snap)
-    trades = [t for t in (_data(snap, "trades") or {}).get("items", []) if t.get("status") == "filled"]
+def weekly(snap: dict) -> dict:
+    data = _data(snap, "attribution")
+    if not isinstance(data, dict) or "week" not in data:
+        return {"error": "El snapshot no trae /api/attribution (es anterior al panel único). Toma uno nuevo con tl.py snapshot."}
     perf = _data(snap, "performance") or {}
-    fx = _f((perf.get("fx") or {}).get("rate"))
-    if end is None:
-        end = max((rows[-1]["date"] for rows in eq.values() if rows), default=None)
-    if end is None:
-        return {"error": "Sin filas de patrimonio en el snapshot."}
-    start = (dt.date.fromisoformat(end) - dt.timedelta(days=days)).isoformat()
-    result = {"start": start, "end": end, "fx_usd_mxn": fx, "sleeves": {}, "trades": []}
-    tot = {"pnl": 0.0, "market": 0.0, "strategy": 0.0, "costs": 0.0, "unattributed": 0.0,
-           "start_equity": 0.0, "end_equity": 0.0}
-    for sleeve, rows in sorted(eq.items()):
-        base = [r for r in rows if r["date"] <= start]
-        inside = [r for r in rows if start < r["date"] <= end]
-        if not base or not inside:
-            result["sleeves"][sleeve] = {"error": "sin cierres suficientes en la ventana"}
-            continue
-        r0, r1 = base[-1], inside[-1]
-        e0, e1 = _f(r0["equity"]), _f(r1["equity"])
-        flows = sum(_f(r.get("flow")) or 0.0 for r in inside)
-        pnl = e1 - e0 - flows
-        p0, p1 = _f(r0.get("benchmark_price")), _f(r1.get("benchmark_price"))
-        bench = (p1 / p0 - 1) if p0 and p1 else None
-        b, n = beta(_returns(rows), end)
-        # Mercado día a día sobre el patrimonio del día anterior: respeta aportaciones y retiros.
-        market = None
-        if b is not None:
-            market, prev = 0.0, r0
-            for r in inside:
-                pa, pb, ea = _f(prev.get("benchmark_price")), _f(r.get("benchmark_price")), _f(prev.get("equity"))
-                if pa and pb and ea:
-                    market += b * (pb / pa - 1) * ea
-                prev = r
-        st_trades = [t for t in trades if t.get("sleeve") == sleeve and start < str(t.get("candle", ""))[:10] <= end]
-        costs = 0.0
-        for t in st_trades:
-            v, bps, fee = _f(t.get("value")) or 0.0, _f(t.get("cost_bps")), _f(t.get("fee")) or 0.0
-            costs += max(bps * v / 1e4, fee) if bps is not None else fee
-        strategy = pnl - market + costs if market is not None else None
-        traded = sum(_f(t.get("value")) or 0.0 for t in st_trades)
-        maker = sum(_f(t.get("maker_value_usd")) or 0.0 for t in st_trades)
-        result["sleeves"][sleeve] = {
-            "start_equity": e0, "end_equity": e1, "flows": flows, "pnl_usd": pnl,
-            "pnl_pct": pnl / (e0 + max(flows, 0.0)) if e0 else None, "benchmark_return": bench, "beta": b, "beta_obs": n,
-            "market_usd": market, "strategy_usd": strategy, "costs_usd": costs,
-            "trades": len(st_trades), "traded_usd": traded,
-            "cost_bps_weighted": costs / traded * 1e4 if traded else None,
-            "maker_share": maker / traded if traded else None,
-            "drawdown": _f(r1.get("drawdown")), "kill_limit": KILL.get(sleeve),
-        }
-        tot["pnl"] += pnl
-        tot["costs"] += costs
-        tot["start_equity"] += e0
-        tot["end_equity"] += e1
-        if market is not None:
-            tot["market"] += market
-            tot["strategy"] += strategy
-        else:  # sin beta confiable: su resultado (ya neto de costos) queda sin atribuir
-            tot["unattributed"] += pnl + costs
-        result["trades"] += [{k: t.get(k) for k in ("candle", "sleeve", "asset", "side", "value", "fee", "cost_bps")}
-                             for t in st_trades]
-    result["total"] = tot
     cur = perf.get("current") or {}
-    result["since_start"] = {"equity_usd": cur.get("equity_usd"), "pnl_usd": cur.get("pnl_usd"),
-                             "pnl_mxn": cur.get("pnl_mxn"), "as_of_utc": cur.get("as_of_utc")}
-    return result
+    data["since_start_performance"] = {"equity_usd": cur.get("equity_usd"), "pnl_usd": cur.get("pnl_usd"),
+                                       "pnl_mxn": cur.get("pnl_mxn"), "as_of_utc": cur.get("as_of_utc")}
+    return data
 
 
 def _m(x, pct=False):
@@ -199,9 +107,10 @@ def _m(x, pct=False):
     return f"{x:+.2%}" if pct else f"{x:+,.2f}"
 
 
-def markdown(w: dict) -> str:
-    if "error" in w:
-        return w["error"]
+LABELS = {"week": "Semana", "days_28": "28 días", "since_start": "Desde el primer cierre"}
+
+
+def _table(w: dict) -> list[str]:
     fx = w.get("fx_usd_mxn")
     lines = [f"Ventana {w['start']} → {w['end']} (cierres del bot). Tipo de cambio {fx or 'sin dato'}.", "",
              "| Bloque | Resultado US$ | % | Referencia | Beta | Mercado | Estrategia | Costos | Ops | pb | Maker |",
@@ -220,9 +129,23 @@ def markdown(w: dict) -> str:
     mxn = f" (MXN {t['pnl'] * fx:+,.0f})" if fx else ""
     extra = f" + sin atribuir {_m(t['unattributed'])}" if t["unattributed"] else ""
     lines += ["", f"Total del periodo: US${t['pnl']:+,.2f}{mxn} = mercado {_m(t['market'])} + estrategia "
-                  f"{_m(t['strategy'])}{extra} − costos {t['costs']:,.2f}.",
-              f"Desde el inicio: {_m(w['since_start'].get('pnl_usd'))} US$ / {_m(w['since_start'].get('pnl_mxn'))} MXN "
-              f"(patrimonio {w['since_start'].get('equity_usd')}, corte {w['since_start'].get('as_of_utc')})."]
+                  f"{_m(t['strategy'])}{extra} − costos {t['costs']:,.2f}."]
+    return lines
+
+
+def markdown(data: dict) -> str:
+    if "error" in data:
+        return data["error"]
+    lines = []
+    for key in ("week", "days_28", "since_start"):
+        w = data.get(key) or {}
+        if "error" in w or not w:
+            lines += [f"**{LABELS[key]}:** {w.get('error', 'sin dato')}", ""]
+            continue
+        lines += [f"**{LABELS[key]}**", ""] + _table(w) + [""]
+    s = data["since_start_performance"]
+    lines.append(f"Desde el inicio (panel): {_m(s.get('pnl_usd'))} US$ / {_m(s.get('pnl_mxn'))} MXN "
+                 f"(patrimonio {s.get('equity_usd')}, corte {s.get('as_of_utc')}).")
     return "\n".join(lines)
 
 
@@ -230,8 +153,6 @@ def main() -> None:
     p = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     p.add_argument("mode", choices=("alerts", "weekly"))
     p.add_argument("snapshot", type=pathlib.Path)
-    p.add_argument("--end")
-    p.add_argument("--days", type=int, default=7)
     p.add_argument("--json", action="store_true")
     a = p.parse_args()
     snap = json.loads(a.snapshot.read_text(encoding="utf-8"))
@@ -239,7 +160,7 @@ def main() -> None:
         found = alerts(snap)
         print("\n".join(found) if found else "Sin alertas.")
         sys.exit(1 if found else 0)
-    w = weekly(snap, a.end, a.days)
+    w = weekly(snap)
     print(json.dumps(w, ensure_ascii=False, indent=1) if a.json else markdown(w))
 
 

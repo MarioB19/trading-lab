@@ -1,0 +1,49 @@
+# Semáforo de «ganadora» para la pestaña Investigación del panel.
+# Estado: PROPUESTA del plan «Un dominio y estrategia ganadora» (25-oct-2026, sección 2.1).
+# Se preregistra con su propio commit en el sprint S02 (1-nov), antes de cualquier prueba nueva,
+# y no se cambia después por los resultados. Los valores del control salen de
+# reports/sprint01_costo_cripto_resultado.md; «sin dato» es válido y significa que S02 lo mide.
+version: 1
+estado: propuesta
+preregistro: pendiente (S02, 1-nov-2026)
+fuente: "00 — Dirección/🗺️ Plan — Un dominio y estrategia ganadora.md, sección 2.1"
+banco: >-
+  Walk-forward del 1-ene-2019 al último cierre, 16 monedas con par en USD de Bitso, costo = comisión
+  del exchange + spread medido, estrés de costos ×1.5, bloque ETF 60/40 fijo y cartera total 50/50.
+veredicto_control: "No es ganadora: falla en costo (10.9% contra 6%) y faltan M1 y M2 medidos."
+metricas:
+  - id: M1
+    nombre: Rendimiento neto contra 60/40 (cartera total)
+    umbral: Gana al 60/40 en la mayoría de los años y el bootstrap de la diferencia es > 0 con 90% de confianza
+    control: sin dato
+    estado: sin_dato
+  - id: M2
+    nombre: Rendimiento neto contra BTC a igual riesgo (bloque cripto)
+    umbral: Diferencia > 0 con 90% de confianza contra «BTC + efectivo» con la misma volatilidad
+    control: "sin dato (pista: Sharpe 1.31 contra 0.97 de BTC, pero +42.7% contra +49.2% anual)"
+    estado: sin_dato
+  - id: M3
+    nombre: Caída máxima con costos ×1.5
+    umbral: Cartera total ≤ 30%; bloque cripto ≤ 40%
+    control: "cripto −36.7%; total sin dato"
+    estado: parcial
+  - id: M4
+    nombre: Costo anual de operar (comisión + spread, bloque cripto)
+    umbral: ≤ 6% al año y ≤ 1/3 de la ganancia bruta
+    control: "10.9%"
+    estado: falla
+  - id: M5
+    nombre: Robustez
+    umbral: M1 y M2 se sostienen con costos ×1.5; si es cambio de señal, placebo p < 0.05 y Sharpe deflactado ≥ 0.95
+    control: "con estrés: +35.2% anual (M1 y M2 sin dato)"
+    estado: sin_dato
+  - id: M6
+    nombre: Fidelidad en simulado (4 semanas en el exchange elegido)
+    umbral: Replay < 2%; costo medido ≤ modelado + 20%; cero órdenes desconocidas y cero ciclos fallidos sin explicar; kill switch a más de 10 puntos
+    control: el control lleva ~4 semanas sin cambios
+    estado: en_curso
+  - id: M7
+    nombre: Costo total con US$1,000 (comisión + spread + Railway)
+    umbral: Sin umbral propio; entra en M1, medido neto también de Railway
+    control: "Railway US$60 al año = 6%; con Bitso ≈ 11.5% en total"
+    estado: informativa

@@ -128,12 +128,19 @@ def source_tree(tmp_path, monkeypatch):
         "dashboard/operations.html": "<main>panel</main>\n",
         "dashboard/operations.js": "console.log('panel');\n",
         "dashboard/operations.css": "main { color: black; }\n",
+        "dashboard/tabs.js": "console.log('tabs');\n",
+        "research/backlog.yaml": "version: 1\n",
+        "research/semaforo.yaml": "version: 1\n",
+        "research/carriles.yaml": "version: 1\n",
+        "archive/arena-v1/manifest.json": "{}\n",
+        "archive/arena-v1/preregistros/plan.md": "plan\n",
     }
     excluded = [".env", ".env.local", ".git/config", "state/equity.csv",
                 "runtime-data/trading.sqlite3", "state/worker.enabled", "reports/evidence.json",
                 "configs/experiments/candidate.yaml", ".venv/bin/python", "data/history.csv",
                 "dashboard/data.json", "dashboard/index.html", "src/lab/__pycache__/bad.py",
-                "src/lab/hidden.sqlite3", "src/lab/private.env", "src/lab/native.so"]
+                "src/lab/hidden.sqlite3", "src/lab/private.env", "src/lab/native.so",
+                "research/notes.md", "archive/other/x.json"]
     for name, content in {**permitted, **{name: "excluded-synthetic-marker" for name in excluded}}.items():
         path = root / name
         path.parent.mkdir(parents=True, exist_ok=True)

@@ -12,7 +12,10 @@ import json
 import math
 import os
 from pathlib import Path
+import re
 import sqlite3
+import threading
+import time
 from urllib.parse import parse_qs, urlparse
 
 import yaml
@@ -23,9 +26,55 @@ from .execution_quality import build_execution_quality
 from .runtime import DATABASE_NAME, readiness
 
 ASSET_DIR = Path(__file__).resolve().parents[2] / "dashboard"
+ROOT_DIR = ASSET_DIR.parent
 ASSETS = {"/": ("operations.html", "text/html; charset=utf-8"),
           "/operations.js": ("operations.js", "text/javascript; charset=utf-8"),
+          "/tabs.js": ("tabs.js", "text/javascript; charset=utf-8"),
           "/operations.css": ("operations.css", "text/css; charset=utf-8")}
+BACKUP_NAME = re.compile(r"hosted-\d{8}T\d{12}Z-[0-9a-f]{12}\.sqlite3")
+MAX_PART = 16 * 1024 * 1024
+
+
+class AuthThrottle:
+    """Límite de intentos fallidos de contraseña por cliente (F6: el dominio propio es fácil de adivinar).
+
+    Tras `max_failures` fallos en `window` segundos, el cliente recibe 429 durante `lockout` segundos,
+    aunque luego mande la contraseña correcta. Memoria acotada: se descartan claves viejas.
+    """
+
+    def __init__(self, max_failures=10, window=900.0, lockout=900.0, clock=time.monotonic, max_keys=10_000):
+        self.max_failures, self.window, self.lockout, self.clock, self.max_keys = max_failures, window, lockout, clock, max_keys
+        self.failures: dict[str, list[float]] = {}
+        self.locked: dict[str, float] = {}
+        self.lock = threading.Lock()
+
+    def retry_after(self, key: str) -> int:
+        with self.lock:
+            until = self.locked.get(key)
+            now = self.clock()
+            if until is None:
+                return 0
+            if until <= now:
+                del self.locked[key]
+                return 0
+            return max(1, math.ceil(until - now))
+
+    def failure(self, key: str) -> None:
+        with self.lock:
+            now = self.clock()
+            recent = [t for t in self.failures.get(key, []) if now - t < self.window] + [now]
+            self.failures[key] = recent
+            if len(recent) >= self.max_failures:
+                self.locked[key] = now + self.lockout
+                self.failures.pop(key, None)
+                print(json.dumps({"auth_lockout": True, "seconds": self.lockout}), flush=True)
+            if len(self.failures) > self.max_keys:
+                for old in sorted(self.failures, key=lambda k: self.failures[k][-1])[: len(self.failures) - self.max_keys]:
+                    self.failures.pop(old, None)
+
+    def success(self, key: str) -> None:
+        with self.lock:
+            self.failures.pop(key, None)
 
 
 def safe_json(value):
@@ -155,6 +204,58 @@ class Reader:
             db.execute("BEGIN")
             return build_summary(db)
 
+    def attribution(self, end: str | None = None):
+        """Mercado, estrategia y costos (semana, 28 días, desde el primer cierre): misma fórmula que la revisión."""
+        from .attribution import windows
+        if not self.path.exists():
+            return {"error": "Sin datos operativos"}
+        with closing(self.connect()) as db:
+            db.execute("BEGIN")
+            equity = [json.loads(row[0]) for row in db.execute("SELECT payload FROM equity ORDER BY rowid")]
+            trades = [json.loads(row[0]) for row in db.execute("SELECT payload FROM trades ORDER BY rowid")]
+        try:
+            fx = (self.performance().get("fx") or {}).get("rate")
+        except (ValueError, yaml.YAMLError):
+            fx = None
+        return windows(equity, trades, end=end, fx=fx)
+
+    def latest_backup(self, backup_dir: Path | None) -> dict:
+        """Solo el último respaldo verificado que registró el supervisor; nunca rutas arbitrarias."""
+        if backup_dir is None or not self.path.exists():
+            raise FileNotFoundError("Respaldo no configurado")
+        with closing(self.connect()) as db:
+            last = self.document(db, "last_backup", {}) or {}
+        name = str(last.get("file", ""))
+        if not BACKUP_NAME.fullmatch(name):
+            raise FileNotFoundError("Sin respaldo verificado")
+        directory = Path(backup_dir).resolve()
+        data, manifest = directory / name, directory / (name + ".manifest.json")
+        if data.is_symlink() or manifest.is_symlink() or not data.is_file() or not manifest.is_file():
+            raise FileNotFoundError("Respaldo ausente")
+        raw = manifest.read_bytes()
+        meta = json.loads(raw)
+        if meta.get("file") != name or meta.get("bytes") != data.stat().st_size:
+            raise FileNotFoundError("El respaldo no coincide con su manifiesto")
+        return {"file": name, "bytes": meta["bytes"], "sha256": meta.get("sha256"),
+                "created_at_utc": meta.get("created_at_utc"), "schema_version": meta.get("schema_version"),
+                "manifest_file": manifest.name, "manifest_bytes": len(raw),
+                "manifest_sha256": hashlib.sha256(raw).hexdigest(), "path": {"db": data, "manifest": manifest}}
+
+
+def research_status(root: Path) -> dict:
+    """Backlog (fuente única: research/backlog.yaml) y semáforo de «ganadora» para la pestaña Investigación."""
+    out = {"backlog": None, "semaforo": None, "errors": []}
+    try:
+        from .backlog import load, summary
+        out["backlog"] = summary(load(Path(root) / "backlog.yaml"))
+    except (OSError, ValueError, KeyError, yaml.YAMLError, ImportError) as exc:
+        out["errors"].append(f"backlog: {type(exc).__name__}")
+    try:
+        out["semaforo"] = _yaml_file(Path(root) / "semaforo.yaml")
+    except (OSError, ValueError, yaml.YAMLError) as exc:
+        out["errors"].append(f"semaforo: {type(exc).__name__}")
+    return out
+
 
 def comparison_status(paper_dir: Path | None, research_dir: Path | None) -> dict:
     """Read dedicated evidence; never choose a winner or run a strategy."""
@@ -188,10 +289,21 @@ def comparison_status(paper_dir: Path | None, research_dir: Path | None) -> dict
     return result
 
 
+def _yaml_file(path: Path):
+    if path.is_symlink() or not path.is_file():
+        raise FileNotFoundError(path.name)
+    return yaml.safe_load(path.read_text(encoding="utf-8"))
+
+
 def make_server(data_dir: Path, host="127.0.0.1", port=8080, *, comparison_dir: Path | None = None,
                 research_dir: Path | None = None, config_path: Path | None = None,
-                require_auth: bool = False):
+                require_auth: bool = False, backup_dir: Path | None = None,
+                archive_dir: Path | None = None, research_root: Path | None = None,
+                throttle: AuthThrottle | None = None):
     reader = Reader(data_dir, config_path)
+    archive_dir = Path(archive_dir or ROOT_DIR / "archive" / "arena-v1")
+    research_root = Path(research_root or ROOT_DIR / "research")
+    throttle = throttle or AuthThrottle()
     auth_digest = None
     if require_auth:
         user = os.environ.get("TRADING_DASHBOARD_USER", "")
@@ -218,6 +330,12 @@ def make_server(data_dir: Path, host="127.0.0.1", port=8080, *, comparison_dir: 
             if auth_digest is None:
                 self.send(503, {"error": "Servicio temporalmente no disponible"})
                 return False
+            client = self.client_key()
+            wait = throttle.retry_after(client)
+            if wait:
+                self.send(429, {"error": "Demasiados intentos fallidos; espera e intenta de nuevo"},
+                          headers={"Retry-After": str(wait)})
+                return False
             headers = self.headers.get_all("Authorization", [])
             supplied = None
             if len(headers) == 1:
@@ -230,17 +348,27 @@ def make_server(data_dir: Path, host="127.0.0.1", port=8080, *, comparison_dir: 
             # Fixed-size byte digests support Unicode without disclosing which field failed.
             candidate = hashlib.sha256(supplied if supplied is not None else b"").digest()
             if hmac.compare_digest(candidate, auth_digest) and supplied is not None:
+                throttle.success(client)
                 return True
+            if headers:  # un navegador sin credenciales todavía no es un intento fallido
+                throttle.failure(client)
             self.send(401, {"error": "Autenticación requerida"})
             return False
 
-        def send(self, status, payload, content_type="application/json; charset=utf-8"):
+        def client_key(self):
+            # Railway agrega la IP real del cliente al final de X-Forwarded-For; lo que manda el cliente queda antes.
+            forwarded = [part.strip() for part in self.headers.get("X-Forwarded-For", "").split(",") if part.strip()]
+            return forwarded[-1] if forwarded else self.client_address[0]
+
+        def send(self, status, payload, content_type="application/json; charset=utf-8", headers=None):
             body = payload if isinstance(payload, bytes) else json.dumps(safe_json(payload), ensure_ascii=False, allow_nan=False).encode()
             self.send_response(status)
             self.send_header("Content-Type", content_type)
             self.send_header("Content-Length", str(len(body)))
             if status == 401:
                 self.send_header("WWW-Authenticate", 'Basic realm="Trading Lab", charset="UTF-8"')
+            for key, value in (headers or {}).items():
+                self.send_header(key, value)
             self.send_header("Cache-Control", "no-store")
             self.send_header("X-Content-Type-Options", "nosniff")
             self.send_header("X-Frame-Options", "DENY")
@@ -275,6 +403,29 @@ def make_server(data_dir: Path, host="127.0.0.1", port=8080, *, comparison_dir: 
                         return self.send(200, comparison_status(comparison_dir, research_dir))
                     except (ValueError, OSError, sqlite3.Error):
                         return self.send(503, {"error": "Comparación no disponible o integridad no verificada"})
+                if url.path == "/api/attribution":
+                    end = parse_qs(url.query).get("end", [None])[0]
+                    if end is not None and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", end):
+                        return self.send(400, {"error": "end debe ser AAAA-MM-DD"})
+                    return self.send(200, reader.attribution(end))
+                if url.path == "/api/research":
+                    return self.send(200, research_status(research_root))
+                if url.path == "/api/candidates":
+                    try:
+                        from .lanes import status as lanes_status
+                        return self.send(200, lanes_status(reader.directory.parent / "lanes",
+                                                           registry_path=research_root / "carriles.yaml"))
+                    except (OSError, ValueError, yaml.YAMLError):
+                        return self.send(503, {"error": "Registro de carriles no disponible"})
+                if url.path in {"/api/arena-archive", "/api/arena-archive/fills"}:
+                    try:
+                        from .arena_archive import fills, load
+                        return self.send(200, load(archive_dir) if url.path == "/api/arena-archive"
+                                         else {"items": fills(archive_dir)})
+                    except (OSError, ValueError, KeyError):
+                        return self.send(503, {"error": "Archivo de la arena no disponible"})
+                if url.path in {"/api/backups/latest", "/api/backups/part"}:
+                    return self.backup(url)
                 if url.path.startswith("/api/"):
                     try:
                         limit = int(parse_qs(url.query).get("limit", ["100"])[0])
@@ -288,6 +439,34 @@ def make_server(data_dir: Path, host="127.0.0.1", port=8080, *, comparison_dir: 
                 self.send(404, {"error": "Recurso desconocido"})
             except (sqlite3.Error, OSError):
                 self.send(503, {"error": "Datos operativos temporalmente no disponibles"})
+
+        def backup(self, url):
+            try:
+                latest = reader.latest_backup(backup_dir)
+            except (FileNotFoundError, ValueError, OSError, sqlite3.Error):
+                return self.send(404, {"error": "Sin respaldo verificado disponible"})
+            paths = latest.pop("path")
+            if url.path == "/api/backups/latest":
+                return self.send(200, latest)
+            query = parse_qs(url.query)
+            try:
+                name, kind = query["file"][0], query.get("kind", ["db"])[0]
+                offset, length = int(query["offset"][0]), int(query["length"][0])
+            except (KeyError, IndexError, ValueError):
+                return self.send(400, {"error": "file, offset y length obligatorios"})
+            if name != latest["file"] or kind not in paths:
+                return self.send(409, {"error": "Ese ya no es el último respaldo; vuelve a pedir /api/backups/latest"})
+            size = latest["bytes"] if kind == "db" else latest["manifest_bytes"]
+            if offset < 0 or not 0 < length <= MAX_PART or offset + length > size:
+                return self.send(416, {"error": "Tramo inválido"})
+            with paths[kind].open("rb") as stream:
+                stream.seek(offset)
+                data = stream.read(length)
+            if len(data) != length:
+                return self.send(416, {"error": "Lectura incompleta"})
+            return self.send(200, data, "application/octet-stream", headers={
+                "X-Part-Sha256": hashlib.sha256(data).hexdigest(), "X-Part-Offset": str(offset),
+                "X-Part-Length": str(length)})
 
         def do_POST(self):
             self.send(405, {"error": "Este panel es exclusivamente de lectura"})

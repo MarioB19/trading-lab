@@ -4,10 +4,17 @@
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
   <title>Trading Lab · Operación</title><link rel="stylesheet" href="/operations.css">
   <script src="/operations.js" defer></script>
+  <script src="/tabs.js" defer></script>
 </head>
 <body>
 <header><a href="/" class="brand">TRADING LAB<span>Operación</span></a><span id="mode" class="badge">SIMULADO · PENDIENTE DE VERIFICAR</span></header>
+<nav class="tabs" role="tablist" aria-label="Secciones del panel">
+  <button type="button" role="tab" id="tab-btn-piloto" aria-controls="tab-piloto" aria-selected="true" data-tab="piloto">Piloto</button>
+  <button type="button" role="tab" id="tab-btn-investigacion" aria-controls="tab-investigacion" aria-selected="false" data-tab="investigacion" tabindex="-1">Investigación</button>
+  <button type="button" role="tab" id="tab-btn-arena" aria-controls="tab-arena" aria-selected="false" data-tab="arena" tabindex="-1">Arena (archivo)</button>
+</nav>
 <main>
+<div id="tab-piloto" role="tabpanel" aria-labelledby="tab-btn-piloto">
   <section class="intro"><div><p class="eyebrow">CONTROL DE OPERACIÓN</p><h1>Todo bajo observación.</h1><p>Patrimonio, ganancias y salud del sistema. Dinero simulado; las aportaciones no cuentan como rendimiento.</p></div><div class="view-controls"><label for="currency">Moneda de vista</label><select id="currency"><option value="MXN" selected>Pesos mexicanos · MXN</option><option value="USD">Dólares · USD</option></select><button id="refresh" type="button">Actualizar</button></div></section>
   <div id="status" class="status" role="status" aria-live="polite">Consultando el estado…</div>
   <section id="comparison-section" aria-labelledby="comparison-title" hidden><div class="section-title"><h2 id="comparison-title">Historial de investigación</h2><span>Resultados conservados · fuera de operación</span></div><p id="comparison-status">Consultando el historial…</p><div id="comparison" class="sleeves"></div><p id="comparison-checks"></p><p id="comparison-paper"></p></section>
@@ -21,6 +28,12 @@
       <article><span>Desde los últimos cierres</span><strong id="in-progress">—</strong><small id="in-progress-reference">Variación incluida en la ganancia acumulada</small><small id="in-progress-cutoff">Los bloques pueden tener cortes distintos.</small></article>
     </div>
     <ul id="performance-notes" class="data-notes" hidden></ul>
+  </section>
+  <section aria-labelledby="attribution-title">
+    <div class="section-title"><h2 id="attribution-title">¿Por qué? Mercado, estrategia y costos</h2><span>Misma fórmula que la revisión semanal · US$</span></div>
+    <p id="attribution-status" class="data-notice" role="status">Consultando la atribución…</p>
+    <div class="table-wrap"><table class="attribution-table"><caption class="sr-only">Resultado de cada bloque repartido en mercado, estrategia y costos, por periodo.</caption><thead><tr><th scope="col">Periodo</th><th scope="col">Bloque</th><th scope="col">Resultado</th><th scope="col">Referencia</th><th scope="col">Mercado</th><th scope="col">Estrategia</th><th scope="col">Costos</th><th scope="col">Ops</th></tr></thead><tbody id="attribution"><tr><td colspan="8">Sin datos.</td></tr></tbody></table></div>
+    <p id="attribution-note" class="chart-note">Mercado = beta × rendimiento de la referencia del bot (BTC en cripto, SPY en ETFs). Costos = comisión + diferencia contra el precio de referencia. Estrategia = resultado − mercado + costos: lo que aportó la regla antes de costos. Sin aportaciones ni retiros.</p>
   </section>
   <section class="balance-panel" aria-labelledby="balance-title">
     <div class="section-title"><div><h2 id="balance-title">Balance por día</h2><p>Saldo a los últimos cierres · efectivo y posiciones</p></div><div class="chart-controls"><label>Bloque<select id="balance-sleeve"><option value="total">Cartera total</option><option value="crypto">Cripto</option><option value="stocks">ETF</option></select></label><label>Periodo<select id="balance-period"><option value="30">Últimos 30 días</option><option value="90">Últimos 90 días</option><option value="all">Todo el historial</option></select></label></div></div>
@@ -48,6 +61,26 @@
   <section><div class="section-title"><h2>Órdenes y conciliación</h2><span>Últimos 100 registros</span></div><div class="table-wrap"><table><thead><tr><th>Activo</th><th>Lado</th><th>Estado</th><th>Cantidad ejecutada</th><th>Actualización</th></tr></thead><tbody id="orders"><tr><td colspan="5">Sin órdenes registradas.</td></tr></tbody></table></div></section>
   <section><div class="section-title"><h2>Operaciones registradas</h2><span>Los movimientos de capital no son rendimiento</span></div><p id="trade-currency-note">Valores en MXN con el tipo de cambio actual disponible; no es la conversión histórica del día de la operación.</p><p>1 bps equivale a 0.01%. Un costo de 45 bps son US$4.50 por una operación de US$1,000; comprar y vender genera costos en ambos lados.</p><div class="table-wrap"><table><thead><tr><th>Fecha UTC</th><th>Bloque</th><th>Activo</th><th>Lado</th><th id="trade-value-title">Valor MXN</th><th>Costo bps</th></tr></thead><tbody id="trades"><tr><td colspan="6">Sin operaciones registradas.</td></tr></tbody></table></div></section>
   <section><div class="section-title"><h2>Actividad del sistema</h2><span>Últimos 15 eventos</span></div><ul id="events" class="events"><li>Sin eventos.</li></ul></section>
+</div>
+<div id="tab-investigacion" role="tabpanel" aria-labelledby="tab-btn-investigacion" hidden>
+  <section class="intro"><div><p class="eyebrow">INVESTIGACIÓN</p><h1>¿Ya hay una ganadora?</h1><p>Semáforo de la definición de «ganadora», hipótesis pendientes, bitácora de sprints y candidatas en simulado contra el control. Todo de solo lectura.</p></div></section>
+  <p id="research-status" class="status" role="status" aria-live="polite">Consultando la investigación…</p>
+  <section aria-labelledby="semaforo-title"><div class="section-title"><h2 id="semaforo-title">Semáforo de «ganadora»</h2><span id="semaforo-state">—</span></div><p id="semaforo-verdict" class="data-notice"></p><div class="table-wrap"><table><caption class="sr-only">Métricas de la definición de ganadora, su umbral y el valor del control.</caption><thead><tr><th scope="col">Métrica</th><th scope="col">Qué mide</th><th scope="col">Umbral</th><th scope="col">Control hoy</th><th scope="col">Estado</th></tr></thead><tbody id="semaforo"></tbody></table></div><p id="semaforo-note" class="chart-note"></p></section>
+  <section aria-labelledby="candidates-title"><div class="section-title"><h2 id="candidates-title">Candidatas en simulado contra el control</h2><span>Mismos días, mismas reglas de lab.portfolio, carteras aisladas</span></div><p id="candidates-status" class="data-notice">Consultando los carriles…</p><div id="candidates" class="sleeves"></div></section>
+  <section aria-labelledby="backlog-title"><div class="section-title"><h2 id="backlog-title">Hipótesis pendientes</h2><span id="backlog-updated">—</span></div><p id="backlog-next" class="data-notice"></p><div class="table-wrap"><table><caption class="sr-only">Hipótesis pendientes en orden de prioridad.</caption><thead><tr><th scope="col">#</th><th scope="col">Id</th><th scope="col">Tipo</th><th scope="col">Hipótesis</th><th scope="col">Estado</th></tr></thead><tbody id="backlog"></tbody></table></div>
+    <details><summary>Ideas descartadas</summary><div class="table-wrap"><table><thead><tr><th scope="col">Id</th><th scope="col">Idea</th><th scope="col">Por qué se descartó</th></tr></thead><tbody id="discarded"></tbody></table></div></details></section>
+  <section aria-labelledby="sprints-title"><div class="section-title"><h2 id="sprints-title">Bitácora de sprints</h2><span>Fuente: research/backlog.yaml</span></div><div class="table-wrap"><table><thead><tr><th scope="col">Sprint</th><th scope="col">Fecha</th><th scope="col">Hipótesis</th><th scope="col">Resultado</th><th scope="col">Decisión</th></tr></thead><tbody id="sprints"></tbody></table></div></section>
+</div>
+<div id="tab-arena" role="tabpanel" aria-labelledby="tab-btn-arena" hidden>
+  <section class="intro"><div><p class="eyebrow">ARENA · ARCHIVO</p><h1>Cuatro estrategias intradía, ya apagadas.</h1><p>Resultado final de la arena (US$1,000 ficticios por estrategia, BTC contra el libro de Bitso). Se apagó el 25-oct (DEC-031) porque perdía por diseño con estas comisiones. Archivo fijo derivado del respaldo completo; sin controles.</p></div></section>
+  <p id="arena-status" class="status" role="status" aria-live="polite">Consultando el archivo…</p>
+  <div class="metrics" id="arena-metrics"></div>
+  <section aria-labelledby="arena-strategies-title"><div class="section-title"><h2 id="arena-strategies-title">Resultado por estrategia</h2><span id="arena-period">—</span></div><div class="table-wrap"><table><thead><tr><th scope="col">Estrategia</th><th scope="col">Patrimonio final</th><th scope="col">Resultado</th><th scope="col">Comisiones</th><th scope="col">Operaciones</th><th scope="col">Maker / taker</th></tr></thead><tbody id="arena-strategies"></tbody></table></div></section>
+  <section class="balance-panel" aria-labelledby="arena-curve-title"><div class="section-title"><div><h2 id="arena-curve-title">Curva de resultado</h2><p>Resultado acumulado de cada estrategia, una muestra por hora (UTC)</p></div></div><div id="arena-legend" class="chart-legend"></div><div id="arena-chart" class="balance-chart"></div></section>
+  <section aria-labelledby="arena-audit-title"><div class="section-title"><h2 id="arena-audit-title">Auditoría diaria</h2><span>Un renglón por día (las 4 estrategias juntas), del más reciente al más antiguo</span></div><div class="table-wrap"><table><thead id="arena-audit-head"></thead><tbody id="arena-audit"></tbody></table></div></section>
+  <section aria-labelledby="arena-fills-title"><div class="section-title"><h2 id="arena-fills-title">Operaciones</h2><span id="arena-fills-count">—</span></div><button id="arena-fills-load" type="button">Ver todas las operaciones</button><div class="table-wrap" id="arena-fills-wrap" hidden><table><thead><tr><th scope="col">Fecha UTC</th><th scope="col">Estrategia</th><th scope="col">Lado</th><th scope="col">BTC</th><th scope="col">Precio</th><th scope="col">Importe</th><th scope="col">Comisión</th><th scope="col">Tipo</th></tr></thead><tbody id="arena-fills"></tbody></table></div></section>
+  <section><p id="arena-source" class="chart-note"></p></section>
+</div>
   <footer><p>Este panel es de lectura. Activación, pausa y restauración requieren acceso operativo. La estrategia continúa siendo diaria; observar más seguido no añade operaciones.</p><p id="updated">Aún sin actualizar.</p></footer>
 </main>
 </body></html>

@@ -18,11 +18,10 @@ Comandos:
   tl.py setup                     configura credenciales (pide el token de Railway oculto y saca el
                                   usuario y la contraseña del panel de Railway, sin mostrarlos)
   tl.py check                     qué credenciales hay y si los servicios responden
-  tl.py snapshot [--out DIR]      guarda JSON crudo del piloto (y de la arena si sigue viva)
-  tl.py arena-pause-all           pausa las cuatro carteras de la arena (conserva inventario)
+  tl.py snapshot [--out DIR]      guarda JSON crudo del piloto (incluye atribución, investigación y carriles)
   tl.py services                  servicios del proyecto Railway y su último deployment
   tl.py stop SERVICE              detiene el deployment activo del servicio (el volumen se conserva)
-                                  (la arena se detuvo así el 25-oct-2026; ver DEC-031)
+                                  (la arena se detuvo así el 25-oct-2026; ver DEC-031 y DEC-032)
   tl.py redeploy SERVICE          vuelve a desplegar la última imagen del servicio
   tl.py up SERVICE BUNDLE         sube un paquete (lo mismo que `railway up --path-as-root`, sin CLI):
                                   trading-lab solo acepta perfil operational-paper y trading-arena
@@ -47,15 +46,17 @@ import urllib.error
 import urllib.request
 
 REPO = pathlib.Path(__file__).resolve().parents[2]
-PILOT_URL = "https://trading-lab-production-a56b.up.railway.app"
-ARENA_URL = "https://trading-arena-production-5c21.up.railway.app"
-ARENA_STRATEGIES = ("scalping-v1", "swing-v1", "mean-reversion-v1", "market-making-v1")
+# Panel único (DEC-032): primero el dominio propio; mientras su DNS no exista (o si falla), el de Railway.
+# Cuando el dominio de Railway se quite, basta con borrar la segunda línea.
+PILOT_URLS = ("https://tradinglab.inovaris.online",
+              "https://trading-lab-production-a56b.up.railway.app")
 RAILWAY_GQL = "https://backboard.railway.com/graphql/v2"
 RAILWAY_PROJECT = "24021d85-bbad-4f2c-850c-e1230822e7b0"
 RAILWAY_ENV = "4774e5bf-c72b-402d-ac72-f88e815e5976"
 PILOT_ENDPOINTS = ("status", "performance", "execution-quality", "trades?limit=500",
-                   "equity?limit=500", "events?limit=100")
-ARENA_ENDPOINTS = ("arena", "daily-audit", "fees")
+                   "equity?limit=500", "events?limit=100", "attribution", "research", "candidates",
+                   "backups/latest")
+_PILOT_URL: str | None = None
 
 
 def load_env() -> dict:
@@ -100,9 +101,24 @@ def _request(url: str, *, headers: dict | None = None, data: bytes | None = None
         return 0, b""  # servicio apagado o sin red
 
 
+def pilot_url() -> str:
+    """El primer dominio del panel que responde /healthz 200 (TL_PILOT_URL lo fija a mano)."""
+    global _PILOT_URL
+    if os.environ.get("TL_PILOT_URL"):
+        return os.environ["TL_PILOT_URL"].rstrip("/")
+    if _PILOT_URL is None:
+        for base in PILOT_URLS:
+            if _request(f"{base}/healthz", timeout=15)[0] == 200:
+                _PILOT_URL = base
+                break
+        else:
+            _PILOT_URL = PILOT_URLS[-1]
+    return _PILOT_URL
+
+
 def server_time() -> dt.datetime:
     """Hora del servidor del piloto (cabecera Date): el reloj de la VM puede estar desfasado."""
-    req = urllib.request.Request(f"{PILOT_URL}/healthz", headers={"User-Agent": "trading-lab-claude/1.0"})
+    req = urllib.request.Request(f"{pilot_url()}/healthz", headers={"User-Agent": "trading-lab-claude/1.0"})
     try:
         with urllib.request.urlopen(req, timeout=30, context=_ssl_context()) as r:
             from email.utils import parsedate_to_datetime
@@ -189,7 +205,7 @@ def cmd_setup() -> None:
         print(f"3) No pude leerlos de Railway ({err or 'variables ausentes'}). Escríbelos:")
         user = input("   Usuario del panel [brandon]: ").strip() or "brandon"
         pw = getpass.getpass("   Contraseña del panel (no se verá): ").strip()
-    code, _ = _request(f"{PILOT_URL}/api/status", headers=_panel_headers(
+    code, _ = _request(f"{pilot_url()}/api/status", headers=_panel_headers(
         {"TL_PANEL_USER": user, "TL_PANEL_PASSWORD": pw}))
     if code != 200:
         sys.exit(f"El panel respondió {code} con ese usuario y contraseña; no guardé nada. Repite.")
@@ -236,11 +252,12 @@ def find_service(name: str, env: dict) -> dict:
 def cmd_check(env: dict) -> None:
     print("panel:", "sí" if env.get("TL_PANEL_USER") and env.get("TL_PANEL_PASSWORD") else "NO")
     print("railway token:", "sí" if env.get("RAILWAY_API_TOKEN") else "NO")
-    for name, base in (("piloto", PILOT_URL), ("arena", ARENA_URL)):
+    for base in PILOT_URLS:
         code, _ = _request(f"{base}/healthz", timeout=20)
-        print(f"{name} /healthz -> {code or 'sin respuesta (apagado)'}")
+        print(f"{base.split('//')[1]} /healthz -> {code or 'sin respuesta'}")
+    print("panel en uso:", pilot_url())
     if env.get("TL_PANEL_USER"):
-        code, payload = get_json(PILOT_URL, "status", env)
+        code, payload = get_json(pilot_url(), "status", env)
         if isinstance(payload, dict):
             print(f"piloto /api/status -> {code} ready={payload.get('ready')} mode={payload.get('mode')} "
                   f"motivo={payload.get('reason')!r}")
@@ -254,31 +271,15 @@ def cmd_snapshot(env: dict, out: pathlib.Path | None) -> None:
     stamp = server_time().strftime("%Y%m%dT%H%M%SZ")
     out = out or REPO / "runtime-data" / "claude" / "snapshots"
     out.mkdir(parents=True, exist_ok=True)
-    snap: dict = {"taken_at_utc": stamp, "pilot": {}, "arena": {}}
+    snap: dict = {"taken_at_utc": stamp, "panel": pilot_url(), "pilot": {}}
     for ep in PILOT_ENDPOINTS:
-        code, payload = get_json(PILOT_URL, ep, env)
+        code, payload = get_json(pilot_url(), ep, env)
         snap["pilot"][ep.split("?")[0]] = {"http": code, "data": payload}
-    code, _ = _request(f"{ARENA_URL}/healthz", timeout=20)
-    if code in (200, 401):
-        for ep in ARENA_ENDPOINTS:
-            code, payload = get_json(ARENA_URL, ep, env)
-            snap["arena"][ep] = {"http": code, "data": payload}
-    else:
-        snap["arena"] = {"offline": code}
     path = out / f"{stamp}.json"
     path.write_text(json.dumps(snap, ensure_ascii=False, indent=1), encoding="utf-8")
     bad = [f"pilot/{k}" for k, v in snap["pilot"].items() if v["http"] != 200]
-    bad += [f"arena/{k}" for k, v in snap["arena"].items() if isinstance(v, dict) and v.get("http", 200) != 200]
     print(path)
     print("endpoints con error:", ", ".join(bad) if bad else "ninguno")
-
-
-def cmd_arena_pause_all(env: dict) -> None:
-    headers = _panel_headers(env) | {"Content-Type": "application/json", "Origin": ARENA_URL}
-    for s in ARENA_STRATEGIES:
-        body = json.dumps({"strategy": s, "action": "pause"}).encode()
-        code, raw = _request(f"{ARENA_URL}/api/control", headers=headers, data=body)
-        print(f"{s}: {code} {raw[:160].decode(errors='replace') if code != 200 else 'pausada'}")
 
 
 BUNDLE_PROFILES = {"trading-lab": "operational-paper", "trading-arena": "arena-maintenance-read-only"}
@@ -342,7 +343,6 @@ def main() -> None:
     sub.add_parser("check")
     s = sub.add_parser("snapshot")
     s.add_argument("--out", type=pathlib.Path)
-    sub.add_parser("arena-pause-all")
     sub.add_parser("services")
     for name in ("stop", "redeploy"):
         sub.add_parser(name).add_argument("service")
@@ -362,8 +362,6 @@ def main() -> None:
         cmd_check(env)
     elif a.cmd == "snapshot":
         cmd_snapshot(env, a.out)
-    elif a.cmd == "arena-pause-all":
-        cmd_arena_pause_all(env)
     elif a.cmd == "services":
         print(json.dumps(services(env), indent=1))
     elif a.cmd == "stop":

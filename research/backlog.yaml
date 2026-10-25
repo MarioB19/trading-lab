@@ -1,0 +1,146 @@
+# Backlog de hipótesis de Trading Lab: fuente única.
+# La nota del vault «00 — Dirección/🧪 Backlog de hipótesis — Trading Lab.md» se genera desde aquí:
+#   python -m lab.backlog render --out "<vault>/00 — Dirección/🧪 Backlog de hipótesis — Trading Lab.md"
+# El panel (pestaña Investigación) lee este mismo archivo. Validar: python -m lab.backlog check
+version: 1
+actualizado: '2026-10-25'
+nota:
+  tags: [proyecto, trading, investigación, hipótesis]
+  estado: activo
+
+intro: >-
+  Lista única de ideas por probar, ordenada por impacto esperado. La skill `trading-lab-investigacion`
+  toma de aquí la de arriba en cada sprint semanal, la preregistra, la prueba y anota el resultado. Una
+  idea descartada se queda en la tabla de abajo con su motivo: no se vuelve a probar sin un dato nuevo.
+
+barras: |-
+  **Dos tipos de cambio, dos barras** (detalle en `trading-lab/AGENTS.md`, regla 3):
+  - **Costo:** misma señal, menos fricción. Gana si mejora el neto en la mayoría de los años del walk-forward, el bootstrap de la diferencia neta es > 0 con 90% de confianza, la caída máxima no empeora más de 2 puntos y aguanta costos ×1.5.
+  - **Señal:** se afirma una ventaja nueva. Walk-forward, placebo p < 0.05, bootstrap contra el control, Sharpe deflactado y costos ×1.5.
+
+por_que_el_orden: >-
+  El bloque cripto paga ~37 pb por movimiento en Bitso (0.30% maker, 0.36% taker) y en el backtest los
+  costos se comen ≈12% del capital al año. La forma más segura de mejorar el neto es pagar menos fricción
+  con la misma señal. Las ideas de "más señal" van después, y solo si superan costos con margen.
+
+# tipo: costo | señal | externo | infra | otro. `estado` es el texto que se muestra tal cual.
+hipotesis:
+  - id: H4
+    orden: 1
+    tipo: costo
+    titulo: Más órdenes maker
+    idea: Subir la parte maker (hoy 24% por importe) baja el costo por movimiento sin cambiar qué se opera
+    evidencia: >-
+      30 días: 33 operaciones, 37 pb, 24% maker. Sprint 01: con la misma señal, abaratar cada operación es
+      la palanca más limpia
+    prueba: >-
+      Analizar fills con metadata (espera, precio relativo, cuánto se llena) y simular espera/precio maker
+      alternativos
+    estado: ⏳ Siguiente (sprint 02)
+  - id: H2
+    orden: 2
+    tipo: costo
+    titulo: Orden mínima de US$20–25
+    idea: >-
+      No ejecutar ajustes menores a US$20–25: las órdenes de ~US$10 cuestan 27–38 pb y casi no cambian el
+      riesgo
+    evidencia: Fills del 10–14 oct (SOL, LINK de ~US$10)
+    prueba: Replay del bot con `min_order_value` 5 vs 20 vs 25
+    estado: Sprint 02
+  - id: H1b
+    orden: 3
+    tipo: costo
+    titulo: No recomprar en 48 h
+    idea: Cortar las recompras en menos de 48 h (7 en 30 días) con un periodo de espera tras vender
+    evidencia: Revisión del 25-oct; V1 del sprint 01 fue la mejor variante, aunque no concluyente
+    prueba: Backtest con «no recomprar en 2 días» contra el control
+    estado: Pendiente
+  - id: H7
+    orden: 4
+    tipo: externo
+    titulo: Comisión menor (otro exchange)
+    idea: >-
+      Una comisión menor cambia todo el cálculo: con 0.10% por lado, el costo anual del control bajaría de
+      ~11% a ~4–5%
+    evidencia: >-
+      Bitso USD 0.30%/0.36% (MXN 0.60%/0.78%); Binance 0.10% (0.075% con BNB); Kraken Pro 0.40%/0.80% por
+      debajo de US$2,500 al mes, peor que Bitso a este tamaño. Bitso no tiene pares de altcoins contra BTC
+    prueba: >-
+      Simular el control con la comisión de cada opción y el spread medido. **La elección de exchange para
+      dinero real es decisión de Brandon** (regulación, depósitos en pesos, custodia)
+    estado: Datos reunidos 25-oct; falta la simulación
+  - id: H8
+    orden: 5
+    tipo: costo
+    titulo: Efectivo con rendimiento
+    idea: >-
+      El efectivo ocioso del bloque cripto (~34% en promedio) rendiría ~4% anual en bonos del Tesoro de
+      corto plazo o equivalente, sin cambiar la señal
+    evidencia: 'Exposición del bloque: 66% el 24-oct; `PortfolioParams.cash_asset` ya existe (BIL)'
+    prueba: Backtest con efectivo en BIL contra efectivo sin rendimiento
+    estado: Pendiente
+  - id: H6
+    orden: 6
+    tipo: costo
+    titulo: Universo de ~8 monedas
+    idea: Universo líquido de ~8 monedas en vez de 16 reduce el spread pagado
+    evidencia: Costos por moneda en `execution-quality`
+    prueba: Medir costo por activo en el piloto y backtest con el universo recortado
+    estado: Pendiente
+  - id: H5
+    orden: 7
+    tipo: señal
+    titulo: Referencia simple
+    idea: Una referencia simple iguala a la táctica neta de costos con mucha menos rotación
+    evidencia: >-
+      Sprint 01: BTC comprar y mantener rinde +49% anual con caída de −77%; BTC con filtro de 200 días +37%
+      con −52%; el control +43% con −37%. Hoy el control gana en riesgo
+    prueba: Solo si cambia el panorama
+    estado: En pausa
+    pausada: true
+
+descartadas:
+  - idea: Táctica en ETFs
+    motivo: 4.5% anual vs 9.9% del 60/40; timing = azar (p = 0.34)
+    fuente: '`reports/multi_informe.md`'
+  - idea: Multi-mercado en ETFs
+    motivo: −1.4% anual; falló los 5 criterios
+    fuente: '`reports/multi_market_informe.md`'
+  - idea: Operar cada hora o cada 4 h
+    motivo: −8.3% / 12.9% anual vs 21.6% del diario, por costos
+    fuente: '`reports/tiempo_real_informe.md`'
+  - idea: Reversión y ruptura de corto plazo
+    motivo: Pierden con 0.45% por operación; requieren costos < 0.15–0.18%
+    fuente: '`reports/corto_plazo_informe.md`'
+  - idea: Agresiva top 3 / volatilidad 60%
+    motivo: Falló siete criterios; CAGR 17% vs 34% del control
+    fuente: '`reports/aggressive_v2_resultado.md`'
+  - id: H1
+    idea: Banda 4 pp + margen 15% (H1)
+    motivo: >-
+      Sprint 01: mejora todo (+2.7 pts de rendimiento anual, −1.8 pts de caída), pero bootstrap 0.81 <
+      0.967. No concluyente; se replantea como H1b (recompras)
+    fuente: '`reports/sprint01_costo_cripto_resultado.md`'
+  - id: H3
+    idea: Rebalanceo semanal (H3)
+    motivo: >-
+      Sprint 01: costo anual 4% contra 11%, pero 2022 −30% contra −14% y caída de 42–45%, en el límite del
+      kill switch
+    fuente: '`reports/sprint01_costo_cripto_resultado.md`'
+  - idea: Arena intradía (scalping, swing, reversión, creación de mercado)
+    motivo: >-
+      Pierde por diseño con estas comisiones: la creación de mercado cobraba 0.10% por lado y pagaba 0.30%;
+      el scalping necesitaba ~69% de aciertos. Resultado final −US$285.90 (−7.1%), US$164.70 en comisiones.
+      Apagada el 25-oct
+    fuente: DEC-030, DEC-031
+
+bitacora:
+  - sprint: '01'
+    fecha: '2026-10-25'
+    hipotesis: 'banda 4 pp + margen 15%, semanal, ambas (H1, H3)'
+    ids: [H1, H3]
+    resultado: >-
+      Control +43% anual con 11% de costo; V1 mejor en todo, pero no concluyente; semanal más barato, pero
+      con peores caídas
+    decision: Se conserva el control. Siguen H4/H2 (abaratar cada operación)
+    enlace: reports/sprint01_costo_cripto_resultado.md
