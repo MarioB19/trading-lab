@@ -7,7 +7,7 @@ cosa, así que el comando de arranque del servicio no cambia.
 Qué hace al arrancar, una sola vez y en este orden:
 1. Inventario del volumen (archivos, tamaños y huellas SHA-256) antes de tocar nada.
 2. Un respaldo consistente de la base con `lab.arena.backup` en una carpeta aparte
-   `/data/arena-final-<UTC>/`. Nunca toca `/data/arena-backups/` ni borra nada.
+   `/data/arena-final/<UTC>/`. Nunca toca `/data/arena-backups/` ni borra nada.
 3. Conteos por tabla de la base viva (solo lectura) y del respaldo.
 4. Inventario después del respaldo.
 
@@ -41,12 +41,12 @@ from . import arena
 
 MODE_ENV = 'ARENA_MAINTENANCE'
 MODE_VALUE = 'read-only-backup'
-FINAL_PREFIX = 'arena-final-'
+FINAL_DIR = 'arena-final'
 FINAL_KIND = 'arena-final-backup-v1'
 MIB = 1024 * 1024
 MAX_PART = 64 * MIB
 MARGIN = 256 * MIB
-_FINAL = re.compile(r'arena-final-\d{8}T\d{6}Z')
+_FINAL = re.compile(r'\d{8}T\d{6}Z')
 
 
 def enabled() -> bool:
@@ -95,17 +95,29 @@ def inventory(root: Path) -> dict:
             'disk': {'total_bytes': usage.total, 'used_bytes': usage.used, 'free_bytes': usage.free}}
 
 
-def table_counts(db_path: Path) -> dict:
-    """Filas por tabla, en una sola transacción de solo lectura."""
-    with closing(sqlite3.connect(Path(db_path).resolve().as_uri() + '?mode=ro', uri=True, timeout=10)) as db:
+def table_counts(db_path: Path, *, immutable: bool = False) -> dict:
+    """Filas por tabla, en una sola transacción de solo lectura.
+
+    `immutable` es para copias que nadie escribe: así SQLite no crea -wal ni -shm junto al respaldo.
+    """
+    uri = Path(db_path).resolve().as_uri() + ('?mode=ro&immutable=1' if immutable else '?mode=ro')
+    with closing(sqlite3.connect(uri, uri=True, timeout=10)) as db:
         db.execute('PRAGMA query_only=ON')
         db.execute('BEGIN')
         names = [r[0] for r in db.execute("SELECT name FROM sqlite_master WHERE type='table' ORDER BY name")]
         return {name: db.execute(f'SELECT COUNT(*) FROM "{name}"').fetchone()[0] for name in names}
 
 
-def _finals(mount: Path) -> list[Path]:
-    return sorted(p for p in mount.iterdir() if p.name.startswith(FINAL_PREFIX))
+def prepare_root(mount: Path, uid: int, gid: int) -> Path:
+    """Como root, antes de soltar privilegios: la raíz del volumen no es del UID 10001."""
+    target = Path(mount) / FINAL_DIR
+    if target.is_symlink():
+        raise ValueError('No se admiten enlaces en el volumen')
+    target.mkdir(mode=0o700, exist_ok=True)
+    if os.geteuid() == 0:
+        os.chown(target, uid, gid)
+        target.chmod(0o700)
+    return target
 
 
 def final_backup(mount: Path, *, stamp: str | None = None) -> dict:
@@ -117,7 +129,10 @@ def final_backup(mount: Path, *, stamp: str | None = None) -> dict:
     mount = Path(mount)
     directory = mount / 'arena'
     source = directory / arena.DB_NAME
-    for folder in _finals(mount):
+    root = mount / FINAL_DIR
+    if root.is_symlink() or not root.is_dir():
+        raise ValueError('Falta la carpeta del respaldo final (prepare_root)')
+    for folder in sorted(root.iterdir()):
         if not _FINAL.fullmatch(folder.name) or folder.is_symlink() or not folder.is_dir():
             raise ValueError(f'Carpeta de respaldo final no reconocida: {folder.name}')
         manifest_path = folder / 'manifest.json'
@@ -128,14 +143,14 @@ def final_backup(mount: Path, *, stamp: str | None = None) -> dict:
         if (manifest.get('kind') != FINAL_KIND or data.stat().st_size != manifest['sqlite_bytes']
                 or digest(data) != manifest['sqlite_sha256']):
             raise ValueError(f'El respaldo final {folder.name} no coincide con su manifiesto')
-        return {**manifest, 'directory': folder.name, 'reused': True}
+        return {**manifest, 'directory': f'{FINAL_DIR}/{folder.name}', 'reused': True}
     if not source.is_file():
         raise ValueError('Base de la arena ausente')
     needed = source.stat().st_size + MARGIN
     if shutil.disk_usage(mount).free < needed:
         raise ValueError(f'Espacio insuficiente para el respaldo final ({needed} bytes)')
     stamp = stamp or datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ')
-    folder = mount / f'{FINAL_PREFIX}{stamp}'
+    folder = root / stamp
     folder.mkdir(mode=0o700)
     target = folder / arena.DB_NAME
     started = _now_ms()
@@ -144,13 +159,13 @@ def final_backup(mount: Path, *, stamp: str | None = None) -> dict:
     manifest = {'kind': FINAL_KIND, 'method': 'lab.arena.backup', 'created_ms': started,
                 'finished_ms': _now_ms(), 'sqlite_bytes': target.stat().st_size,
                 'sqlite_sha256': result['sha256'], 'integrity_check': 'ok',
-                'source': f'arena/{arena.DB_NAME}', 'counts': table_counts(target)}
+                'source': f'arena/{arena.DB_NAME}', 'counts': table_counts(target, immutable=True)}
     with (folder / 'manifest.json').open('x') as stream:
         stream.write(json.dumps(manifest, sort_keys=True, indent=1) + '\n')
         stream.flush()
         os.fsync(stream.fileno())
     (folder / 'manifest.json').chmod(0o600)
-    return {**manifest, 'directory': folder.name, 'reused': False}
+    return {**manifest, 'directory': f'{FINAL_DIR}/{folder.name}', 'reused': False}
 
 
 def prepare(mount: Path, state: dict, lock: threading.Lock) -> None:

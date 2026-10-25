@@ -19,7 +19,7 @@ def load():
 
 def test_download_resumes_by_parts_and_verifies_whole_file(tmp_path, monkeypatch):
     cli = load()
-    blobs = {'arena-final-20261025T000000Z/arena.sqlite3': bytes(range(256)) * 5000,
+    blobs = {'arena-final/20261025T000000Z/arena.sqlite3': bytes(range(256)) * 5000,
              'arena-backups/arena-1-aa/snapshot.sqlite3.gz': b'x' * 3000,
              'arena/arena.sqlite3': b'viva'}
     files = [{'path': k, 'size': len(v), 'sha256': hashlib.sha256(v).hexdigest()} for k, v in blobs.items()]
@@ -49,7 +49,7 @@ def test_download_resumes_by_parts_and_verifies_whole_file(tmp_path, monkeypatch
 def test_corrupt_part_is_never_published(tmp_path, monkeypatch):
     cli = load()
     data = b'abc' * 1000
-    item = {'path': 'arena-final-20261025T000000Z/arena.sqlite3', 'size': len(data),
+    item = {'path': 'arena-final/20261025T000000Z/arena.sqlite3', 'size': len(data),
             'sha256': hashlib.sha256(b'otra cosa').hexdigest()}
     (tmp_path / 'inventario-contenedor.json').write_text(json.dumps({'inventory_after': {'files': [item]}}))
     monkeypatch.setattr(cli, '_part', lambda env, rel, offset, length, compress: data[offset:offset + length])

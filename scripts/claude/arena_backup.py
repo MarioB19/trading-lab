@@ -10,7 +10,7 @@ Si una llamada se corta, la siguiente retoma desde el primer tramo que falte.
     arena_backup.py download --dest DIR [--budget 150] [--part-mib 32]
     arena_backup.py verify   --dest DIR        huella completa de cada archivo contra el contenedor
 
-Archivos que baja: el respaldo final nuevo (`arena-final-*/`), los respaldos que ya existían
+Archivos que baja: el respaldo final nuevo (`arena-final/<UTC>/`), los respaldos que ya existían
 (`arena-backups/`) y lo que haya en `arena-imports/`. La base viva (`arena/`) no se baja: el
 respaldo consistente es su copia.
 """
@@ -30,7 +30,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import tl  # noqa: E402
 
 ARENA = tl.ARENA_URL
-PREFIXES = ('arena-final-', 'arena-backups/', 'arena-imports/')
+PREFIXES = ('arena-final/', 'arena-backups/', 'arena-imports/')
 
 
 def fetch_status(env: dict) -> dict:

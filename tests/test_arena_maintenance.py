@@ -15,6 +15,7 @@ def volume(tmp_path):
     mount = tmp_path / 'data'
     for name in ('arena', 'arena-backups', 'arena-imports'):
         (mount / name).mkdir(parents=True)
+    maint.prepare_root(mount, 10001, 10001)
     arena.initialize(mount / 'arena', 'synthetic')
     old = mount / 'arena-backups' / 'arena-0000000000001-deadbeef'
     old.mkdir()
@@ -36,27 +37,28 @@ def test_prepare_inventories_backs_up_once_and_never_touches_old_backups(tmp_pat
     state, _ = ready_state(mount)
     assert state['phase'] == 'ready', state.get('error')
     paths_before = {f['path'] for f in state['inventory_before']['files']}
-    assert 'arena/arena.sqlite3' in paths_before and not any(p.startswith('arena-final-') for p in paths_before)
+    assert 'arena/arena.sqlite3' in paths_before and not any(p.startswith('arena-final/') for p in paths_before)
     folder = mount / state['backup']['directory']
-    assert folder.name.startswith('arena-final-') and (folder / 'manifest.json').is_file()
+    assert folder.parent.name == 'arena-final' and (folder / 'manifest.json').is_file()
     data = folder / arena.DB_NAME
     assert hashlib.sha256(data.read_bytes()).hexdigest() == state['backup']['sqlite_sha256']
     assert state['counts']['live'] == state['counts']['backup'] and state['counts']['live']['wallets'] == 4
     assert sorted(p.name for p in (mount / 'arena-backups').iterdir()) == before
     assert (mount / 'arena-backups' / before[0] / 'snapshot.sqlite3.gz').read_bytes() == old_bytes
     after = {f['path'] for f in state['inventory_after']['files']}
-    assert f"{folder.name}/{arena.DB_NAME}" in after and paths_before <= after
+    assert f"arena-final/{folder.name}/{arena.DB_NAME}" in after and paths_before <= after
+    assert sorted(p.name for p in folder.iterdir()) == [arena.DB_NAME, 'manifest.json']  # sin -wal ni -shm
     again, _ = ready_state(mount)  # un reinicio verifica y reutiliza, no crea otra copia
-    assert again['backup']['reused'] and again['backup']['directory'] == folder.name
-    assert len([p for p in mount.iterdir() if p.name.startswith('arena-final-')]) == 1
+    assert again['backup']['reused'] and again['backup']['directory'] == f'arena-final/{folder.name}'
+    assert len(list((mount / 'arena-final').iterdir())) == 1
 
 
 def test_partial_final_backup_is_not_retried(tmp_path):
     mount = volume(tmp_path)
-    (mount / 'arena-final-20261025T000000Z').mkdir()
+    (mount / 'arena-final' / '20261025T000000Z').mkdir()
     state, _ = ready_state(mount)
     assert state['phase'] == 'error' and 'a medias' in state['error']
-    assert len([p for p in mount.iterdir() if p.name.startswith('arena-final-')]) == 1
+    assert len(list((mount / 'arena-final').iterdir())) == 1
 
 
 def test_no_space_blocks_backup_without_writing(tmp_path, monkeypatch):
@@ -64,7 +66,7 @@ def test_no_space_blocks_backup_without_writing(tmp_path, monkeypatch):
     monkeypatch.setattr(maint.shutil, 'disk_usage', lambda _: type('U', (), {'free': 1, 'total': 2, 'used': 1})())
     state, _ = ready_state(mount)
     assert state['phase'] == 'error' and 'Espacio' in state['error']
-    assert not any(p.name.startswith('arena-final-') for p in mount.iterdir())
+    assert not any((mount / 'arena-final').iterdir())
 
 
 @pytest.fixture
@@ -119,12 +121,13 @@ def test_hosted_run_dispatches_to_maintenance_without_worker(monkeypatch):
     monkeypatch.setenv(maint.MODE_ENV, maint.MODE_VALUE)
     monkeypatch.setattr(arena_hosted, 'prepare_volume', lambda mount: None)
     monkeypatch.setattr(arena_hosted.os, 'geteuid', lambda: arena_hosted.UID)
+    monkeypatch.setattr(maint, 'prepare_root', lambda mount, uid, gid: calls.append(('root', mount)))
     monkeypatch.setattr(maint, 'serve', lambda mount: calls.append(mount))
     monkeypatch.setattr(arena_hosted.subprocess, 'Popen', lambda *a, **k: pytest.fail('worker iniciado'))
     monkeypatch.setattr(arena_hosted.arena_storage, 'backup_once', lambda *a, **k: pytest.fail('rotación'))
     monkeypatch.setattr(arena_hosted.arena, 'execution_proof', lambda *a: pytest.fail('ruta normal'))
     arena_hosted.run()
-    assert calls == [Path('/data')]
+    assert calls == [('root', Path('/data')), Path('/data')]
 
 
 def test_maintenance_requires_exact_image_flag(monkeypatch):

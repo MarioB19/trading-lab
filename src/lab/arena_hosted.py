@@ -81,14 +81,17 @@ def prepare_volume(mount):
 def run():
     os.umask(0o077)
     prepare_volume(Path(os.environ.get('RAILWAY_VOLUME_MOUNT_PATH', '')))
+    from . import arena_maintenance
+    maintenance = arena_maintenance.enabled()
+    if maintenance:
+        arena_maintenance.prepare_root(Path('/data'), UID, GID)
     if os.geteuid() == 0:
         os.setgroups([])
         os.setgid(GID)
         os.setuid(UID)
     if os.geteuid() != UID:
         raise ValueError('UID incorrecto')
-    from . import arena_maintenance
-    if arena_maintenance.enabled():
+    if maintenance:
         # Imagen de mantenimiento: volumen y salud, sin worker ni rotación de respaldos.
         return arena_maintenance.serve(Path('/data'))
     arena.execution_proof(PREREG)
