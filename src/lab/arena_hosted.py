@@ -87,6 +87,10 @@ def run():
         os.setuid(UID)
     if os.geteuid() != UID:
         raise ValueError('UID incorrecto')
+    from . import arena_maintenance
+    if arena_maintenance.enabled():
+        # Imagen de mantenimiento: volumen y salud, sin worker ni rotación de respaldos.
+        return arena_maintenance.serve(Path('/data'))
     arena.execution_proof(PREREG)
     directory, backups = Path('/data/arena'), Path('/data/arena-backups')
     server = make_server(directory, int(os.environ.get('PORT', '8080')),
