@@ -1,5 +1,5 @@
 {
- "updated_utc": "2026-09-28 00:44",
+ "updated_utc": "2026-09-29 01:50",
  "mode": "paper",
  "action": "observe",
  "every_minutes": 60,
@@ -9,58 +9,58 @@
    "label": "Criptomonedas",
    "strategy": "tactical",
    "broker": "simulado \u00b7 libro real de Bitso",
-   "updated_utc": "2026-09-28 00:44",
-   "prices_as_of_utc": "2026-09-28 00:44",
-   "equity": 504.43,
-   "cash": 146.06,
-   "exposure": 0.7105,
+   "updated_utc": "2026-09-29 01:50",
+   "prices_as_of_utc": "2026-09-29 01:50",
+   "equity": 492.71,
+   "cash": 135.86,
+   "exposure": 0.7243,
    "peak": 507.39,
-   "drawdown": -0.0058,
+   "drawdown": -0.0289,
    "kill_drawdown": 0.45,
    "kill_at_equity": 279.06,
    "brake_now": 1.0,
    "kill_switch": false,
-   "change_since_close": -0.007,
+   "change_since_close": -0.0176,
    "positions": [
     {
-     "asset": "SOL",
-     "qty": 0.7579392,
-     "price": 121.67,
-     "value": 92.22,
-     "weight": 0.1828,
-     "change_since_close": -0.0025
+     "asset": "ETH",
+     "qty": 0.04196214,
+     "price": 2662.21,
+     "value": 111.71,
+     "weight": 0.2267,
+     "change_since_close": -0.0094
     },
     {
      "asset": "LTC",
      "qty": 1.18837928,
-     "price": 70.35,
-     "value": 83.6,
-     "weight": 0.1657,
-     "change_since_close": -0.013
+     "price": 67.8,
+     "value": 80.57,
+     "weight": 0.1635,
+     "change_since_close": -0.0204
     },
     {
      "asset": "LINK",
-     "qty": 5.87053063,
-     "price": 13.99289,
-     "value": 82.15,
-     "weight": 0.1628,
-     "change_since_close": -0.0019
+     "qty": 4.96659886,
+     "price": 15.23392,
+     "value": 75.66,
+     "weight": 0.1536,
+     "change_since_close": -0.0131
     },
     {
      "asset": "UNI",
      "qty": 5.36807421,
-     "price": 9.6067,
-     "value": 51.57,
-     "weight": 0.1022,
-     "change_since_close": -0.0074
+     "price": 8.6011,
+     "value": 46.17,
+     "weight": 0.0937,
+     "change_since_close": -0.0228
     },
     {
      "asset": "NEAR",
      "qty": 9.19191127,
-     "price": 5.3134,
-     "value": 48.84,
-     "weight": 0.0968,
-     "change_since_close": -0.0134
+     "price": 4.6493,
+     "value": 42.74,
+     "weight": 0.0867,
+     "change_since_close": -0.0354
     }
    ],
    "alerts": [],
@@ -68,33 +68,33 @@
    "action": "observe",
    "signal_now": [
     {
-     "asset": "SOL",
-     "target_now": 0.184,
-     "weight_now": 0.1828,
+     "asset": "ETH",
+     "target_now": 0.2252,
+     "weight_now": 0.2267,
      "move": "igual"
     },
     {
      "asset": "LTC",
-     "target_now": 0.1677,
-     "weight_now": 0.1657,
+     "target_now": 0.1674,
+     "weight_now": 0.1635,
      "move": "igual"
     },
     {
      "asset": "LINK",
-     "target_now": 0.1639,
-     "weight_now": 0.1628,
+     "target_now": 0.1528,
+     "weight_now": 0.1536,
      "move": "igual"
     },
     {
      "asset": "UNI",
-     "target_now": 0.1033,
-     "weight_now": 0.1022,
+     "target_now": 0.0993,
+     "weight_now": 0.0937,
      "move": "igual"
     },
     {
      "asset": "NEAR",
-     "target_now": 0.098,
-     "weight_now": 0.0968,
+     "target_now": 0.0922,
+     "weight_now": 0.0867,
      "move": "igual"
     }
    ]
@@ -104,33 +104,33 @@
    "label": "Acciones y ETFs",
    "strategy": "passive",
    "broker": "simulado",
-   "updated_utc": "2026-09-28 00:44",
-   "prices_as_of_utc": "2026-09-25 20:00",
-   "equity": 702.89,
-   "cash": 2.1,
-   "exposure": 0.997,
-   "peak": 702.89,
-   "drawdown": 0.0,
+   "updated_utc": "2026-09-29 01:50",
+   "prices_as_of_utc": "2026-09-28 20:00",
+   "equity": 498.2,
+   "cash": -0.1,
+   "exposure": 1.0002,
+   "peak": 501.57,
+   "drawdown": -0.0067,
    "kill_drawdown": 0.25,
-   "kill_at_equity": 527.17,
+   "kill_at_equity": 376.18,
    "brake_now": 1.0,
    "kill_switch": false,
    "change_since_close": 0.0,
    "positions": [
     {
      "asset": "SPY",
-     "qty": 0.54426702,
-     "price": 771.35,
-     "value": 419.82,
-     "weight": 0.5973,
+     "qty": 0.39050996,
+     "price": 765.61,
+     "value": 298.98,
+     "weight": 0.6001,
      "change_since_close": 0.0
     },
     {
      "asset": "IEF",
-     "qty": 3.12186411,
-     "price": 90.0,
-     "value": 280.97,
-     "weight": 0.3997,
+     "qty": 2.22628044,
+     "price": 89.53,
+     "value": 199.32,
+     "weight": 0.4001,
      "change_since_close": 0.0
     }
    ],
@@ -273,10 +273,10 @@
   }
  },
  "fx": {
-  "rate": 17.7335,
-  "bid": 17.733,
-  "ask": 17.734,
+  "rate": 17.9865,
+  "bid": 17.986,
+  "ask": 17.987,
   "source": "Bitso USD/MXN",
-  "time_utc": "2026-09-28 00:44"
+  "time_utc": "2026-09-29 01:50"
  }
 }
