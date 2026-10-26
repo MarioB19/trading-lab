@@ -37,7 +37,7 @@ hipotesis:
       Sprint 02: análisis de fills (18 con dato: 6 maker en 36–105 s a 29 pb; 12 agotaron los 120 s y fueron a
       mercado a 39 pb). No se puede backtestear. Prueba hacia adelante preregistrada: `execution.wait_s` 120 → 300 s,
       4 semanas, éxito si ≥ 50% maker por importe y costo ≤ 33 pb
-    estado: Prueba hacia adelante propuesta (sprint 02); Brandon decide si se activa
+    estado: '🔬 Prueba hacia adelante activa desde el 25-oct (DEC-034): wait_s 300 s, presupuesto 600 s por ciclo; se evalúa a las 4 semanas'
   - id: H2
     orden: 6
     tipo: costo
