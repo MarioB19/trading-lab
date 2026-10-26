@@ -26,7 +26,7 @@ por_que_el_orden: >-
 # tipo: costo | señal | externo | infra | otro. `estado` es el texto que se muestra tal cual.
 hipotesis:
   - id: H4
-    orden: 1
+    orden: 4
     tipo: costo
     titulo: Más órdenes maker
     idea: Subir la parte maker (hoy 24% por importe) baja el costo por movimiento sin cambiar qué se opera
@@ -34,29 +34,34 @@ hipotesis:
       30 días: 33 operaciones, 37 pb, 24% maker. Sprint 01: con la misma señal, abaratar cada operación es
       la palanca más limpia
     prueba: >-
-      Analizar fills con metadata (espera, precio relativo, cuánto se llena) y simular espera/precio maker
-      alternativos
-    estado: ⏳ Siguiente (sprint 02)
+      Sprint 02: análisis de fills (18 con dato: 6 maker en 36–105 s a 29 pb; 12 agotaron los 120 s y fueron a
+      mercado a 39 pb). No se puede backtestear. Prueba hacia adelante preregistrada: `execution.wait_s` 120 → 300 s,
+      4 semanas, éxito si ≥ 50% maker por importe y costo ≤ 33 pb
+    estado: Prueba hacia adelante propuesta (sprint 02); Brandon decide si se activa
   - id: H2
-    orden: 2
+    orden: 6
     tipo: costo
     titulo: Orden mínima de US$20–25
     idea: >-
       No ejecutar ajustes menores a US$20–25: las órdenes de ~US$10 cuestan 27–38 pb y casi no cambian el
       riesgo
     evidencia: Fills del 10–14 oct (SOL, LINK de ~US$10)
-    prueba: Replay del bot con `min_order_value` 5 vs 20 vs 25
-    estado: Sprint 02
+    prueba: >-
+      Sprint 02: simulador con efectivo, US$500 cada 1 de enero 2021–2026, `min_order_value` 5 / 20 / 25.
+      US$25: +41.0% anual contra +36.2%, caída −33.7% contra −36.6%, bootstrap 0.971 (umbral 0.967). US$20 no
+      concluyente (0.599). El ahorro de costo es ≈1 punto; el resto es efecto de camino, vecindad consistente
+      entre US$24 y US$30
+    estado: '✅ Aprobada (sprint 02). En el piloto desde el 25-oct con orden mínima de US$25 (DEC-033); revisión a las 4 semanas'
   - id: H1b
-    orden: 3
+    orden: 1
     tipo: costo
     titulo: No recomprar en 48 h
     idea: Cortar las recompras en menos de 48 h (7 en 30 días) con un periodo de espera tras vender
     evidencia: Revisión del 25-oct; V1 del sprint 01 fue la mejor variante, aunque no concluyente
     prueba: Backtest con «no recomprar en 2 días» contra el control
-    estado: Pendiente
+    estado: ⏳ Siguiente (sprint 03, 8-nov)
   - id: H7
-    orden: 4
+    orden: 2
     tipo: externo
     titulo: Comisión menor (otro exchange)
     idea: >-
@@ -77,14 +82,21 @@ hipotesis:
       El efectivo ocioso del bloque cripto (~34% en promedio) rendiría ~4% anual en bonos del Tesoro de
       corto plazo o equivalente, sin cambiar la señal
     evidencia: 'Exposición del bloque: 66% el 24-oct; `PortfolioParams.cash_asset` ya existe (BIL)'
-    prueba: Backtest con efectivo en BIL contra efectivo sin rendimiento
-    estado: Pendiente
+    prueba: >-
+      Sprint 02: T-bill a 3 meses (FRED DTB3) menos 25% sobre el efectivo del control: +44.5% contra +42.7% anual, 6
+      de 6 años, caída 1.9 puntos menor, bootstrap 1.00. Con la tasa de hoy (4.0%) y 67% de efectivo promedio vale
+      ≈+2 puntos al año
+    estado: >-
+      Aprobada en backtest; falta dato para operarla: tasa real de la plataforma sobre el efectivo ocioso (Bitso+ paga
+      sobre stablecoins en USD, no sobre USD), retiro inmediato y costo de mover. Se resuelve junto con H7 (exchange)
   - id: H6
-    orden: 6
+    orden: 3
     tipo: costo
     titulo: Universo de ~8 monedas
     idea: Universo líquido de ~8 monedas en vez de 16 reduce el spread pagado
-    evidencia: Costos por moneda en `execution-quality`
+    evidencia: >-
+      Costos por moneda en `execution-quality`. Sprint 02 (30 días): LTC 43 pb de promedio con 22 pb de spread, LINK 30 pb
+      con 22 pb de spread, NEAR 55 pb; BTC y ETH 33 pb con spread de 1–2 pb
     prueba: Medir costo por activo en el piloto y backtest con el universo recortado
     estado: Pendiente
   - id: H5
@@ -144,3 +156,15 @@ bitacora:
       con peores caídas
     decision: Se conserva el control. Siguen H4/H2 (abaratar cada operación)
     enlace: reports/sprint01_costo_cripto_resultado.md
+  - sprint: '02'
+    fecha: '2026-10-25'
+    hipotesis: 'orden mínima US$20/25 (H2), efectivo con rendimiento (H8), órdenes maker (H4)'
+    ids: [H2, H8, H4]
+    resultado: >-
+      H2 US$25 aprobada (+41.0% contra +36.2% anual, caída 2.9 puntos menor, bootstrap 0.971; ahorro de costo ≈1 punto,
+      el resto es camino); H8 aprobada en backtest (+1.8 puntos) pero sin tasa real de plataforma; H4 sin veredicto
+      por backtest (6 de 18 órdenes maker)
+    decision: >-
+      `min_order_value` 5 → 25 en el piloto cripto (DEC-033), revisión a 4 semanas. H8 se resuelve con el exchange (H7).
+      H4: prueba hacia adelante con `wait_s` 300 propuesta a Brandon
+    enlace: reports/sprint02_costo_ejecucion_resultado.md
