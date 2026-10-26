@@ -73,7 +73,11 @@ hipotesis:
     prueba: >-
       Simular el control con la comisión de cada opción y el spread medido. **La elección de exchange para
       dinero real es decisión de Brandon** (regulación, depósitos en pesos, custodia)
-    estado: Datos reunidos 25-oct; falta la simulación
+    estado: >-
+      Simulado el 25-oct (`reports/h7_exchanges_informe.md`): con 0.10% por lado el control rinde +53.7% anual contra
+      +42.7% y la caída máxima baja de −37% a −28%; costo anual 3.7% contra 11%. Operar en pesos en Bitso (0.78%) activa
+      el kill switch. Falta la decisión de Brandon (regulación, pesos, custodia) y 4 semanas en simulado contra el libro
+      del exchange elegido
   - id: H8
     orden: 5
     tipo: costo
