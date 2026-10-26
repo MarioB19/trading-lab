@@ -44,10 +44,11 @@
 
   // ---- Pestañas -------------------------------------------------------------------------
   const loaded = {};
-  const tabs = ["piloto", "investigacion", "arena"];
-  const loaders = {piloto: loadAttribution, investigacion: loadResearch, arena: loadArena};
+  const tabs = ["resumen", "operaciones", "investigacion", "sistema", "arena"];
+  const loaders = {resumen: loadResumen, operaciones: async () => {}, investigacion: loadResearch, sistema: async () => {}, arena: loadArena};
   function show(name, focus) {
-    if (!tabs.includes(name)) name = "piloto";
+    if (name === "piloto") name = "resumen";
+    if (!tabs.includes(name)) name = "resumen";
     for (const tab of tabs) {
       const button = $(`tab-btn-${tab}`), panel = $(`tab-${tab}`);
       const active = tab === name;
@@ -74,6 +75,37 @@
     });
   });
   window.addEventListener("hashchange", () => show(location.hash.slice(1)));
+  document.querySelectorAll("[data-goto]").forEach((link) => {
+    link.addEventListener("click", (event) => { event.preventDefault(); history.replaceState(null, "", `#${link.dataset.goto}`); show(link.dataset.goto, true); window.scrollTo({top: 0}); });
+  });
+
+  // ---- Resumen: atribución + qué está en prueba -----------------------------------------
+  async function loadResumen() {
+    await loadAttribution();
+    loadTesting().catch(() => {});
+  }
+  async function loadTesting() {
+    const status = $("testing-status"), box = $("testing");
+    box.replaceChildren();
+    try {
+      const data = await getJSON("/api/research");
+      const b = data.backlog || {};
+      const active = (b.hipotesis || []).filter((h) => /^(✅|🔬)/.test(String(h.estado || "")));
+      const cards = active.map((h) => ({tag: String(h.estado).includes("DEC-0") ? (String(h.estado).match(/DEC-\d+/) || ["En el piloto"])[0] : "En el piloto",
+        tone: "ok", title: h.titulo || h.idea, note: h.estado}));
+      if (b.siguiente) cards.push({tag: "Siguiente sprint", tone: "wait", title: `${b.siguiente.id} · ${b.siguiente.titulo || b.siguiente.idea}`, note: b.siguiente.idea || ""});
+      for (const c of cards) {
+        const article = document.createElement("article");
+        article.className = "testing-card";
+        article.append(cell("span", c.tag, `pill ${c.tone}`), cell("strong", c.title), cell("p", c.note, "chart-note"));
+        box.append(article);
+      }
+      status.hidden = true;
+      if (!cards.length) { status.hidden = false; status.textContent = "Nada en prueba ahora mismo."; }
+    } catch (error) {
+      status.textContent = "No se pudo leer el backlog.";
+    }
+  }
 
   // ---- Piloto: atribución ---------------------------------------------------------------
   async function loadAttribution() {
@@ -101,8 +133,7 @@
           [usd(t.market), tone(t.market)], [usd(t.strategy), tone(t.strategy)], [usd(-t.costs), tone(-t.costs)], ""]);
       }
       fill("attribution", rows, "Sin cierres suficientes.", 8);
-      status.textContent = "Resultado repartido en lo que movió el mercado, lo que aportó la regla y lo que costó operar.";
-      status.classList.remove("data-notice");
+      status.hidden = true;
     } catch (error) {
       status.textContent = "No se pudo leer la atribución. El resto del panel sigue disponible.";
       throw error;

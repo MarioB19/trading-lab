@@ -2,66 +2,97 @@
 <html lang="es">
 <head>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-  <title>Trading Lab · Operación</title><link rel="stylesheet" href="/operations.css">
+  <title>Trading Lab</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans+Condensed:wght@600&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+  <link rel="stylesheet" href="/operations.css">
   <script src="/operations.js" defer></script>
   <script src="/tabs.js" defer></script>
 </head>
 <body>
-<header><a href="/" class="brand">TRADING LAB<span>Operación</span></a><span id="mode" class="badge">SIMULADO · PENDIENTE DE VERIFICAR</span></header>
+<header>
+  <a href="/" class="brand">TRADING LAB<span id="header-cutoff">Simulado · consultando el corte…</span></a>
+  <div class="header-chips">
+    <span id="mode" class="badge">SIMULADO · PENDIENTE DE VERIFICAR</span>
+    <span id="health-chip" class="chip">Salud: consultando…</span>
+    <label class="currency-switch" for="currency"><span class="sr-only">Moneda de vista</span><select id="currency"><option value="MXN" selected>MXN</option><option value="USD">USD</option></select></label>
+    <button id="refresh" type="button">Actualizar</button>
+  </div>
+</header>
 <nav class="tabs" role="tablist" aria-label="Secciones del panel">
-  <button type="button" role="tab" id="tab-btn-piloto" aria-controls="tab-piloto" aria-selected="true" data-tab="piloto">Piloto</button>
+  <button type="button" role="tab" id="tab-btn-resumen" aria-controls="tab-resumen" aria-selected="true" data-tab="resumen">Resumen</button>
+  <button type="button" role="tab" id="tab-btn-operaciones" aria-controls="tab-operaciones" aria-selected="false" data-tab="operaciones" tabindex="-1">Operaciones</button>
   <button type="button" role="tab" id="tab-btn-investigacion" aria-controls="tab-investigacion" aria-selected="false" data-tab="investigacion" tabindex="-1">Investigación</button>
+  <button type="button" role="tab" id="tab-btn-sistema" aria-controls="tab-sistema" aria-selected="false" data-tab="sistema" tabindex="-1">Sistema</button>
   <button type="button" role="tab" id="tab-btn-arena" aria-controls="tab-arena" aria-selected="false" data-tab="arena" tabindex="-1">Arena (archivo)</button>
 </nav>
 <main>
-<div id="tab-piloto" role="tabpanel" aria-labelledby="tab-btn-piloto">
-  <section class="intro"><div><p class="eyebrow">CONTROL DE OPERACIÓN</p><h1>Todo bajo observación.</h1><p>Patrimonio, ganancias y salud del sistema. Dinero simulado; las aportaciones no cuentan como rendimiento.</p></div><div class="view-controls"><label for="currency">Moneda de vista</label><select id="currency"><option value="MXN" selected>Pesos mexicanos · MXN</option><option value="USD">Dólares · USD</option></select><button id="refresh" type="button">Actualizar</button></div></section>
+
+<!-- ============================================================ 1 · RESUMEN -->
+<div id="tab-resumen" role="tabpanel" aria-labelledby="tab-btn-resumen">
   <div id="status" class="status" role="status" aria-live="polite">Consultando el estado…</div>
-  <section id="comparison-section" aria-labelledby="comparison-title" hidden><div class="section-title"><h2 id="comparison-title">Historial de investigación</h2><span>Resultados conservados · fuera de operación</span></div><p id="comparison-status">Consultando el historial…</p><div id="comparison" class="sleeves"></div><p id="comparison-checks"></p><p id="comparison-paper"></p></section>
-  <section aria-label="Patrimonio y rendimiento">
-    <p id="fx" class="fx-note">Consultando el tipo de cambio y su corte…</p>
-    <p id="performance-status" class="data-notice" role="status" aria-live="polite" hidden></p>
-    <div class="metrics financial-metrics">
-      <article><span>Patrimonio actual</span><strong id="equity">—</strong><small id="equity-reference">Pendiente de lectura</small><small id="equity-cutoff">Sin corte verificado</small></article>
-      <article><span>Resultado acumulado de la cartera</span><strong id="pnl">—</strong><small id="pnl-reference">Sin contar aportaciones ni retiros</small><small>Incluye posiciones abiertas y costos de trading. No descuenta infraestructura ni impuestos.</small></article>
-      <article><span>Capital objetivo simulado</span><strong id="capital-target">—</strong><small id="capital-target-reference">Según la configuración vigente</small><small id="capital-applied">Capital aplicado: pendiente de lectura</small><small id="capital-pending">El objetivo no modifica el patrimonio observado.</small></article>
-      <article><span>Desde los últimos cierres</span><strong id="in-progress">—</strong><small id="in-progress-reference">Variación incluida en la ganancia acumulada</small><small id="in-progress-cutoff">Los bloques pueden tener cortes distintos.</small></article>
-    </div>
-    <ul id="performance-notes" class="data-notes" hidden></ul>
+  <p id="performance-status" class="data-notice" role="status" aria-live="polite" hidden></p>
+  <section class="metrics hero-metrics" aria-label="Resultado">
+    <article><span>Patrimonio simulado</span><strong id="equity">—</strong><small id="equity-reference">Pendiente de lectura</small><small id="equity-cutoff">Sin corte verificado</small></article>
+    <article><span>Resultado desde el inicio</span><strong id="pnl">—</strong><small id="pnl-reference">Sin contar aportaciones ni retiros</small><small id="pnl-week">Semana: consultando…</small></article>
+    <article><span>Contra la referencia (BTC y SPY, 50/50)</span><strong id="vs-benchmark">—</strong><small id="vs-benchmark-detail">Consultando la atribución…</small><small id="vs-benchmark-blocks"></small></article>
   </section>
-  <section aria-labelledby="attribution-title">
-    <div class="section-title"><h2 id="attribution-title">¿Por qué? Mercado, estrategia y costos</h2><span>Misma fórmula que la revisión semanal · US$</span></div>
-    <p id="attribution-status" class="data-notice" role="status">Consultando la atribución…</p>
-    <div class="table-wrap"><table class="attribution-table"><caption class="sr-only">Resultado de cada bloque repartido en mercado, estrategia y costos, por periodo.</caption><thead><tr><th scope="col">Periodo</th><th scope="col">Bloque</th><th scope="col">Resultado</th><th scope="col">Referencia</th><th scope="col">Mercado</th><th scope="col">Estrategia</th><th scope="col">Costos</th><th scope="col">Ops</th></tr></thead><tbody id="attribution"><tr><td colspan="8">Sin datos.</td></tr></tbody></table></div>
-    <p id="attribution-note" class="chart-note">Mercado = beta × rendimiento de la referencia del bot (BTC en cripto, SPY en ETFs). Costos = comisión + diferencia contra el precio de referencia. Estrategia = resultado − mercado + costos: lo que aportó la regla antes de costos. Sin aportaciones ni retiros.</p>
+  <ul id="performance-notes" class="data-notes" hidden></ul>
+
+  <div class="two-up">
+    <section class="panel-card" aria-labelledby="why-title">
+      <div class="section-title"><h2 id="why-title">¿Por qué? Desde el inicio, en US$</h2><span id="why-window">—</span></div>
+      <p id="attribution-status" class="data-notice" role="status">Consultando la atribución…</p>
+      <div id="attribution-bars" class="attr-bars"></div>
+      <p class="chart-note">Estrategia = lo que aportaron las monedas elegidas y la rotación, descontado el mercado (beta × BTC o SPY). Costos = comisión + diferencia contra el precio de referencia.</p>
+      <details><summary>Ver la tabla por periodo (semana, 28 días, desde el inicio)</summary>
+        <div class="table-wrap"><table class="attribution-table"><caption class="sr-only">Resultado de cada bloque repartido en mercado, estrategia y costos, por periodo.</caption><thead><tr><th scope="col">Periodo</th><th scope="col">Bloque</th><th scope="col">Resultado</th><th scope="col">Referencia</th><th scope="col">Mercado</th><th scope="col">Estrategia</th><th scope="col">Costos</th><th scope="col">Ops</th></tr></thead><tbody id="attribution"><tr><td colspan="8">Sin datos.</td></tr></tbody></table></div>
+      </details>
+    </section>
+
+    <section class="panel-card balance-panel" aria-labelledby="balance-title">
+      <div class="section-title"><div><h2 id="balance-title">Capital día a día</h2><p>Saldo a los últimos cierres · efectivo y posiciones</p></div><div class="chart-controls"><label>Bloque<select id="balance-sleeve"><option value="total">Cartera total</option><option value="crypto">Cripto</option><option value="stocks">ETF</option></select></label><label>Periodo<select id="balance-period"><option value="30">30 días</option><option value="90">90 días</option><option value="all">Todo</option></select></label></div></div>
+      <div class="chart-legend"><span><i class="legend-balance"></i>Saldo</span><span><i class="legend-capital"></i>Capital aportado neto</span><span><i class="legend-flow"></i>Aporte o retiro</span></div>
+      <p id="balance-empty" class="empty" hidden>Sin cierres disponibles.</p>
+      <div id="balance-chart" class="balance-chart"></div>
+      <div id="balance-navigation" class="balance-navigation"><label for="balance-day">Explorar cierre <strong id="balance-selected-date">—</strong></label><input id="balance-day" type="range" min="0" max="0" value="0" step="1" aria-label="Seleccionar día de cierre"></div>
+      <div id="balance-detail" class="balance-detail" role="status" aria-live="polite"></div>
+      <p id="balance-note" class="chart-note"></p>
+    </section>
+  </div>
+
+  <section aria-labelledby="blocks-title"><div class="section-title"><h2 id="blocks-title">Bloques</h2><span id="fx" class="fx-note">Consultando el tipo de cambio…</span></div><div id="sleeves" class="sleeves"><p class="empty">No hay posiciones importadas.</p></div></section>
+
+  <section class="panel-card" aria-labelledby="testing-title">
+    <div class="section-title"><h2 id="testing-title">Qué está en prueba</h2><a href="#investigacion" class="link-tab" data-goto="investigacion">Ir a Investigación</a></div>
+    <p id="testing-status" class="data-notice" role="status">Consultando el backlog…</p>
+    <div id="testing" class="testing-grid"></div>
   </section>
-  <section class="balance-panel" aria-labelledby="balance-title">
-    <div class="section-title"><div><h2 id="balance-title">Balance por día</h2><p>Saldo a los últimos cierres · efectivo y posiciones</p></div><div class="chart-controls"><label>Bloque<select id="balance-sleeve"><option value="total">Cartera total</option><option value="crypto">Cripto</option><option value="stocks">ETF</option></select></label><label>Periodo<select id="balance-period"><option value="30">Últimos 30 días</option><option value="90">Últimos 90 días</option><option value="all">Todo el historial</option></select></label></div></div>
-    <div class="chart-legend"><span><i class="legend-balance"></i>Saldo</span><span><i class="legend-capital"></i>Capital aportado neto</span><span><i class="legend-flow"></i>Aporte o retiro</span></div>
-    <p id="balance-empty" class="empty" hidden>Sin cierres disponibles.</p>
-    <div id="balance-chart" class="balance-chart"></div>
-    <div id="balance-navigation" class="balance-navigation"><label for="balance-day">Explorar cierre <strong id="balance-selected-date">—</strong></label><input id="balance-day" type="range" min="0" max="0" value="0" step="1" aria-label="Seleccionar día de cierre"></div>
-    <div id="balance-detail" class="balance-detail" role="status" aria-live="polite"></div>
-    <p id="balance-note" class="chart-note"></p>
-  </section>
-  <section aria-labelledby="daily-title"><div class="section-title"><h2 id="daily-title">Ganancias por día</h2><span>Más recientes primero · sin aportaciones ni retiros</span></div><p id="daily-currency-note">Cada fila corresponde al cierre UTC; los periodos incompletos se indican en sus notas.</p><div class="table-wrap"><table class="daily-table"><caption class="sr-only">Ganancias diarias por bloque y movimientos de capital, con fecha de cierre UTC.</caption><thead><tr><th scope="col">Cierre UTC</th><th scope="col">Cripto</th><th scope="col">ETF</th><th scope="col">Ganancia total</th><th scope="col">Aportes / retiros</th><th scope="col">Notas del cierre</th></tr></thead><tbody id="daily"><tr><td colspan="6">Sin cierres disponibles.</td></tr></tbody></table></div></section>
-  <section aria-labelledby="analysis-title"><div class="section-title"><h2 id="analysis-title">Qué está ganado o perdido</h2><span>Operaciones y posiciones al último cierre</span></div><p id="analysis-status" class="data-notice">Consultando el análisis…</p><div class="metrics"><article><span>Resultado de ventas cerradas</span><strong id="analysis-realized">—</strong><small>Incluye comisiones de compra y venta. Son operaciones simuladas.</small></article><article><span>Resultado en posiciones abiertas</span><strong id="analysis-unrealized">—</strong><small>Aún puede cambiar; no es dinero cobrado.</small></article><article><span>Comisiones acumuladas</span><strong id="analysis-fees">—</strong><small>Ya están descontadas del resultado; no se restan otra vez.</small></article><article><span>Operaciones analizadas</span><strong id="analysis-count">—</strong><small id="analysis-cutoff">Cortes pendientes de verificar.</small></article></div><ul id="accounting-alerts" class="data-notes" hidden></ul></section>
-  <section class="economics-panel" aria-labelledby="economics-title"><div class="section-title"><h2 id="economics-title">Lo que debe cubrir esta base</h2><span>Escenario editable · no es un pronóstico</span></div><p>Ganar en la cartera no basta para cubrir los gastos del proyecto. Introduce un supuesto de gasto y, si quieres, una meta mensual. Estos importes no cambian el capital ni generan órdenes.</p><div class="economics-controls"><label for="monthly-cost">Gasto mensual supuesto (USD)<input id="monthly-cost" type="number" min="0" step="0.01" value="5" inputmode="decimal"></label><label for="monthly-income">Ganancia mensual deseada (USD)<input id="monthly-income" type="number" min="0" step="0.01" value="0" inputmode="decimal"></label></div><p id="economics-result" role="status" aria-live="polite">Pendiente de verificar la base aplicada.</p><p class="chart-note">El gasto de ejemplo no representa tu factura. El cálculo exige un resultado después de costos de trading y antes de impuestos; no demuestra que la estrategia pueda conseguirlo. La base y el historial de pérdidas se conservan.</p></section>
-  <section aria-labelledby="evidence-title">
-    <div class="section-title"><h2 id="evidence-title">Datos y decisiones verificables</h2><span>Captura desde la puesta en marcha de este registro</span></div>
-    <p id="evidence-status" class="data-notice" role="status">Consultando la evidencia…</p>
-    <div class="metrics evidence-metrics"><article><span>Datos de mercado archivados</span><strong id="evidence-market-count">—</strong><small id="evidence-cutoff">Sin captura verificada</small></article><article><span>Decisiones archivadas</span><strong id="evidence-replay-count">—</strong><small id="evidence-replay-note">Esperando decisiones del bot diario</small></article></div>
-    <ul id="evidence-details" class="data-notes"></ul>
-    <p>Se conserva el proveedor, el corte, los ajustes de ETFs y los datos usados. Una reproducción correcta comprueba el funcionamiento de la simulación; la rentabilidad de la estrategia sigue sin demostrarse.</p>
-    <details><summary>Alcance y pendientes de validación</summary><ul id="evidence-limitations" class="data-notes"></ul></details>
-  </section>
-  <section class="metrics health-metrics" aria-label="Salud operativa"><article><span>Órdenes pendientes</span><strong id="pending">—</strong><small id="unknown">Esperando conciliación</small></article><article><span>Último ciclo correcto</span><strong id="heartbeat" class="time">—</strong><small id="build">Sin ejecución verificada</small></article><article><span>Último respaldo local</span><strong id="backup" class="time">—</strong><small>La copia externa automática se verifica por separado.</small></article></section>
-  <section><div class="section-title"><h2>Bloques</h2><span>El corte de cada mercado puede ser distinto</span></div><div id="sleeves" class="sleeves"><p class="empty">No hay posiciones importadas.</p></div></section>
-  <section aria-labelledby="execution-title"><div class="section-title"><h2 id="execution-title">Costos y rotación</h2><span>Últimos 30 días · simulación</span></div><p id="execution-status" class="data-notice" role="status">Consultando calidad de ejecución…</p><div class="metrics"><article><span>Costo cripto contra el libro</span><strong id="execution-cost">—</strong><small id="execution-cost-coverage">Sin medición</small></article><article><span>Proporción maker</span><strong id="execution-maker">—</strong><small id="execution-maker-coverage">Sin medición estructurada</small></article><article><span>Ventas seguidas de recompra en 48 h</span><strong id="execution-reentries">—</strong><small>Diagnóstico; mantener la posición no garantiza una mejora.</small></article><article><span>Liquidez y demoras</span><strong id="execution-liquidity">—</strong><small id="execution-wait">Sin medición</small></article></div><p>El costo incluye comisión y diferencia de precio. Los costos supuestos se separan de los medidos contra el libro público; las órdenes antiguas sin detalle maker no cuentan como 0%.</p></section>
-  <section><div class="section-title"><h2>Órdenes y conciliación</h2><span>Últimos 100 registros</span></div><div class="table-wrap"><table><thead><tr><th>Activo</th><th>Lado</th><th>Estado</th><th>Cantidad ejecutada</th><th>Actualización</th></tr></thead><tbody id="orders"><tr><td colspan="5">Sin órdenes registradas.</td></tr></tbody></table></div></section>
-  <section><div class="section-title"><h2>Operaciones registradas</h2><span>Los movimientos de capital no son rendimiento</span></div><p id="trade-currency-note">Valores en MXN con el tipo de cambio actual disponible; no es la conversión histórica del día de la operación.</p><p>1 bps equivale a 0.01%. Un costo de 45 bps son US$4.50 por una operación de US$1,000; comprar y vender genera costos en ambos lados.</p><div class="table-wrap"><table><thead><tr><th>Fecha UTC</th><th>Bloque</th><th>Activo</th><th>Lado</th><th id="trade-value-title">Valor MXN</th><th>Costo bps</th></tr></thead><tbody id="trades"><tr><td colspan="6">Sin operaciones registradas.</td></tr></tbody></table></div></section>
-  <section><div class="section-title"><h2>Actividad del sistema</h2><span>Últimos 15 eventos</span></div><ul id="events" class="events"><li>Sin eventos.</li></ul></section>
+
+  <p class="chart-note">Simulado contra el libro real de Bitso con dinero ficticio. Las ganancias incluyen posiciones abiertas; MXN se convierte con el tipo de cambio del corte. No es una recomendación de inversión.</p>
 </div>
+
+<!-- ============================================================ 2 · OPERACIONES -->
+<div id="tab-operaciones" role="tabpanel" aria-labelledby="tab-btn-operaciones" hidden>
+  <section aria-labelledby="execution-title"><div class="section-title"><h2 id="execution-title">Costos y rotación</h2><span>Últimos 30 días · bloque cripto · libro real de Bitso</span></div><p id="execution-status" class="data-notice" role="status">Consultando calidad de ejecución…</p>
+    <div class="metrics"><article><span>Costo por orden (contra el libro)</span><strong id="execution-cost">—</strong><small id="execution-cost-coverage">Sin medición</small><small>Meta DEC-034: ≤ 33 pb</small></article><article><span>Proporción maker (por importe)</span><strong id="execution-maker">—</strong><small id="execution-maker-coverage">Sin medición estructurada</small><small>Meta DEC-034: ≥ 50%</small></article><article><span>Ventas seguidas de recompra en 48 h</span><strong id="execution-reentries">—</strong><small id="execution-reentries-detail">Diagnóstico; lo ataca H1b.</small></article><article><span>Órdenes menores a US$25</span><strong id="execution-small">—</strong><small id="execution-small-detail">Desde DEC-033 ya no se ejecutan.</small></article></div>
+    <p class="chart-note">El costo incluye comisión y diferencia de precio. Los costos supuestos se separan de los medidos contra el libro; las órdenes antiguas sin detalle maker no cuentan como 0%. 1 pb = 0.01%: 45 pb son US$4.50 por una operación de US$1,000. <span id="execution-liquidity-note"></span></p>
+  </section>
+
+  <div class="two-up two-up-57">
+    <section class="panel-card" aria-labelledby="cost-asset-title"><div class="section-title"><h2 id="cost-asset-title">Costo por moneda</h2><span>30 días · pb por orden</span></div><div class="table-wrap"><table><thead><tr><th scope="col">Moneda</th><th scope="col">Ops</th><th scope="col">Importe</th><th scope="col">Costo</th><th scope="col">Spread</th></tr></thead><tbody id="cost-by-asset"><tr><td colspan="5">Sin operaciones.</td></tr></tbody></table></div><p class="chart-note">La comisión taker (36 pb) es casi todo el costo; el spread separa a las monedas poco líquidas (dato para H6).</p></section>
+    <section class="panel-card" aria-labelledby="trades-title"><div class="section-title"><h2 id="trades-title">Órdenes recientes</h2><span id="trade-currency-note">Importes al tipo de cambio actual</span></div><div class="table-wrap"><table><thead><tr><th scope="col">Fecha UTC</th><th scope="col">Bloque</th><th scope="col">Activo</th><th scope="col">Lado</th><th scope="col" id="trade-value-title">Valor MXN</th><th scope="col">Ejecución</th><th scope="col">Espera</th><th scope="col">Costo pb</th></tr></thead><tbody id="trades"><tr><td colspan="8">Sin operaciones registradas.</td></tr></tbody></table></div><div class="table-foot"><button id="trades-more" type="button" hidden>Ver todas</button><p class="chart-note">Las órdenes maker se llenan en segundos; las que agotan la espera van a mercado. Por eso DEC-034 sube la espera a 300 s.</p></div></section>
+  </div>
+
+  <section class="panel-card" aria-labelledby="daily-title"><div class="section-title"><h2 id="daily-title">Ganancias por día</h2><span id="daily-currency-note">Cierres UTC · sin aportaciones ni retiros</span></div>
+    <div id="daily-chart" class="daily-chart"></div>
+    <details><summary>Ver la tabla día por día</summary><div class="table-wrap"><table class="daily-table"><caption class="sr-only">Ganancias diarias por bloque y movimientos de capital, con fecha de cierre UTC.</caption><thead><tr><th scope="col">Cierre UTC</th><th scope="col">Cripto</th><th scope="col">ETF</th><th scope="col">Ganancia total</th><th scope="col">Aportes / retiros</th><th scope="col">Notas del cierre</th></tr></thead><tbody id="daily"><tr><td colspan="6">Sin cierres disponibles.</td></tr></tbody></table></div></details>
+  </section>
+
+  <section aria-labelledby="analysis-title"><div class="section-title"><h2 id="analysis-title">Qué está ganado o perdido</h2><span>Operaciones y posiciones al último cierre</span></div><p id="analysis-status" class="data-notice">Consultando el análisis…</p><div class="metrics"><article><span>Resultado de ventas cerradas</span><strong id="analysis-realized">—</strong><small>Incluye comisiones de compra y venta. Son operaciones simuladas.</small></article><article><span>Resultado en posiciones abiertas</span><strong id="analysis-unrealized">—</strong><small>Aún puede cambiar; no es dinero cobrado.</small></article><article><span>Comisiones acumuladas</span><strong id="analysis-fees">—</strong><small>Ya están descontadas del resultado; no se restan otra vez.</small></article><article><span>Operaciones analizadas</span><strong id="analysis-count">—</strong><small id="analysis-cutoff">Cortes pendientes de verificar.</small></article></div><ul id="accounting-alerts" class="data-notes" hidden></ul></section>
+</div>
+
+<!-- ============================================================ 3 · INVESTIGACIÓN -->
 <div id="tab-investigacion" role="tabpanel" aria-labelledby="tab-btn-investigacion" hidden>
   <section class="intro"><div><p class="eyebrow">INVESTIGACIÓN</p><h1>¿Ya hay una ganadora?</h1><p>Semáforo de la definición de «ganadora», hipótesis pendientes, bitácora de sprints y candidatas en simulado contra el control. Todo de solo lectura.</p></div></section>
   <p id="research-status" class="status" role="status" aria-live="polite">Consultando la investigación…</p>
@@ -71,6 +102,25 @@
     <details><summary>Ideas descartadas</summary><div class="table-wrap"><table><thead><tr><th scope="col">Id</th><th scope="col">Idea</th><th scope="col">Por qué se descartó</th></tr></thead><tbody id="discarded"></tbody></table></div></details></section>
   <section aria-labelledby="sprints-title"><div class="section-title"><h2 id="sprints-title">Bitácora de sprints</h2><span>Fuente: research/backlog.yaml</span></div><div class="table-wrap"><table><thead><tr><th scope="col">Sprint</th><th scope="col">Fecha</th><th scope="col">Hipótesis</th><th scope="col">Resultado</th><th scope="col">Decisión</th></tr></thead><tbody id="sprints"></tbody></table></div></section>
 </div>
+
+<!-- ============================================================ 4 · SISTEMA -->
+<div id="tab-sistema" role="tabpanel" aria-labelledby="tab-btn-sistema" hidden>
+  <section class="metrics health-metrics" aria-label="Salud operativa"><article><span>Último ciclo correcto</span><strong id="heartbeat" class="time">—</strong><small id="build">Sin ejecución verificada</small></article><article><span>Último respaldo verificado</span><strong id="backup" class="time">—</strong><small>La copia externa en la USB y la Mac se verifica por separado.</small></article><article><span>Órdenes pendientes</span><strong id="pending">—</strong><small id="unknown">Esperando conciliación</small></article><article><span>Capital objetivo simulado</span><strong id="capital-target">—</strong><small id="capital-target-reference">Según la configuración vigente</small><small id="capital-applied">Capital aplicado: pendiente de lectura</small><small id="capital-pending">El objetivo no modifica el patrimonio observado.</small></article><article><span>Desde los últimos cierres</span><strong id="in-progress">—</strong><small id="in-progress-reference">Variación incluida en la ganancia acumulada</small><small id="in-progress-cutoff">Los bloques pueden tener cortes distintos.</small></article></section>
+  <section aria-labelledby="evidence-title">
+    <div class="section-title"><h2 id="evidence-title">Datos y decisiones verificables</h2><span>Captura desde la puesta en marcha de este registro</span></div>
+    <p id="evidence-status" class="data-notice" role="status">Consultando la evidencia…</p>
+    <div class="metrics evidence-metrics"><article><span>Datos de mercado archivados</span><strong id="evidence-market-count">—</strong><small id="evidence-cutoff">Sin captura verificada</small></article><article><span>Decisiones archivadas</span><strong id="evidence-replay-count">—</strong><small id="evidence-replay-note">Esperando decisiones del bot diario</small></article></div>
+    <ul id="evidence-details" class="data-notes"></ul>
+    <p class="chart-note">Se conserva el proveedor, el corte, los ajustes de ETFs y los datos usados. Una reproducción correcta comprueba el funcionamiento de la simulación; la rentabilidad de la estrategia sigue sin demostrarse.</p>
+    <details><summary>Alcance y pendientes de validación</summary><ul id="evidence-limitations" class="data-notes"></ul></details>
+  </section>
+  <section><div class="section-title"><h2>Órdenes y conciliación</h2><span>Últimos 100 registros</span></div><div class="table-wrap"><table><thead><tr><th>Activo</th><th>Lado</th><th>Estado</th><th>Cantidad ejecutada</th><th>Actualización</th></tr></thead><tbody id="orders"><tr><td colspan="5">Sin órdenes registradas.</td></tr></tbody></table></div></section>
+  <section><div class="section-title"><h2>Actividad del sistema</h2><span>Últimos 15 eventos</span></div><ul id="events" class="events"><li>Sin eventos.</li></ul></section>
+  <section class="economics-panel" aria-labelledby="economics-title"><div class="section-title"><h2 id="economics-title">Lo que debe cubrir esta base</h2><span>Escenario editable · no es un pronóstico</span></div><p>Ganar en la cartera no basta para cubrir los gastos del proyecto. Introduce un supuesto de gasto y, si quieres, una meta mensual. Estos importes no cambian el capital ni generan órdenes.</p><div class="economics-controls"><label for="monthly-cost">Gasto mensual supuesto (USD)<input id="monthly-cost" type="number" min="0" step="0.01" value="5" inputmode="decimal"></label><label for="monthly-income">Ganancia mensual deseada (USD)<input id="monthly-income" type="number" min="0" step="0.01" value="0" inputmode="decimal"></label></div><p id="economics-result" role="status" aria-live="polite">Pendiente de verificar la base aplicada.</p><p class="chart-note">El gasto de ejemplo no representa tu factura. El cálculo exige un resultado después de costos de trading y antes de impuestos; no demuestra que la estrategia pueda conseguirlo.</p></section>
+  <section id="comparison-section" aria-labelledby="comparison-title" hidden><div class="section-title"><h2 id="comparison-title">Historial de investigación</h2><span>Resultados conservados · fuera de operación</span></div><p id="comparison-status">Consultando el historial…</p><div id="comparison" class="sleeves"></div><p id="comparison-checks"></p><p id="comparison-paper"></p></section>
+</div>
+
+<!-- ============================================================ 5 · ARENA -->
 <div id="tab-arena" role="tabpanel" aria-labelledby="tab-btn-arena" hidden>
   <section class="intro"><div><p class="eyebrow">ARENA · ARCHIVO</p><h1>Cuatro estrategias intradía, ya apagadas.</h1><p>Resultado final de la arena (US$1,000 ficticios por estrategia, BTC contra el libro de Bitso). Se apagó el 25-oct (DEC-031) porque perdía por diseño con estas comisiones. Archivo fijo derivado del respaldo completo; sin controles.</p></div></section>
   <p id="arena-status" class="status" role="status" aria-live="polite">Consultando el archivo…</p>
@@ -81,6 +131,7 @@
   <section aria-labelledby="arena-fills-title"><div class="section-title"><h2 id="arena-fills-title">Operaciones</h2><span id="arena-fills-count">—</span></div><button id="arena-fills-load" type="button">Ver todas las operaciones</button><div class="table-wrap" id="arena-fills-wrap" hidden><table><thead><tr><th scope="col">Fecha UTC</th><th scope="col">Estrategia</th><th scope="col">Lado</th><th scope="col">BTC</th><th scope="col">Precio</th><th scope="col">Importe</th><th scope="col">Comisión</th><th scope="col">Tipo</th></tr></thead><tbody id="arena-fills"></tbody></table></div></section>
   <section><p id="arena-source" class="chart-note"></p></section>
 </div>
-  <footer><p>Este panel es de lectura. Activación, pausa y restauración requieren acceso operativo. La estrategia continúa siendo diaria; observar más seguido no añade operaciones.</p><p id="updated">Aún sin actualizar.</p></footer>
+
+  <footer><p>Este panel es de lectura. Activación, pausa y restauración requieren acceso operativo. La estrategia es diaria; observar más seguido no añade operaciones.</p><p id="updated">Aún sin actualizar.</p></footer>
 </main>
 </body></html>

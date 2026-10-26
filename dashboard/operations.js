@@ -17,6 +17,7 @@ try {
 } catch (_) { /* Storage can be disabled; MXN remains the default. */ }
 let lastPerformance = null;
 let lastOperating = null;
+let lastAttribution = null;
 let refreshing = false;
 const currentRate = () => {
   const rate = numeric(lastPerformance?.fx?.rate);
@@ -78,6 +79,9 @@ function sleeves(status) {
   target.replaceChildren();
   const snapshot = status.snapshot?.sleeves || {};
   const live = status.live?.sleeves || {};
+  const meta = {crypto: {label: "Criptomonedas", swatch: "swatch-crypto", rule: "Tendencia + momentum · diario", bench: "BTC"},
+                stocks: {label: "Acciones y ETFs", swatch: "swatch-stocks", rule: "60/40 SPY · IEF · banda 5 pp", bench: "SPY"}};
+  const attribution = lastAttribution?.since_start?.sleeves || {};
   for (const name of new Set([...Object.keys(snapshot), ...Object.keys(live)])) {
     const base = snapshot[name] || {};
     const latest = live[name] || {};
@@ -88,28 +92,81 @@ function sleeves(status) {
       || selectedDocument?.updated_utc || selectedDocument?.generated_utc;
     const sameCutoff = Boolean(valuation?.as_of_utc) && valuation.as_of_utc === sourceCutoff;
     const detailVerified = numeric(valuation?.equity_usd) !== null && sameCutoff;
-    const card = text("article", null, "sleeve");
-    card.replaceChildren(text("h3", data.label || base.label || name));
-    const dl = document.createElement("dl");
-    for (const [label, value] of [
-      ["Patrimonio", moneyWithReference(valuation?.equity_usd)], ["Efectivo", moneyWithReference(detailVerified ? data.cash : null)],
-      ["Caída reportada", !detailVerified || data.drawdown == null ? "—" : `${(data.drawdown * 100).toFixed(2)}%`],
-      ["Kill switch", data.kill_switch ? "ACTIVADO" : "No activado"],
-      ["Ejecución diaria", base.status || "—"], ["Observación", latest.status || "—"],
-      ["Corte UTC", date(valuation?.as_of_utc)]
-    ]) dl.append(text("dt", label), text("dd", value));
-    card.append(dl);
+    const m = meta[name] || {label: data.label || base.label || name, swatch: "", rule: "", bench: "ref."};
+    const card = text("article", "", "sleeve");
+    const head = text("div", "", "sleeve-head");
+    const title = text("div", "", "sleeve-id");
+    title.append(text("span", "", `swatch ${m.swatch}`), text("h3", m.label));
+    head.append(title, text("span", m.rule, "chip"));
+    card.append(head);
+    const attr = attribution[name] || {};
+    const equity = numeric(valuation?.equity_usd);
+    const start = numeric(attr.start_equity);
+    const sincePct = numeric(attr.pnl_pct);
+    const dd = detailVerified && data.drawdown != null ? numeric(data.drawdown) : null;
+    const killLimit = numeric(attr.kill_limit ?? data.kill_limit);
+    const stats = text("div", "", "sleeve-stats");
+    for (const [label, value, cls] of [
+      ["Patrimonio", moneyWithReference(equity), ""],
+      ["Desde el inicio", sincePct === null ? "—" : `${(sincePct * 100).toFixed(1)}%`, sincePct === null ? "" : sincePct < 0 ? "gain-negative" : "gain-positive"],
+      [`${m.bench} en el periodo`, numeric(attr.benchmark_return) === null ? "—" : `${(attr.benchmark_return * 100).toFixed(1)}%`, ""],
+      ["Caída desde el máximo", dd === null ? "—" : `${(dd * 100).toFixed(1)}%${killLimit ? ` · apaga a −${Math.round(killLimit * 100)}%` : ""}`, data.kill_switch ? "gain-negative" : ""]
+    ]) {
+      const stat = text("div", "", "stat");
+      stat.append(text("span", label), text("strong", value, cls));
+      stats.append(stat);
+    }
+    card.append(stats);
+    const exposure = numeric(data.exposure ?? latest.exposure ?? base.exposure);
+    if (detailVerified) {
+      const expo = text("div", "", "expo");
+      const row = text("div", "", "expo-row");
+      row.append(text("span", `Invertido ${exposure === null ? "—" : `${(exposure * 100).toFixed(0)}%`} · efectivo ${moneyWithReference(data.cash)}`),
+        text("span", data.kill_switch ? "KILL SWITCH ACTIVADO" : `Ejecución ${base.status || "—"} · observación ${latest.status || "—"}`));
+      const bar = text("div", "", `wbar ${name === "stocks" ? "wbar-stocks" : ""}`);
+      const fillNode = document.createElement("i");
+      fillNode.style.width = `${Math.max(0, Math.min(100, (exposure || 0) * 100))}%`;
+      bar.append(fillNode);
+      expo.append(row, bar);
+      card.append(expo);
+    } else {
+      card.append(text("p", "Detalle de efectivo y posiciones pendiente de coincidir con una valoración válida del mismo corte.", "chart-note"));
+    }
     const positions = detailVerified ? (data.positions || data.assets?.filter(a => Number(a.qty) > 0) || []) : [];
-    if (!detailVerified) card.append(text("p", "Detalle de efectivo y posiciones pendiente de coincidir con una valoración válida del mismo corte."));
-    if (positions.length) card.append(text("p", positions.map(p =>
-      `${p.asset}: ${Number(p.qty).toLocaleString("es-MX", {maximumFractionDigits: 6})}`).join(" · ")));
+    if (positions.length) {
+      const wrap = text("div", "", "table-wrap");
+      const table = document.createElement("table");
+      table.className = "positions-table";
+      const thead = document.createElement("thead");
+      const hr = document.createElement("tr");
+      for (const h of ["Posición", "Valor", "Peso", "Hoy", "Cantidad"]) hr.append(text("th", h));
+      thead.append(hr);
+      const tbody = document.createElement("tbody");
+      for (const p of positions) {
+        const tr = document.createElement("tr");
+        const change = numeric(p.change_since_close);
+        tr.append(text("td", p.asset), text("td", moneyWithReference(p.value)),
+          text("td", numeric(p.weight) === null ? "—" : `${(p.weight * 100).toFixed(0)}%`),
+          text("td", change === null ? "—" : `${change > 0 ? "+" : ""}${(change * 100).toFixed(1)}%`, change === null || change === 0 ? "" : change > 0 ? "gain-positive" : "gain-negative"),
+          text("td", Number(p.qty).toLocaleString("es-MX", {maximumFractionDigits: 6})));
+        tbody.append(tr);
+      }
+      table.append(thead, tbody);
+      wrap.append(table);
+      card.append(wrap);
+    }
     const notes = new Set([...(base.notes || []), ...(latest.notes || []), ...(data.alerts || [])]);
-    if (notes.size) card.append(text("p", "Notas del cierre y observación · importes en USD", "note-label"));
-    for (const note of notes) card.append(text("p", note));
+    if (notes.size) {
+      const details = document.createElement("details");
+      details.append(text("summary", `Notas del cierre y observación (${notes.size}) · corte ${date(valuation?.as_of_utc)}`));
+      for (const note of notes) details.append(text("p", note, "chart-note"));
+      card.append(details);
+    } else {
+      card.append(text("p", `Corte ${date(valuation?.as_of_utc)}`, "chart-note"));
+    }
     target.append(card);
   }
   if (!target.children.length) target.append(text("p", "Pendiente de importar el estado.", "empty"));
-
 }
 
 async function fetchJson(path) {
@@ -138,7 +195,7 @@ async function comparison() {
       for (const role of ["control", "aggressive"]) {
         const values = base?.[role]?.crypto;
         if (!values) continue;
-        const card = text("article", null, "sleeve");
+        const card = text("article", "", "sleeve");
         card.replaceChildren(text("h3", role === "control" ? "Control · 5 criptos / volatilidad 40%" : "Agresiva · 3 criptos / volatilidad 60%"));
         const dl = document.createElement("dl");
         for (const [label, value] of [["Rentabilidad anualizada neta", `${(values.cagr * 100).toFixed(2)}%`],
@@ -370,8 +427,8 @@ function renderPerformance(data) {
   const rate = currentRate();
   const fx = data?.fx || {};
   el("fx").textContent = rate !== null
-    ? `Tipo de cambio actual: 1 USD = ${rate.toLocaleString("es-MX", {maximumFractionDigits: 6})} MXN · ${fx.source || "Fuente no indicada"} · corte ${date(fx.time_utc)}. ${selectedCurrency === "MXN" ? "Patrimonio y capital convertidos con esta tasa." : "Vista USD: importes principales sin conversión."}`
-    : "Sin tipo de cambio. Se conservan las referencias USD; no se supone una tasa de conversión.";
+    ? `1 USD = ${rate.toLocaleString("es-MX", {maximumFractionDigits: 4})} MXN · ${fx.source || "fuente no indicada"} · ${date(fx.time_utc)}`
+    : "Sin tipo de cambio: importes en USD";
   paintMetric("equity", money(current.equity_usd));
   el("equity-reference").textContent = `${formatMoney(current.equity_usd)} · dinero simulado observado`;
   el("equity-cutoff").textContent = `Corte: ${date(current.as_of_utc)}`;
@@ -403,9 +460,10 @@ function renderPerformance(data) {
   el("in-progress-reference").textContent = `${formatMoney(progress.pnl_usd, "USD", true)} · incluida en la acumulada; aún fuera del diario de cierres`;
   el("in-progress-cutoff").textContent = `Observación: ${date(progress.as_of_utc)}. Cada bloque se compara con su último cierre.`;
   el("daily-currency-note").textContent = selectedCurrency === "MXN"
-    ? "Ganancias MXN reportadas con el tipo de cambio de cada cierre, sin usar la tasa actual. Los periodos incompletos se indican en las notas."
-    : "Ganancias USD por cierre UTC. Los aportes y retiros se muestran aparte; los periodos incompletos se indican en las notas.";
+    ? "Cierres UTC · MXN con el tipo de cambio de cada cierre · sin aportaciones ni retiros"
+    : "Cierres UTC · USD · sin aportaciones ni retiros";
   dailyRows(data?.daily || []);
+  dailyChart(data?.daily || []);
   renderBalance(data);
   const notes = el("performance-notes");
   notes.replaceChildren();
@@ -457,11 +515,195 @@ function renderAnalysis(status) {
   alerts.hidden = !alerts.children.length;
 }
 
+const SIDES = {buy: "compra", sell: "venta"};
+function executionLabel(t) {
+  const maker = numeric(t.maker_value_usd), taker = numeric(t.taker_value_usd);
+  if (maker === null || taker === null || maker + taker <= 0) return ["—", ""];
+  const share = maker / (maker + taker);
+  if (share >= 0.999) return ["100% maker", "pill ok"];
+  if (share <= 0.001) return ["a mercado", "pill"];
+  return [`${(share * 100).toFixed(0)}% maker`, "pill wait"];
+}
+let tradesExpanded = false;
+function tradeRows(items) {
+  const target = el("trades");
+  target.replaceChildren();
+  const all = items || [];
+  const list = tradesExpanded ? all : all.slice(0, 12);
+  const more = el("trades-more");
+  more.hidden = all.length <= 12;
+  more.textContent = tradesExpanded ? "Ver solo las últimas 12" : `Ver todas (${all.length})`;
+  if (!list.length) {
+    const tr = document.createElement("tr");
+    const td = text("td", "Sin operaciones registradas.");
+    td.colSpan = 8;
+    tr.append(td);
+    target.append(tr);
+    return;
+  }
+  for (const t of list) {
+    const tr = document.createElement("tr");
+    const [label, cls] = executionLabel(t);
+    const wait = numeric(t.execution_wait_s);
+    const cost = numeric(t.cost_bps);
+    tr.append(text("td", date(t.run_at_utc)), text("td", t.sleeve === "crypto" ? "cripto" : t.sleeve === "stocks" ? "ETF" : t.sleeve),
+      text("td", t.asset), text("td", SIDES[t.side] || t.side), text("td", moneyWithReference(t.value)));
+    const exec = document.createElement("td");
+    exec.append(text("span", label, cls));
+    tr.append(exec, text("td", wait === null ? "—" : `${Math.round(wait)} s`),
+      text("td", cost === null ? "—" : cost.toFixed(1), cost !== null && cost >= 38 ? "gain-negative" : ""));
+    target.append(tr);
+  }
+}
+function costByAsset(items) {
+  const target = el("cost-by-asset");
+  target.replaceChildren();
+  const groups = {};
+  for (const t of items || []) {
+    if (t.sleeve !== "crypto" || t.status !== "filled" || numeric(t.cost_bps) === null) continue;
+    const g = groups[t.asset] || (groups[t.asset] = {n: 0, value: 0, cost: 0, spread: 0, spreadN: 0});
+    g.n += 1; g.value += numeric(t.value) || 0; g.cost += numeric(t.cost_bps);
+    if (numeric(t.spread_bps) !== null) { g.spread += numeric(t.spread_bps); g.spreadN += 1; }
+  }
+  const list = Object.entries(groups).map(([asset, g]) => ({asset, n: g.n, value: g.value, cost: g.cost / g.n,
+    spread: g.spreadN ? g.spread / g.spreadN : null})).sort((a, b) => b.cost - a.cost);
+  if (!list.length) {
+    const tr = document.createElement("tr");
+    const td = text("td", "Sin operaciones medidas.");
+    td.colSpan = 5;
+    tr.append(td);
+    target.append(tr);
+    return;
+  }
+  const maxSpread = Math.max(1, ...list.map(x => x.spread || 0));
+  for (const x of list) {
+    const tr = document.createElement("tr");
+    tr.append(text("td", x.asset), text("td", String(x.n)), text("td", formatMoney(x.value)),
+      text("td", x.cost.toFixed(1), x.cost >= 40 ? "gain-negative" : x.cost >= 36 ? "gain-warn" : ""));
+    const td = document.createElement("td");
+    if (x.spread === null) td.append(text("span", "sin dato", "muted"));
+    else {
+      const cellWrap = text("div", "", "spread-cell");
+      const bar = text("div", "", "wbar wbar-small");
+      const fillNode = document.createElement("i");
+      fillNode.style.width = `${Math.max(3, x.spread / maxSpread * 100)}%`;
+      if (x.spread >= 10) fillNode.className = "bad";
+      bar.append(fillNode);
+      cellWrap.append(bar, text("span", `${x.spread.toFixed(1)} pb`));
+      td.append(cellWrap);
+    }
+    tr.append(td);
+    target.append(tr);
+  }
+}
+function dailyChart(items) {
+  const target = el("daily-chart");
+  target.replaceChildren();
+  const list = (items || []).slice(-45);
+  if (!list.length) { target.append(text("p", "Sin cierres disponibles.", "empty")); return; }
+  const key = selectedCurrency === "MXN" ? "pnl_mxn" : "pnl_usd";
+  const values = list.map(r => numeric(r[key]) ?? 0);
+  const max = Math.max(0.01, ...values.map(v => Math.abs(v)));
+  const W = 1100, H = 150, mid = 72, slot = W / list.length, bw = Math.max(4, slot - 6);
+  const ns = "http://www.w3.org/2000/svg";
+  const svg = document.createElementNS(ns, "svg");
+  svg.setAttribute("viewBox", `0 0 ${W} ${H}`);
+  svg.setAttribute("role", "img");
+  svg.setAttribute("aria-label", `Ganancia por día en ${selectedCurrency}, ${list[0].date} a ${list[list.length - 1].date}`);
+  const axis = document.createElementNS(ns, "line");
+  for (const [k, v] of [["x1", 0], ["x2", W], ["y1", mid], ["y2", mid]]) axis.setAttribute(k, v);
+  axis.setAttribute("class", "chart-grid");
+  svg.append(axis);
+  let worst = {v: 0, i: -1};
+  values.forEach((v, i) => {
+    const h = Math.abs(v) / max * 64;
+    const rect = document.createElementNS(ns, "rect");
+    rect.setAttribute("x", (i * slot + (slot - bw) / 2).toFixed(1));
+    rect.setAttribute("y", (v >= 0 ? mid - h : mid).toFixed(1));
+    rect.setAttribute("width", bw.toFixed(1));
+    rect.setAttribute("height", h.toFixed(1));
+    rect.setAttribute("class", v >= 0 ? "bar-pos" : "bar-neg");
+    const title = document.createElementNS(ns, "title");
+    title.textContent = `${list[i].date}: ${formatMoney(v, selectedCurrency, true)}`;
+    rect.append(title);
+    svg.append(rect);
+    if (v < worst.v) worst = {v, i};
+  });
+  const label = (x, textValue, anchor) => {
+    const node = document.createElementNS(ns, "text");
+    node.setAttribute("x", x); node.setAttribute("y", H - 4); node.setAttribute("class", "chart-label");
+    if (anchor) node.setAttribute("text-anchor", anchor);
+    node.textContent = textValue;
+    return node;
+  };
+  svg.append(label(0, list[0].date), label(W, list[list.length - 1].date, "end"));
+  if (worst.i >= 0) svg.append(label(worst.i * slot + slot / 2, `peor día ${list[worst.i].date}: ${formatMoney(worst.v, selectedCurrency, true)}`, worst.i > list.length / 2 ? "end" : "start"));
+  target.append(svg);
+}
+function renderSummary() {
+  const since = lastAttribution?.since_start;
+  const week = lastAttribution?.week;
+  const bars = el("attribution-bars");
+  bars.replaceChildren();
+  if (!since || since.error) {
+    el("vs-benchmark").textContent = "—";
+    el("vs-benchmark-detail").textContent = "Sin cierres suficientes para comparar.";
+    return;
+  }
+  el("why-window").textContent = `Cierres ${since.start} → ${since.end} · total ${formatMoney(since.total?.pnl, "USD", true)}`;
+  const parts = [["Mercado", since.total?.market, "bar-market"], ["Estrategia", since.total?.strategy, "bar-strategy"], ["Costos", -(numeric(since.total?.costs) || 0), "bar-costs"]];
+  const maxAbs = Math.max(0.01, ...parts.map(([, v]) => Math.abs(numeric(v) || 0)));
+  for (const [label, value, cls] of parts) {
+    const row = text("div", "", "attr-row");
+    const bar = text("div", "", "wbar wbar-attr");
+    const fillNode = document.createElement("i");
+    fillNode.className = cls;
+    fillNode.style.width = `${Math.abs(numeric(value) || 0) / maxAbs * 100}%`;
+    bar.append(fillNode);
+    row.append(text("span", label), bar, text("strong", formatMoney(value, "USD", true), numeric(value) < 0 ? "gain-negative" : "gain-positive"));
+    bars.append(row);
+  }
+  // Referencia 50/50: promedio de las referencias de cada bloque (los dos parten de US$500).
+  const sleevesData = since.sleeves || {};
+  const refs = Object.values(sleevesData).map(s => numeric(s.benchmark_return)).filter(v => v !== null);
+  const startEq = numeric(since.total?.start_equity), endEq = numeric(since.total?.end_equity);
+  if (refs.length && startEq) {
+    const ref = refs.reduce((a, b) => a + b, 0) / refs.length;
+    const bot = endEq / startEq - 1;
+    const diff = (bot - ref) * 100;
+    paintMetric("vs-benchmark", `${diff > 0 ? "+" : ""}${diff.toFixed(1)} puntos`, diff);
+    el("vs-benchmark-detail").textContent = `Bot ${(bot * 100).toFixed(1)}% · referencia ${(ref * 100).toFixed(1)}% (${since.start} → ${since.end})`;
+    const names = {crypto: "cripto", stocks: "ETFs"}, benches = {crypto: "BTC", stocks: "SPY"};
+    el("vs-benchmark-blocks").textContent = Object.entries(sleevesData).map(([k, s]) =>
+      `${names[k] || k} ${(numeric(s.pnl_pct) * 100).toFixed(1)}% vs ${benches[k] || "ref."} ${(numeric(s.benchmark_return) * 100).toFixed(1)}%`).join(" · ");
+  }
+  if (week && !week.error && week.total) {
+    const fx = numeric(week.fx_usd_mxn);
+    const wk = numeric(week.total.pnl);
+    const pctWk = numeric(week.total.start_equity) ? wk / week.total.start_equity * 100 : null;
+    el("pnl-week").textContent = `Semana ${week.start} → ${week.end}: ${formatMoney(wk, "USD", true)}${pctWk === null ? "" : ` (${pctWk > 0 ? "+" : ""}${pctWk.toFixed(1)}%)`}${fx ? ` · ${formatMoney(wk * fx, "MXN", true)}` : ""}`;
+  }
+}
+async function refreshSummary() {
+  try {
+    lastAttribution = await fetchJson("/api/attribution");
+    renderSummary();
+    if (lastOperating) sleeves(lastOperating[0]);
+  } catch (_) {
+    el("vs-benchmark-detail").textContent = "No se pudo leer la atribución.";
+  }
+}
+
 function renderOperating(values) {
   const [status, orders, trades, events] = values;
   el("mode").textContent = status.mode === "paper" ? "SIMULADO · PAPER" : "MODO NO VERIFICADO";
   el("status").textContent = status.reason;
   el("status").className = `status ${status.ready ? "ok" : ""}`;
+  const chip = el("health-chip");
+  const pendingOrders = numeric(status.storage?.pending_orders) || 0;
+  chip.textContent = status.ready && !pendingOrders ? `Sano · ${pendingOrders} órdenes pendientes` : `Revisar · ${status.reason || "estado sin verificar"}`;
+  chip.className = `chip ${status.ready && !pendingOrders ? "good" : "warn"}`;
+  el("header-cutoff").textContent = `Simulado · corte ${date(status.live?.updated_utc || status.snapshot?.updated_utc || status.runtime?.last_success_utc)}`;
   el("pending").textContent = status.storage?.pending_orders ?? "—";
   el("unknown").textContent = `${status.storage?.unknown_orders ?? 0} con resultado desconocido`;
   el("heartbeat").textContent = date(status.runtime?.last_success_utc);
@@ -471,12 +713,11 @@ function renderOperating(values) {
   renderAnalysis(status);
   rows("orders", orders.items, [o => o.asset, o => o.side, o => o.status,
     o => o.filled_qty ?? o.applied_qty ?? 0, o => date(o.updated_at || o.created_at)]);
-  rows("trades", trades.items, [t => date(t.run_at_utc), t => t.sleeve, t => t.asset,
-    t => t.side, t => moneyWithReference(t.value), t => t.cost_bps ?? "—"]);
+  tradeRows(trades.items);
+  costByAsset(trades.items);
   el("trade-value-title").textContent = `Valor ${selectedCurrency}`;
   el("trade-currency-note").textContent = selectedCurrency === "MXN"
-    ? "Valores MXN convertidos con el tipo de cambio actual disponible; no son la conversión histórica del día de la operación. Se conserva la referencia USD."
-    : "Valores originales en USD; la conversión opcional a MXN usa el tipo de cambio actual disponible.";
+    ? "Importes MXN al tipo de cambio actual (no el del día) · referencia USD conservada" : "Importes originales en USD";
   el("events").replaceChildren();
   for (const event of events.items) {
     const li = document.createElement("li");
@@ -489,16 +730,30 @@ function renderOperating(values) {
 function renderExecutionQuality(data) {
   const crypto = data.by_sleeve?.crypto || {};
   const cost = numeric(crypto.book_cost_bps);
-  el("execution-status").textContent = `Diagnóstico actualizado ${date(data.as_of_utc)}. La regla vigente continúa; la variante de menor rotación espera validación.`;
-  el("execution-cost").textContent = cost === null ? "Sin dato" : `${cost.toFixed(1)} bps`;
+  el("execution-status").textContent = `Diagnóstico actualizado ${date(data.as_of_utc)} · ventana de ${data.window_days || 30} días.`;
+  el("execution-cost").textContent = cost === null ? "Sin dato" : `${cost.toFixed(1)} pb`;
   el("execution-cost-coverage").textContent = `${crypto.book_cost_trades || 0} operaciones medidas · ${crypto.assumed_cost_trades || 0} con costo supuesto`;
   const maker = numeric(crypto.maker_share);
-  el("execution-maker").textContent = maker === null ? "Sin dato" : `${(maker * 100).toFixed(1)}%`;
+  el("execution-maker").textContent = maker === null ? "Sin dato" : `${(maker * 100).toFixed(0)}%`;
+  paintMetric("execution-maker", maker === null ? "Sin dato" : `${(maker * 100).toFixed(0)}%`, maker === null ? null : maker >= 0.5 ? 1 : -1);
   el("execution-maker-coverage").textContent = `${crypto.maker_known_trades || 0} operaciones con importes maker/taker registrados`;
-  el("execution-reentries").textContent = String(crypto.reentries_48h?.length || 0);
-  el("execution-liquidity").textContent = crypto.liquidity_known_trades ? `${crypto.liquidity_warnings} alertas` : "Sin dato";
+  const re = crypto.reentries_48h || [];
+  el("execution-reentries").textContent = String(re.length);
+  const counts = {};
+  for (const r of re) counts[r.asset] = (counts[r.asset] || 0) + 1;
+  el("execution-reentries-detail").textContent = re.length
+    ? `${Object.entries(counts).map(([a, n]) => n > 1 ? `${a} ×${n}` : a).join(", ")} · lo ataca H1b (sprint 03)` : "Ninguna en la ventana.";
   const wait = numeric(crypto.mean_execution_wait_s);
-  el("execution-wait").textContent = wait === null ? "Sin medición de tiempo de ejecución" : `${wait.toFixed(1)} s por ejecución · ${crypto.liquidity_known_trades} libros medidos`;
+  el("execution-liquidity-note").textContent = crypto.liquidity_known_trades
+    ? `Liquidez: ${crypto.liquidity_warnings} alertas en ${crypto.liquidity_known_trades} libros medidos; espera media ${wait === null ? "—" : `${wait.toFixed(0)} s`}.`
+    : "";
+  const trades = lastOperating ? lastOperating[2].items : [];
+  const small = trades.filter(t => t.sleeve === "crypto" && t.status === "filled" && numeric(t.value) !== null && t.value < 25);
+  const filled = trades.filter(t => t.sleeve === "crypto" && t.status === "filled");
+  el("execution-small").textContent = filled.length ? `${small.length} de ${filled.length}` : "Sin dato";
+  el("execution-small-detail").textContent = small.length
+    ? `${formatMoney(small.reduce((a, t) => a + t.value, 0))} negociados · desde DEC-033 (25-oct) ya no se ejecutan`
+    : "Desde DEC-033 (25-oct) ya no se ejecutan.";
 }
 
 async function refreshExecutionQuality() {
@@ -552,7 +807,6 @@ async function refresh() {
   refreshing = true;
   el("refresh").disabled = true;
   const comparisonUpdate = comparison();
-  const executionUpdate = refreshExecutionQuality();
   const evidenceUpdate = refreshEvidence();
   try {
     const [operating, performance] = await Promise.allSettled([
@@ -572,14 +826,15 @@ async function refresh() {
     if (operating.status === "fulfilled") {
       lastOperating = operating.value;
       renderOperating(lastOperating);
+      await refreshExecutionQuality();
       el("updated").textContent = `Estado operativo actualizado ${new Date().toLocaleString("es-MX")}. Los cortes financieros y de mercado se indican por separado.`;
     } else {
       el("status").textContent = "Conexión operativa no disponible. Los datos de salud, órdenes y posiciones visibles pueden estar desactualizados.";
       el("status").className = "status error";
     }
+    await refreshSummary();
   } finally {
     await comparisonUpdate;
-    await executionUpdate;
     await evidenceUpdate;
     el("refresh").disabled = false;
     refreshing = false;
@@ -594,15 +849,16 @@ el("currency").addEventListener("change", () => {
     // Reformat only currency-sensitive content; preserve any stale-data status warning.
     sleeves(lastOperating[0]);
     renderAnalysis(lastOperating[0]);
-    rows("trades", lastOperating[2].items, [t => date(t.run_at_utc), t => t.sleeve, t => t.asset,
-      t => t.side, t => moneyWithReference(t.value), t => t.cost_bps ?? "—"]);
+    tradeRows(lastOperating[2].items);
     el("trade-value-title").textContent = `Valor ${selectedCurrency}`;
     el("trade-currency-note").textContent = selectedCurrency === "MXN"
-      ? "Valores MXN convertidos con el tipo de cambio actual disponible; no son la conversión histórica del día de la operación. Se conserva la referencia USD."
-      : "Valores originales en USD; la conversión opcional a MXN usa el tipo de cambio actual disponible.";
+      ? "Importes MXN al tipo de cambio actual (no el del día) · referencia USD conservada" : "Importes originales en USD";
+    costByAsset(lastOperating[2].items);
   }
+  if (lastPerformance) dailyChart(lastPerformance.daily || []);
 });
 el("refresh").addEventListener("click", refresh);
+el("trades-more").addEventListener("click", () => { tradesExpanded = !tradesExpanded; if (lastOperating) tradeRows(lastOperating[2].items); });
 el("monthly-cost").addEventListener("input", renderEconomics);
 el("monthly-income").addEventListener("input", renderEconomics);
 el("balance-sleeve").addEventListener("change", () => renderBalance(lastPerformance));
