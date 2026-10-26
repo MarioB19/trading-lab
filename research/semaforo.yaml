@@ -4,8 +4,8 @@
 # y no se cambia después por los resultados. Los valores del control salen de
 # reports/sprint01_costo_cripto_resultado.md; «sin dato» es válido y significa que S02 lo mide.
 version: 1
-estado: propuesta
-preregistro: pendiente (S02, 1-nov-2026)
+estado: preregistrado
+preregistro: 2026-10-25, sprint 02 (reports/sprint02_costo_ejecucion_preregistro.md), umbrales sin cambios
 fuente: "00 — Dirección/🗺️ Plan — Un dominio y estrategia ganadora.md, sección 2.1"
 banco: >-
   Walk-forward del 1-ene-2019 al último cierre, 16 monedas con par en USD de Bitso, costo = comisión
