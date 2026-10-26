@@ -5,12 +5,18 @@ from pathlib import Path
 import pytest
 
 from lab import aggressive_plan
-from lab.experiments import ResearchGateError, canonical_hash
+from lab.experiments import ResearchGateError, canonical_hash, file_hash
 
 
-def test_plan_is_fixed_and_matches_current_strategy():
+# Los experimentos aggressive-v1/v2 y rotation-paper-v1 (cerrados) se registraron contra el config.yaml
+# anterior a DEC-033 (25-oct-2026, orden mínima 5 → 25). Esa línea base queda congelada en
+# configs/experiments/baseline_config_pre_dec033.yaml; el control vivo ya no coincide con esos planes.
+PRE_DEC033_BASELINE = aggressive_plan.ROOT / "configs/experiments/baseline_config_pre_dec033.yaml"
+
+
+def test_plan_is_fixed_and_matches_its_registered_baseline():
     plan, variants = aggressive_plan.comparison_plan()
-    aggressive_plan.assert_current_control(plan)
+    assert file_hash(PRE_DEC033_BASELINE) == plan["baseline_config_sha256"]
     aggressive_plan.validate_registered_variants(plan)
     assert len(variants) == 2 and {v['role'] for v in variants} == {'control', 'aggressive'}
     assert len({v['id'] for v in variants}) == 2
@@ -39,6 +45,12 @@ def test_experimental_paths_cannot_hide_inside_symlinks(tmp_path):
     with pytest.raises(ResearchGateError):
         aggressive_plan.isolated_directory(link / 'nested')
     assert aggressive_plan.isolated_directory(tmp_path/'paper') == (tmp_path/'paper').resolve()
+
+
+def test_closed_experiments_no_longer_match_the_live_control():
+    plan, _ = aggressive_plan.comparison_plan()
+    with pytest.raises(ResearchGateError, match='nuevo protocolo'):
+        aggressive_plan.assert_current_control(plan)
 
 
 def test_configuration_change_requires_new_protocol():
