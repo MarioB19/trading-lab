@@ -115,11 +115,14 @@ def test_active_lane_requires_preregistered_plan(tmp_path):
         lanes.load(path)
 
 
-def test_versioned_registry_is_empty_and_panel_status_reads_it(tmp_path):
+def test_versioned_registry_has_the_donchian_lane_and_panel_status_reads_it(tmp_path):
     data = lanes.load()
-    assert [lane["estado"] for lane in data["carriles"]] == ["vacio", "vacio"]
+    assert [lane["estado"] for lane in data["carriles"]] == ["activo", "vacio"]
+    lane = data["carriles"][0]
+    assert lane["ejecutor"] == "mac" and lane["plan"] == "configs/experiments/donchian_lane_v1.yaml"
+    assert lanes.commands(data, tmp_path / "lanes") == []  # el servicio no corre un carril con ejecutor externo
     status = lanes.status(tmp_path / "lanes")
-    assert status["active"] == 0 and status["max_active"] == 2 and len(status["lanes"]) == 2
+    assert status["active"] == 1 and status["max_active"] == 2 and len(status["lanes"]) == 2
     assert not (tmp_path / "lanes").exists()  # leer no crea carpetas
 
 
@@ -137,3 +140,13 @@ def test_donchian_lane_plan_is_frozen_and_valid():
     assert "signal" not in plan["portfolios"]["control"]["crypto"]["params"]
     assert preregistration_path(plan) == ROOT / "reports/donchian_lane_v1_preregistro.md"
     assert plan["live_authorized"] is False and plan["mode"] == "paper"
+
+
+def test_external_executor_lane_is_skipped_by_runtime(tmp_path):
+    from lab import lanes
+    reg = {"carriles": [{"id": "carril-1", "estado": "activo", "plan": "configs/experiments/donchian_lane_v1.yaml",
+                         "preregistro_commit": "4" * 40, "ejecutor": "mac"},
+                        {"id": "carril-2", "estado": "activo", "plan": "configs/experiments/donchian_lane_v1.yaml",
+                         "preregistro_commit": "5" * 40}]}
+    cmds = lanes.commands(reg, tmp_path)
+    assert [c[0] for c in cmds] == ["carril-2"]

@@ -5,6 +5,8 @@ propia carpeta y su propia base, con un único escritor (el candado de paper_com
 nunca lee ni escribe en un carril, y un carril nunca toca la base del piloto:
 
 - el registro vive en `research/carriles.yaml` (máximo dos carriles activos, US$500 ficticios cada uno);
+  un carril con `ejecutor: mac` corre fuera del servicio (tarea programada en la Mac, con el gate Git del
+  checkout) y el runtime de Railway lo omite;
 - `lab.runtime` los corre **después** de cerrar el ciclo del piloto, en procesos aparte, con
   `--data-dir /data/lanes/<id>`; si un carril falla, el ciclo del piloto ya quedó escrito y no cambia;
 - sin carriles activos no se importa ni se ejecuta nada.
@@ -64,8 +66,8 @@ def commands(registry: dict, lanes_root: Path) -> list[tuple[str, list[str]]]:
     """Comandos de los carriles activos. Nunca reciben la configuración ni la carpeta del piloto."""
     out = []
     for lane in registry.get("carriles") or []:
-        if lane.get("estado") != "activo":
-            continue
+        if lane.get("estado") != "activo" or lane.get("ejecutor", "railway") != "railway":
+            continue  # un carril con ejecutor externo (p. ej. la Mac) no corre dentro del servicio
         out.append((lane["id"], [sys.executable, "-m", "lab.paper_comparison", "--once",
                                  "--preregistration-commit", lane["preregistro_commit"],
                                  "--plan", str(ROOT / lane["plan"]),
