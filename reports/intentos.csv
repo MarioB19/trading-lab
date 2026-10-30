@@ -7,3 +7,6 @@ fecha,experimento,variante,tipo,sharpe_diario,veredicto
 2026-10-25,sprint02-costo-ejecucion,h2-min25,costo,0.06569,aprobada (al piloto, DEC-033)
 2026-10-25,sprint02-costo-ejecucion,h8-tbill,costo,0.07080,aprobada en backtest; falta dato operativo (no entra al piloto)
 2026-10-25,sprint02-costo-ejecucion,h4-maker-fills,costo,,análisis de fills; prueba hacia adelante propuesta (wait_s 300)
+2026-10-30,h9-parabolic-sar,v1-sar-filtro,señal,0.05968,no aprobada (H9 descartada)
+2026-10-30,h9-parabolic-sar,v2-sar-filtro-lento,señal,0.06302,no aprobada (H9 descartada)
+2026-10-30,h9-parabolic-sar,v3-sar-tendencia,señal,0.03755,no aprobada (H9 descartada)

@@ -3,7 +3,7 @@
 #   python -m lab.backlog render --out "<vault>/00 — Dirección/🧪 Backlog de hipótesis — Trading Lab.md"
 # El panel (pestaña Investigación) lee este mismo archivo. Validar: python -m lab.backlog check
 version: 1
-actualizado: '2026-10-25'
+actualizado: '2026-10-30'
 nota:
   tags: [proyecto, trading, investigación, hipótesis]
   estado: activo
@@ -102,7 +102,9 @@ hipotesis:
       Costos por moneda en `execution-quality`. Sprint 02 (30 días): LTC 43 pb de promedio con 22 pb de spread, LINK 30 pb
       con 22 pb de spread, NEAR 55 pb; BTC y ETH 33 pb con spread de 1–2 pb
     prueba: Medir costo por activo en el piloto y backtest con el universo recortado
-    estado: Pendiente
+    estado: >-
+      Pendiente. Dato nuevo (30-oct): el piloto compró TRX por US$118.89 (40% del bloque) con spread de 2.4% y 165 pb
+      de costo, la única orden con aviso de liquidez; un filtro de spread o liquidez por moneda se evaluaría aquí
   - id: H5
     orden: 7
     tipo: señal
@@ -131,6 +133,14 @@ descartadas:
   - idea: Agresiva top 3 / volatilidad 60%
     motivo: Falló siete criterios; CAGR 17% vs 34% del control
     fuente: '`reports/aggressive_v2_resultado.md`'
+  - id: H9
+    idea: Parabolic SAR como capa de salida y como señal (H9)
+    motivo: >-
+      Sprint extra (30-oct, a petición de Brandon): como filtro de salida no gana al control (Sharpe 1.14–1.20 contra
+      1.19, bootstrap 0.35–0.50) y empeora la caída máxima 9–10 puntos (−44% contra −34%) porque sale en cada rebote
+      fallido y recompra tarde, pagando 15–17% anual en costos contra 13%; como señal única rinde +17% anual contra +38%.
+      No se vuelve a probar sin comisiones < 0.15% por lado
+    fuente: '`reports/h9_parabolic_sar_resultado.md`'
   - id: H1
     idea: Banda 4 pp + margen 15% (H1)
     motivo: >-
@@ -172,3 +182,15 @@ bitacora:
       `min_order_value` 5 → 25 en el piloto cripto (DEC-033), revisión a 4 semanas. H8 se resuelve con el exchange (H7).
       H4: prueba hacia adelante con `wait_s` 300 propuesta a Brandon
     enlace: reports/sprint02_costo_ejecucion_resultado.md
+  - sprint: 'H9'
+    fecha: '2026-10-30'
+    hipotesis: 'Parabolic SAR como filtro de salida (estándar y lento) y en lugar de la tendencia (H9)'
+    ids: [H9]
+    resultado: >-
+      Ninguna variante aprobada: V1/V2 pasan placebo y Sharpe deflactado pero no ganan al control (bootstrap 0.35/0.50),
+      pierden 4 y 3 de 6 años, caen −6/−3 puntos con costos de estrés y empeoran la caída máxima 9–10 puntos; V3
+      falla los cinco criterios (+17% contra +38% anual)
+    decision: >-
+      Se conserva el control. H9 a descartadas. Sigue el orden del backlog: H1b (no recomprar en 48 h) en el sprint 03
+      del 8-nov; filtro de liquidez/spread por moneda se propone como parte de H6
+    enlace: reports/h9_parabolic_sar_resultado.md
