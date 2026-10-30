@@ -223,3 +223,62 @@ def test_monthly_rebalance_no_lookahead_and_trades_only_monthly():
     rd = pd.Series(rebalance_days(idx), index=idx).shift(1, fill_value=False)
     first_trade = traded[0]
     assert rd.loc[traded[traded > first_trade]].all()  # después de entrar, solo opera tras un día de rebalanceo
+
+
+# ------------------------------------------------------------ Parabolic SAR (H9)
+def _ohlc(P, seed=3):
+    rng = np.random.default_rng(seed)
+    H = P * (1 + np.abs(rng.normal(0, 0.01, P.shape)))
+    L = P * (1 - np.abs(rng.normal(0, 0.01, P.shape)))
+    return H.where(P.notna()), L.where(P.notna())
+
+
+def test_parabolic_sar_follows_wilder_rules():
+    from lab.portfolio import parabolic_sar
+    idx = pd.date_range("2024-01-01", periods=40, freq="D")
+    c = np.concatenate([np.linspace(100, 120, 20), np.linspace(119, 90, 20)])
+    C = pd.DataFrame({"X": c}, index=idx)
+    H, L = C * 1.01, C * 0.99
+    ps = parabolic_sar(C, H, L)
+    bull, sar = ps["bull"]["X"], ps["sar"]["X"]
+    assert bull.iloc[1] == 1.0 and bull.iloc[:20].dropna().eq(1.0).all()   # subida: alcista
+    assert (sar.iloc[2:20] < L["X"].iloc[2:20]).all()                      # el SAR va debajo de los mínimos
+    assert bull.iloc[-1] == 0.0 and (sar.iloc[-5:] > H["X"].iloc[-5:]).all()  # bajada: gira y va encima
+    assert sar.iloc[2:20].diff().dropna().gt(0).all()                      # se acelera hacia el precio
+
+
+def test_parabolic_sar_no_lookahead_in_both_modes():
+    P = panel()
+    H, L = _ohlc(P)
+    for mode in ("filter", "trend"):
+        p = PortfolioParams(psar_mode=mode)
+        full = target_weights(P, listed_universe(P), p, highs=H, lows=L)
+        for cut in (450, 700):
+            part = target_weights(P.iloc[:cut], listed_universe(P.iloc[:cut]), p,
+                                  highs=H.iloc[:cut], lows=L.iloc[:cut])
+            pd.testing.assert_frame_equal(full.iloc[:cut], part)
+
+
+def test_parabolic_sar_filter_only_removes_assets_and_falls_back_to_close():
+    P = panel()
+    H, L = _ohlc(P)
+    base = target_weights(P, listed_universe(P), PortfolioParams())
+    filt = target_weights(P, listed_universe(P), PortfolioParams(psar_mode="filter"), highs=H, lows=L)
+    assert not filt.equals(base)  # el filtro cambia la cartera en algún momento
+    sig = target_weights(P, listed_universe(P), PortfolioParams(psar_mode="filter"), return_signals=True,
+                         highs=H, lows=L)[1]
+    bear = sig["psar_bull"].fillna(0.0) < 0.5
+    assert (filt.where(bear, 0.0) == 0).all().all()  # ningún peso en un activo con SAR bajista
+    # sin máximos/mínimos, el cierre hace de ambos y el cálculo sigue siendo determinista
+    a = target_weights(P, listed_universe(P), PortfolioParams(psar_mode="filter"))
+    b = target_weights(P, listed_universe(P), PortfolioParams(psar_mode="filter"), highs=P, lows=P)
+    pd.testing.assert_frame_equal(a, b)
+
+
+def test_params_identity_without_psar_is_unchanged():
+    assert "psar_mode" not in PortfolioParams().to_dict()
+    d = PortfolioParams(psar_mode="trend", psar_af=0.01, psar_step=0.01, psar_max=0.10).to_dict()
+    assert d["psar_mode"] == "trend" and d["psar_max"] == 0.10
+    assert PortfolioParams.from_dict(d) == PortfolioParams(psar_mode="trend", psar_af=0.01, psar_step=0.01, psar_max=0.10)
+    with pytest.raises(ValueError):
+        PortfolioParams(psar_mode="sideways")

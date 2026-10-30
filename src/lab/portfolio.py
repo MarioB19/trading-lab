@@ -45,10 +45,20 @@ class PortfolioParams:
     rebalance: str = "daily"        # "monthly": solo se rebalancea el primer día hábil de cada mes
     cov_estimator: str = "sample"  # alternativa de investigación, opt-in: "ledoit_wolf"
     rotation_buffer: float = 0.0  # investigación: ventaja relativa necesaria para sustituir un activo
+    # Parabolic SAR de Wilder (H9, opt-in). "none": apagado. "filter": un activo solo es elegible si
+    # además su SAR es alcista (capa de salida). "trend": el SAR sustituye a la señal de tendencia.
+    psar_mode: str = "none"
+    psar_af: float = 0.02      # factor de aceleración inicial
+    psar_step: float = 0.02    # incremento por cada nuevo extremo
+    psar_max: float = 0.20     # tope del factor
 
     def __post_init__(self):
         if not np.isfinite(self.rotation_buffer) or not 0 <= self.rotation_buffer < 1:
             raise ValueError("rotation_buffer debe estar entre 0 y 1 (exclusivo)")
+        if self.psar_mode not in ("none", "filter", "trend"):
+            raise ValueError("psar_mode debe ser none, filter o trend")
+        if self.psar_mode != "none" and not (0 < self.psar_af <= self.psar_max and self.psar_step > 0):
+            raise ValueError("parámetros del SAR inválidos: 0 < af <= max y step > 0")
 
     @classmethod
     def from_dict(cls, d: dict | None) -> "PortfolioParams":
@@ -63,6 +73,9 @@ class PortfolioParams:
         # Preserve the identity of frozen control/archived plans. Missing means 0.
         if self.rotation_buffer == 0:
             result.pop("rotation_buffer")
+        if self.psar_mode == "none":
+            for k in ("psar_mode", "psar_af", "psar_step", "psar_max"):
+                result.pop(k)
         return result
 
 
@@ -76,7 +89,64 @@ def clean(prices: pd.DataFrame) -> pd.DataFrame:
     return prices.where(prices > 0).ffill(limit=5)
 
 
-def signals(prices: pd.DataFrame, p: PortfolioParams) -> dict[str, pd.DataFrame]:
+def parabolic_sar(close: pd.DataFrame, high: pd.DataFrame | None, low: pd.DataFrame | None,
+                  af0: float = 0.02, step: float = 0.02, af_max: float = 0.20) -> dict[str, pd.DataFrame]:
+    """Parabolic SAR de Wilder por activo, con velas diarias.
+
+    Devuelve `sar` (nivel del día, calculado solo con datos hasta el día anterior y acotado a los
+    extremos de los dos días previos) y `bull` (True si al cierre del día la tendencia es alcista).
+    El giro se detecta cuando el mínimo (alcista) o el máximo (bajista) del día cruzan el SAR.
+    Si faltan máximo o mínimo en un día con cierre, se usa el cierre como ambos. Un día sin
+    cierre no actualiza el estado. Solo usa información hasta el cierre del día.
+    """
+    C = clean(close)
+    H = (high.reindex_like(C) if high is not None else pd.DataFrame(np.nan, index=C.index, columns=C.columns))
+    L = (low.reindex_like(C) if low is not None else pd.DataFrame(np.nan, index=C.index, columns=C.columns))
+    H = H.where(H.notna() & C.notna(), C)
+    L = L.where(L.notna() & C.notna(), C)
+    H, L = np.maximum(H, C), np.minimum(L, C)
+    n, m = C.shape
+    sar_out = np.full((n, m), np.nan)
+    bull_out = np.full((n, m), np.nan)
+    cv, hv, lv = C.values, H.values, L.values
+    for j in range(m):
+        c, h, l = cv[:, j], hv[:, j], lv[:, j]
+        valid = np.flatnonzero(np.isfinite(c))
+        if len(valid) < 2:
+            continue
+        i0, i1 = valid[0], valid[1]
+        up = c[i1] > c[i0]
+        ep = max(h[i0], h[i1]) if up else min(l[i0], l[i1])
+        sar = min(l[i0], l[i1]) if up else max(h[i0], h[i1])
+        af = af0
+        prev_lo, prev2_lo, prev_hi, prev2_hi = l[i1], l[i0], h[i1], h[i0]
+        bull_out[i1, j] = float(up)
+        for t in range(i1 + 1, n):
+            if not np.isfinite(c[t]):
+                bull_out[t, j] = bull_out[t - 1, j]
+                continue
+            s = sar + af * (ep - sar)
+            if up:
+                s = min(s, prev_lo, prev2_lo)
+                if l[t] < s:
+                    up, s, ep, af = False, ep, l[t], af0
+                elif h[t] > ep:
+                    ep, af = h[t], min(af + step, af_max)
+            else:
+                s = max(s, prev_hi, prev2_hi)
+                if h[t] > s:
+                    up, s, ep, af = True, ep, h[t], af0
+                elif l[t] < ep:
+                    ep, af = l[t], min(af + step, af_max)
+            sar = s
+            sar_out[t, j], bull_out[t, j] = s, float(up)
+            prev2_lo, prev_lo, prev2_hi, prev_hi = prev_lo, l[t], prev_hi, h[t]
+    return {"sar": pd.DataFrame(sar_out, index=C.index, columns=C.columns),
+            "bull": pd.DataFrame(bull_out, index=C.index, columns=C.columns)}
+
+
+def signals(prices: pd.DataFrame, p: PortfolioParams, highs: pd.DataFrame | None = None,
+            lows: pd.DataFrame | None = None) -> dict[str, pd.DataFrame]:
     prices = clean(prices)
     trend = sum((prices > prices.rolling(n, min_periods=n).mean()).astype(float)
                 .where(prices.rolling(n, min_periods=n).mean().notna())
@@ -85,7 +155,13 @@ def signals(prices: pd.DataFrame, p: PortfolioParams) -> dict[str, pd.DataFrame]
     vol = logret.ewm(halflife=p.vol_halflife, min_periods=60).std() * np.sqrt(p.ann)
     mom = sum(prices.pct_change(w, fill_method=None) for w in p.mom_windows) / len(p.mom_windows)
     score = mom / vol
-    return {"trend": trend, "vol": vol, "mom": mom, "score": score}
+    out = {"trend": trend, "vol": vol, "mom": mom, "score": score}
+    if p.psar_mode != "none":
+        ps = parabolic_sar(prices, highs, lows, p.psar_af, p.psar_step, p.psar_max)
+        out["psar_bull"], out["psar"] = ps["bull"], ps["sar"]
+        if p.psar_mode == "trend":
+            out["trend"] = ps["bull"]  # 1 (SAR alcista) o 0; NaN donde el SAR aún no existe
+    return out
 
 
 def cap_weights(w: np.ndarray, cap: float) -> np.ndarray:
@@ -128,18 +204,23 @@ def select_ranked(score, eligible, previous, top_k, buffer=0.0):
 
 
 def target_weights(prices: pd.DataFrame, eligible: pd.DataFrame | None,
-                   p: PortfolioParams, return_signals: bool = False, last_only: bool = False):
+                   p: PortfolioParams, return_signals: bool = False, last_only: bool = False,
+                   highs: pd.DataFrame | None = None, lows: pd.DataFrame | None = None):
     """Pesos objetivo por fecha (antes del freno por caída, que depende del capital).
 
     last_only=True calcula solo la última fila para la regla sin memoria. Con margen de
     sustitución reconstruye las decisiones previas; el último objetivo coincide con el
     cálculo completo. Tampoco se abrevia el rebalanceo mensual.
+    highs/lows: máximos y mínimos diarios, solo los usa el Parabolic SAR (`psar_mode`).
     """
     prices = clean(prices)
-    sig = signals(prices, p)
+    sig = signals(prices, p, highs, lows)
     cols = list(prices.columns)
     elig = (eligible.reindex_like(prices).fillna(False).astype(bool).values
             if eligible is not None else np.ones(prices.shape, bool))
+    if p.psar_mode == "filter":
+        # capa de salida: sin SAR alcista el activo no es elegible (se vende y no se recompra)
+        elig = elig & (sig["psar_bull"].fillna(0.0).values > 0.5)
     trend, vol, score = sig["trend"].values, sig["vol"].values, sig["score"].values
     rets = np.log(prices).diff().values
     has_regime = p.regime_asset is not None and p.regime_asset in cols
