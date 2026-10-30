@@ -19,7 +19,8 @@ carriles:
     preregistro_commit: 405c3c2d6ba5f554b2f594d71f5fbb4530987362
     desde: '2026-10-30'
     ejecutor: mac
-    datos: 'Trading Lab/carriles/carril-1 (vault, fuera del repo)'
+    datos: 'Trading Lab/carriles/carril-1 (vault, fuera del repo); código congelado en Trading Lab/carriles/codigo-carril-1'
+    como_corre: 'scripts/lanes/run_carril.sh carril-1 "<vault>/Trading Lab" run (tarea programada diaria «Trading Lab — Carril 1»)'
   - id: carril-2
     estado: vacio
     hipotesis: null
