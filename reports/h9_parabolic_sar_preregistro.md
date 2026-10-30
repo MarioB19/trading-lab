@@ -60,6 +60,17 @@ exige un preregistro nuevo y este intento queda registrado.
   a `data/crypto_ohlc_okx.csv`. Se aplican al panel de cierres como razones `alto/cierre` y `bajo/cierre` del
   mismo día (así una diferencia de venue no desplaza la serie de cierres). Fuente única para las 16 monedas.
 - Evaluación 2019-01-01 → 2026-09-26; comparación por año 2021–2026 (2026 parcial, hasta septiembre).
+
+**Enmienda antes de correr (30-oct, al validar los datos, sin haber corrido ninguna variante):** los
+cierres de OKX y los del panel CoinMetrics/Yahoo no coinciden en el instante (desviación mediana 0.7–1.6%
+por día incluso alineando un día; el panel mezcla fuentes con distinto corte horario), así que aplicar
+razones alto/cierre de una fuente sobre cierres de otra mezclaría días. Para que máximos, mínimos y cierres
+sean coherentes, **control y variantes se corren todos sobre el panel OHLC de OKX** (cierres, máximos y mínimos
+de la misma vela). Se reporta también el control sobre el panel CoinMetrics (el de los sprints 01–02) como
+comprobación de que el control se comporta igual en ambos paneles. Limpieza declarada: una vela con
+`alto/cierre > 3` o `bajo/cierre < 1/3` se trata como dato sospechoso y ese día usa cierre = alto = bajo
+(detectados antes de correr: DOGE 2019-07-17 con un máximo 300 000× el cierre y SOL 2020-10-28). Evaluación
+2019-01-01 → 2026-10-30 (OKX llega a hoy). Los criterios de decisión no cambian.
 - **Honestidad:** este histórico ya se inspeccionó en estudios previos (43 intentos de la etapa Codex más 7 de
   los sprints 01 y 02). Es evidencia retrospectiva, no un holdout limpio. Los parámetros del SAR son los
   canónicos de Wilder, no se ajustan a los datos. La evidencia hacia adelante será el piloto simulado.
