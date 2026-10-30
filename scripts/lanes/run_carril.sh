@@ -21,10 +21,9 @@ setup() {
     # clon local del checkout de la USB (sin red); queda fijo en el commit de main de ese momento
     git clone -q --no-hardlinks "$WORK" "$FROZEN"
     git -C "$FROZEN" checkout -q --detach "$(git -C "$WORK" rev-parse HEAD)"
-    mkdir -p "$DATA"
-    git -C "$FROZEN" rev-parse HEAD > "$DATA/codigo_commit.txt"
+    git -C "$FROZEN" rev-parse HEAD > "$FROZEN.commit"   # la base del carril exige un directorio vacío al arrancar
   fi
-  echo "venv: $VENV"; echo "código congelado: $(git -C "$FROZEN" rev-parse --short HEAD) ($(cat "$DATA/codigo_commit.txt"))"
+  echo "venv: $VENV"; echo "código congelado: $(git -C "$FROZEN" rev-parse --short HEAD) ($(cat "$FROZEN.commit"))"
 }
 
 lane_plan() {
