@@ -397,9 +397,10 @@ def build_catalog() -> list[dict]:
     for wt in (7, 14):
         add("F6 stop ATR sobre el control", f"atrstop-3x-wait{wt}", lambda M, wt=wt: f_atr_stop(M, 3.0, wt))
     for ds, df_ in ((0.05, 0.20), (0.15, 0.40)):
-        add("F7 freno y kill switch", f"control-ddbrake-{int(ds * 100)}-{int(df_ * 100)}", lambda M, ds=ds, df_=df_: f_control(M, dd_start=ds, dd_full=df_))
+        add("F7 freno y kill switch", f"control-ddbrake-{int(ds * 100)}-{int(df_ * 100)}", lambda M: f_control(M),
+            params={"dd_start": ds, "dd_full": df_})  # el freno vive en el motor, no en los pesos
     for fl in (0.0, 0.5):
-        add("F7 freno y kill switch", f"control-ddfloor-{int(fl * 100)}", lambda M, fl=fl: f_control(M, dd_floor=fl))
+        add("F7 freno y kill switch", f"control-ddfloor-{int(fl * 100)}", lambda M: f_control(M), params={"dd_floor": fl})
     for kd in (0.30, 0.35):
         add("F7 freno y kill switch", f"control-kill-{int(kd * 100)}", lambda M: f_control(M), kill_dd=kd)
     for n in (5, 8, 10, 12):

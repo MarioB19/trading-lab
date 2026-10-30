@@ -3,7 +3,7 @@ protocol_version: 1
 status: approved
 experiment_id: catalogo100
 type: barrido (señal y costo, por familia)
-config_sha256: 1bffce8aa13a4c4b16571b5c2335a76005e450b8fcb20fa3fb65fd68d69510c5
+config_sha256: 5214792904311b2c5dde03478fa39664e7d3595bc156b26051e4f92294f74d35
 n_variants: 103
 approved_by: Claude, a petición de Brandon (30-oct-2026, «investigar 100+ estrategias hasta encontrar una ganadora»), con la autonomía acordada el 25-oct (DEC-030)
 date: 2026-10-30
@@ -83,6 +83,11 @@ filtro de 200 días (lunes).
 Fuera del alcance (declarado): reparto de capital entre el bloque cripto y el de ETFs (es decisión de Brandon,
 hoy 50/50), cortos, apalancamiento, intradía (ya descartado), reversión de corto plazo con estas comisiones
 (ya descartada), estrategias que necesiten datos que el bot no tiene al cierre (funding, on-chain).
+
+**Enmienda antes de correr (30-oct, sin haber simulado ninguna variante):** las cuatro variantes del freno por
+caída de F7 (`control-ddbrake-*`, `control-ddfloor-*`) declaraban sus parámetros en los pesos, pero el freno
+vive en el motor de simulación; se mueven al bloque `sim.params` de la variante para que el motor los aplique.
+Mismas variantes, mismos valores; cambia solo el hash del plan (antes `1bffce8a…`).
 
 ## Compuerta de costos (antes de mirar rendimientos)
 
