@@ -121,3 +121,19 @@ def test_versioned_registry_is_empty_and_panel_status_reads_it(tmp_path):
     status = lanes.status(tmp_path / "lanes")
     assert status["active"] == 0 and status["max_active"] == 2 and len(status["lanes"]) == 2
     assert not (tmp_path / "lanes").exists()  # leer no crea carpetas
+
+
+# ------------------------------------------------------------ carril Donchian (H10)
+def test_donchian_lane_plan_is_frozen_and_valid():
+    from pathlib import Path
+    from lab.aggressive_plan import comparison_plan, preregistration_path
+    from lab.data import ROOT
+    from lab.donchian_plan import PLAN_SHA256
+    from lab.experiments import canonical_hash
+    plan, variants = comparison_plan(ROOT / "configs/experiments/donchian_lane_v1.yaml")
+    assert canonical_hash(plan) == PLAN_SHA256
+    assert [v["role"] for v in variants] == ["control", "candidate"] and variants[0]["id"] != variants[1]["id"]
+    assert plan["portfolios"]["candidate"]["crypto"]["params"]["signal"] == "donchian"
+    assert "signal" not in plan["portfolios"]["control"]["crypto"]["params"]
+    assert preregistration_path(plan) == ROOT / "reports/donchian_lane_v1_preregistro.md"
+    assert plan["live_authorized"] is False and plan["mode"] == "paper"

@@ -282,3 +282,23 @@ def test_params_identity_without_psar_is_unchanged():
     assert PortfolioParams.from_dict(d) == PortfolioParams(psar_mode="trend", psar_af=0.01, psar_step=0.01, psar_max=0.10)
     with pytest.raises(ValueError):
         PortfolioParams(psar_mode="sideways")
+
+
+# ------------------------------------------------------------ Donchian como señal del motor (H10)
+def test_donchian_signal_matches_catalog_variant_and_has_no_lookahead():
+    from lab import catalog
+    P = panel()
+    elig = listed_universe(P)
+    M = catalog.Market(C=P, H=P, L=P, V=P, elig=elig)
+    for weighting, scheme in (("equal", "equal"), ("invvol", "invvol")):
+        p = PortfolioParams(signal="donchian", donchian_entry=55, donchian_exit=20, weighting=weighting, regime_asset=None)
+        W = target_weights(P, elig, p)
+        pd.testing.assert_frame_equal(W, catalog.f_donchian(M, 55, 20, scheme), check_exact=False, atol=1e-10)
+        for cut in (450, 700):
+            part = target_weights(P.iloc[:cut], listed_universe(P.iloc[:cut]), p)
+            pd.testing.assert_frame_equal(W.iloc[:cut], part)
+    d = p.to_dict()
+    assert d["signal"] == "donchian" and d["weighting"] == "invvol" and PortfolioParams.from_dict(d) == p
+    assert "signal" not in PortfolioParams().to_dict() and "weighting" not in PortfolioParams().to_dict()
+    with pytest.raises(ValueError):
+        PortfolioParams(signal="fibonacci")

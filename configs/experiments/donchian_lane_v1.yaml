@@ -1,0 +1,317 @@
+protocol_version: 1
+mode: paper
+initial_capital_usd: 1000.0
+baseline_config_sha256: a0a9cb46af71657078e568ce2210ae8e1303f04bc2f6722f7fa3e79aa72a3d29
+costs:
+  crypto:
+    base: 0.0042
+    stress:
+    - 0.0063
+  stocks:
+    base: 0.0005
+execution_model: daily_close_simulated_fee_and_slippage_no_orderbook
+live_authorized: false
+max_price_jump: 0.4
+experiment_id: donchian-lane-v1
+engine_version: paired-paper-v1
+portfolios:
+  control:
+    crypto:
+      enabled: true
+      label: Criptomonedas
+      strategy: tactical
+      universe:
+      - BTC
+      - ETH
+      - SOL
+      - XRP
+      - ADA
+      - DOGE
+      - LINK
+      - AVAX
+      - LTC
+      - BCH
+      - XLM
+      - TRX
+      - HBAR
+      - NEAR
+      - UNI
+      - ATOM
+      data:
+        source: ccxt
+        exchange: kraken
+        fallback_exchange: bitso
+      quote: USD
+      capital: 500.0
+      compound: true
+      band: 0.02
+      kill_drawdown: 0.45
+      max_order_value: 500.0
+      min_order_value: 25
+      max_data_age_hours: 36
+      benchmark: BTC
+      min_history: 250
+      params:
+        top_k: 5
+        vol_target: 0.4
+        regime_asset: BTC
+        dd_brake: true
+        max_weight: 0.4
+        lookbacks:
+        - 20
+        - 50
+        - 100
+        - 200
+        mom_windows:
+        - 30
+        - 90
+        - 180
+        vol_halflife: 20
+        cov_window: 90
+        min_trend: 0.5
+        ann: 365
+        dd_start: 0.1
+        dd_full: 0.3
+        dd_floor: 0.25
+        dd_peak_window: 180
+        cash_asset: null
+        rebalance: daily
+        cov_estimator: sample
+      paper_broker: sim
+      fee: 0.0036
+      slippage: 0.0006
+      execution:
+        maker_first: false
+    stocks:
+      enabled: true
+      label: Acciones y ETFs
+      strategy: passive
+      universe:
+      - SPY
+      - QQQ
+      - IWM
+      - EFA
+      - EEM
+      - EWW
+      - TLT
+      - IEF
+      - GLD
+      - DBC
+      - VNQ
+      - XLK
+      - XLF
+      - XLE
+      - XLV
+      - XLI
+      - XLP
+      - XLU
+      - XLY
+      - XLB
+      data:
+        source: yahoo
+      quote: USD
+      capital: 500.0
+      compound: true
+      band: 0.05
+      kill_drawdown: 0.25
+      max_order_value: 500.0
+      min_order_value: 1
+      max_data_age_hours: 100
+      benchmark: SPY
+      min_history: 250
+      params:
+        top_k: 5
+        vol_target: 0.1
+        regime_asset: null
+        dd_brake: true
+        max_weight: 0.35
+        lookbacks: &id001
+        - 20
+        - 50
+        - 100
+        - 200
+        mom_windows: &id002
+        - 21
+        - 63
+        - 126
+        vol_halflife: 20
+        cov_window: 63
+        min_trend: 0.5
+        ann: 252
+        dd_start: 0.1
+        dd_full: 0.3
+        dd_floor: 0.25
+        dd_peak_window: 126
+        cash_asset: null
+        rebalance: daily
+        cov_estimator: sample
+      paper_broker: sim
+      fee: 0.0
+      slippage: 0.0005
+      execution:
+        maker_first: false
+      mix:
+        SPY: 0.6
+        IEF: 0.4
+  candidate:
+    crypto:
+      enabled: true
+      label: Criptomonedas
+      strategy: tactical
+      universe:
+      - BTC
+      - ETH
+      - SOL
+      - XRP
+      - ADA
+      - DOGE
+      - LINK
+      - AVAX
+      - LTC
+      - BCH
+      - XLM
+      - TRX
+      - HBAR
+      - NEAR
+      - UNI
+      - ATOM
+      data:
+        source: ccxt
+        exchange: kraken
+        fallback_exchange: bitso
+      quote: USD
+      capital: 500.0
+      compound: true
+      band: 0.02
+      kill_drawdown: 0.45
+      max_order_value: 500.0
+      min_order_value: 25
+      max_data_age_hours: 36
+      benchmark: BTC
+      min_history: 250
+      params:
+        top_k: 5
+        vol_target: 0.4
+        regime_asset: null
+        dd_brake: true
+        max_weight: 0.4
+        lookbacks:
+        - 20
+        - 50
+        - 100
+        - 200
+        mom_windows:
+        - 30
+        - 90
+        - 180
+        vol_halflife: 20
+        cov_window: 90
+        min_trend: 0.5
+        ann: 365
+        dd_start: 0.1
+        dd_full: 0.3
+        dd_floor: 0.25
+        dd_peak_window: 180
+        cash_asset: null
+        rebalance: daily
+        cov_estimator: sample
+        signal: donchian
+        donchian_entry: 55
+        donchian_exit: 20
+        weighting: equal
+      paper_broker: sim
+      fee: 0.0036
+      slippage: 0.0006
+      execution:
+        maker_first: false
+    stocks:
+      enabled: true
+      label: Acciones y ETFs
+      strategy: passive
+      universe:
+      - SPY
+      - QQQ
+      - IWM
+      - EFA
+      - EEM
+      - EWW
+      - TLT
+      - IEF
+      - GLD
+      - DBC
+      - VNQ
+      - XLK
+      - XLF
+      - XLE
+      - XLV
+      - XLI
+      - XLP
+      - XLU
+      - XLY
+      - XLB
+      data:
+        source: yahoo
+      quote: USD
+      capital: 500.0
+      compound: true
+      band: 0.05
+      kill_drawdown: 0.25
+      max_order_value: 500.0
+      min_order_value: 1
+      max_data_age_hours: 100
+      benchmark: SPY
+      min_history: 250
+      params:
+        top_k: 5
+        vol_target: 0.1
+        regime_asset: null
+        dd_brake: true
+        max_weight: 0.35
+        lookbacks: *id001
+        mom_windows: *id002
+        vol_halflife: 20
+        cov_window: 63
+        min_trend: 0.5
+        ann: 252
+        dd_start: 0.1
+        dd_full: 0.3
+        dd_floor: 0.25
+        dd_peak_window: 126
+        cash_asset: null
+        rebalance: daily
+        cov_estimator: sample
+      paper_broker: sim
+      fee: 0.0
+      slippage: 0.0005
+      execution:
+        maker_first: false
+      mix:
+        SPY: 0.6
+        IEF: 0.4
+evaluation:
+  forward_min_days: 28
+  min_history: 250
+  historical_holdout_unseen: false
+  selection_basis: 'catalogo100: mejor variante de la familia F4 por Sharpe (1.34, +53.4% anual, rotación 15.9);
+    NO superó la corrección por 101 comparaciones (p ajustada 0.69). El carril es observación prospectiva, no una
+    aprobación'
+  earliest_observation_utc: null
+historical_evidence:
+  preregistro:
+    path: reports/catalogo100_preregistro.md
+    sha256: d8588f7e5095502032684d8ab985534aac07414a58776fa283cda549bebf2408
+  resultado:
+    path: reports/catalogo100_resultado.json
+    sha256: 107d9b106af11162475ef4924fb345faba67b74ce246d0706d1630fc8e77a9fd
+  resultado_md:
+    path: reports/catalogo100_resultado.md
+    sha256: db9c4195db9ccc45bcd83218dd16d5b13d0c8959f75ccaa5b2ac09b660573d5b
+criteria:
+  prospective_days_min: 28
+  no_observation_gaps: true
+  no_unresolved_errors: true
+  net_return_noninferiority: true
+  drawdown_noninferiority_tolerance: 0.02
+  turnover_ratio_max: 1.0
+  promotion_requires_human_review: true
+  live_authorized: false

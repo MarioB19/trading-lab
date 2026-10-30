@@ -20,7 +20,7 @@ PLAN_PATH = ROOT / "configs/experiments/aggressive_v1.yaml"
 EXPERIMENT_ID = "aggressive-v1"
 PREREGISTRATION = ROOT / "reports/aggressive_v1_preregistro.md"
 PLAN_V1_HASH = "4d7d97add8f79e86d5dd942691cf99ad4d0bac030508c3cff427fb66ac86886e"
-EXPERIMENT_IDS = {EXPERIMENT_ID, "aggressive-v2", "rotation-paper-v1"}
+EXPERIMENT_IDS = {EXPERIMENT_ID, "aggressive-v2", "rotation-paper-v1", "donchian-lane-v1"}
 AVAILABILITY_EVIDENCE = ROOT / "reports/data_quality/avax_spot_availability.json"
 
 
@@ -37,7 +37,8 @@ def comparison_plan(plan_path: Path | None = None) -> tuple[dict, list[dict]]:
 
 
 def roles_for(plan: dict) -> tuple[str, str]:
-    return ("control", "candidate") if plan.get("experiment_id") == "rotation-paper-v1" else ("control", "aggressive")
+    paired = ("rotation-paper-v1", "donchian-lane-v1")
+    return ("control", "candidate") if plan.get("experiment_id") in paired else ("control", "aggressive")
 
 
 def preregistration_path(plan: dict) -> Path:
@@ -51,6 +52,10 @@ def validate_plan(plan: dict) -> None:
     if plan.get("experiment_id") == "rotation-paper-v1":
         from .rotation_plan import validate_plan as validate_rotation
         validate_rotation(plan)
+        return
+    if plan.get("experiment_id") == "donchian-lane-v1":
+        from .donchian_plan import validate_plan as validate_donchian
+        validate_donchian(plan)
         return
     if plan.get("mode") != "paper" or plan.get("live_authorized") is not False:
         raise ResearchGateError("el experimento admite exclusivamente dinero simulado")

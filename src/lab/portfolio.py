@@ -51,10 +51,25 @@ class PortfolioParams:
     psar_af: float = 0.02      # factor de aceleración inicial
     psar_step: float = 0.02    # incremento por cada nuevo extremo
     psar_max: float = 0.20     # tope del factor
+    # Señal (H10, carril Donchian). "tactical": tendencia + momentum (la regla vigente). "donchian": entra
+    # cuando el cierre supera el máximo de `donchian_entry` días previos y sale bajo el mínimo de
+    # `donchian_exit`; se tienen todos los activos en ruptura (top_k no aplica), con reparto `weighting`
+    # ("equal": partes iguales; "invvol": 1/volatilidad), tope por activo (salvo con un único activo en
+    # ruptura) y volatilidad objetivo.
+    signal: str = "tactical"
+    donchian_entry: int = 55
+    donchian_exit: int = 20
+    weighting: str = "risk"    # "risk" = tendencia/volatilidad (regla vigente); "equal"; "invvol"
 
     def __post_init__(self):
         if not np.isfinite(self.rotation_buffer) or not 0 <= self.rotation_buffer < 1:
             raise ValueError("rotation_buffer debe estar entre 0 y 1 (exclusivo)")
+        if self.signal not in ("tactical", "donchian"):
+            raise ValueError("signal debe ser tactical o donchian")
+        if self.weighting not in ("risk", "equal", "invvol"):
+            raise ValueError("weighting debe ser risk, equal o invvol")
+        if self.signal == "donchian" and not (self.donchian_entry > 1 and self.donchian_exit > 0):
+            raise ValueError("ventanas Donchian inválidas")
         if self.psar_mode not in ("none", "filter", "trend"):
             raise ValueError("psar_mode debe ser none, filter o trend")
         if self.psar_mode != "none" and not (0 < self.psar_af <= self.psar_max and self.psar_step > 0):
@@ -76,6 +91,11 @@ class PortfolioParams:
         if self.psar_mode == "none":
             for k in ("psar_mode", "psar_af", "psar_step", "psar_max"):
                 result.pop(k)
+        if self.signal == "tactical":
+            for k in ("signal", "donchian_entry", "donchian_exit"):
+                result.pop(k)
+        if self.weighting == "risk":
+            result.pop("weighting")
         return result
 
 
@@ -145,8 +165,30 @@ def parabolic_sar(close: pd.DataFrame, high: pd.DataFrame | None, low: pd.DataFr
             "bull": pd.DataFrame(bull_out, index=C.index, columns=C.columns)}
 
 
+def donchian_state(prices: pd.DataFrame, entry: int, exit: int,
+                   eligible: pd.DataFrame | None = None) -> pd.DataFrame:
+    """True mientras un activo está «en ruptura»: entra cuando el cierre supera el máximo de los `entry`
+    cierres previos y sale cuando cae bajo el mínimo de los `exit` cierres previos. Solo usa cierres
+    hasta el día; un día sin cierre, o sin elegibilidad, saca al activo (tiene que volver a romper)."""
+    C = clean(prices)
+    hi = C.shift(1).rolling(entry, min_periods=entry).max().values
+    lo = C.shift(1).rolling(exit, min_periods=exit).min().values
+    cv = C.values
+    el = (eligible.reindex_like(C).fillna(False).astype(bool).values if eligible is not None
+          else np.ones(C.shape, bool))
+    n, k = C.shape
+    state = np.zeros(k, bool)
+    out = np.zeros((n, k), bool)
+    for t in range(n):
+        enter = np.isfinite(hi[t]) & (cv[t] > hi[t])
+        leave = ~np.isfinite(cv[t]) | (np.isfinite(lo[t]) & (cv[t] < lo[t])) | ~el[t]
+        state = (state | enter) & ~leave
+        out[t] = state & el[t]
+    return pd.DataFrame(out, index=C.index, columns=C.columns)
+
+
 def signals(prices: pd.DataFrame, p: PortfolioParams, highs: pd.DataFrame | None = None,
-            lows: pd.DataFrame | None = None) -> dict[str, pd.DataFrame]:
+            lows: pd.DataFrame | None = None, eligible: pd.DataFrame | None = None) -> dict[str, pd.DataFrame]:
     prices = clean(prices)
     trend = sum((prices > prices.rolling(n, min_periods=n).mean()).astype(float)
                 .where(prices.rolling(n, min_periods=n).mean().notna())
@@ -156,6 +198,8 @@ def signals(prices: pd.DataFrame, p: PortfolioParams, highs: pd.DataFrame | None
     mom = sum(prices.pct_change(w, fill_method=None) for w in p.mom_windows) / len(p.mom_windows)
     score = mom / vol
     out = {"trend": trend, "vol": vol, "mom": mom, "score": score}
+    if p.signal == "donchian":
+        out["donchian"] = donchian_state(prices, p.donchian_entry, p.donchian_exit, eligible)
     if p.psar_mode != "none":
         ps = parabolic_sar(prices, highs, lows, p.psar_af, p.psar_step, p.psar_max)
         out["psar_bull"], out["psar"] = ps["bull"], ps["sar"]
@@ -214,7 +258,7 @@ def target_weights(prices: pd.DataFrame, eligible: pd.DataFrame | None,
     highs/lows: máximos y mínimos diarios, solo los usa el Parabolic SAR (`psar_mode`).
     """
     prices = clean(prices)
-    sig = signals(prices, p, highs, lows)
+    sig = signals(prices, p, highs, lows, eligible)
     cols = list(prices.columns)
     elig = (eligible.reindex_like(prices).fillna(False).astype(bool).values
             if eligible is not None else np.ones(prices.shape, bool))
@@ -222,6 +266,7 @@ def target_weights(prices: pd.DataFrame, eligible: pd.DataFrame | None,
         # capa de salida: sin SAR alcista el activo no es elegible (se vende y no se recompra)
         elig = elig & (sig["psar_bull"].fillna(0.0).values > 0.5)
     trend, vol, score = sig["trend"].values, sig["vol"].values, sig["score"].values
+    donch = sig["donchian"].values if p.signal == "donchian" else None
     rets = np.log(prices).diff().values
     has_regime = p.regime_asset is not None and p.regime_asset in cols
     ci = cols.index(p.cash_asset) if p.cash_asset and p.cash_asset in cols else -1
@@ -233,18 +278,36 @@ def target_weights(prices: pd.DataFrame, eligible: pd.DataFrame | None,
     previous = np.array([], dtype=int)
     for t in (range(len(prices) - 1, len(prices)) if only_last else range(len(prices))):
         tr, vo, sc = trend[t], vol[t], score[t]
-        ok = elig[t] & (tr >= p.min_trend) & (sc > 0) & np.isfinite(vo) & (vo > 0) & np.isfinite(sc)
+        if donch is not None:
+            # ruptura Donchian: elegibles los activos en ruptura con volatilidad medible; sin ranking
+            ok = elig[t] & donch[t] & np.isfinite(vo) & (vo > 0)
+        else:
+            ok = elig[t] & (tr >= p.min_trend) & (sc > 0) & np.isfinite(vo) & (vo > 0) & np.isfinite(sc)
         if ci >= 0:
             ok[ci] = False  # el activo de efectivo nunca compite por tendencia
         if has_regime and not (np.isfinite(tr[ri]) and tr[ri] >= p.min_trend):
             mask = np.zeros(len(cols), bool)
             mask[ri] = True
             ok &= mask
-        idx = select_ranked(sc, ok, previous, p.top_k, p.rotation_buffer)
+        if donch is not None:
+            idx = np.flatnonzero(ok)
+        else:
+            idx = select_ranked(sc, ok, previous, p.top_k, p.rotation_buffer)
         previous = idx
         if not len(idx):
             continue
-        raw = tr[idx] / vo[idx]
+        if p.weighting == "equal":
+            raw = np.ones(len(idx))
+        elif p.weighting == "invvol":
+            raw = 1.0 / vo[idx]
+        else:
+            raw = tr[idx] / vo[idx]
+        # Donchian (H10): con un solo activo en ruptura el tope por activo no aplica (la volatilidad
+        # objetivo sigue limitando); así se probó la variante en el catálogo y así corre en el carril.
+        if donch is not None and len(idx) == 1:
+            # un solo activo: sin tope, escalado por su volatilidad (la misma de las señales)
+            W[t, idx] = min(1.0, p.vol_target / vo[idx[0]]) if p.vol_target else 1.0
+            continue
         w = cap_weights(raw / raw.sum(), p.max_weight)
         if p.vol_target:
             window = rets[max(1, t - p.cov_window + 1): t + 1][:, idx]
