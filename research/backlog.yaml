@@ -93,6 +93,19 @@ hipotesis:
     estado: >-
       Aprobada en backtest; falta dato para operarla: tasa real de la plataforma sobre el efectivo ocioso (Bitso+ paga
       sobre stablecoins en USD, no sobre USD), retiro inmediato y costo de mover. Se resuelve junto con H7 (exchange)
+  - id: H10
+    orden: 7
+    tipo: señal
+    titulo: Carril hacia adelante para Donchian 55/20
+    idea: >-
+      La ruptura Donchian 55/20 con pesos iguales rindió +53% anual contra +38% del control en 2019–2026 con la mitad de
+      rotación, pero su ventaja está en 2023 y no sobrevive la corrección por 101 comparaciones (p 0.69). ¿Sostiene algo
+      hacia adelante, en los mismos días que el control?
+    evidencia: Catálogo 100 (30-oct), `reports/catalogo100_resultado.md`
+    prueba: >-
+      Carril en simulado (`research/carriles.yaml`, `lab.lanes`) 4 semanas contra el control; requiere reimplementar la
+      regla en `lab.portfolio` con prueba de sin mirar al futuro y un DEC. No cambia el piloto
+    estado: Propuesta a Brandon (30-oct); no se activa sin su sí
   - id: H6
     orden: 3
     tipo: costo
@@ -106,7 +119,7 @@ hipotesis:
       Pendiente. Dato nuevo (30-oct): el piloto compró TRX por US$118.89 (40% del bloque) con spread de 2.4% y 165 pb
       de costo, la única orden con aviso de liquidez; un filtro de spread o liquidez por moneda se evaluaría aquí
   - id: H5
-    orden: 7
+    orden: 8
     tipo: señal
     titulo: Referencia simple
     idea: Una referencia simple iguala a la táctica neta de costos con mucha menos rotación
@@ -141,6 +154,15 @@ descartadas:
       fallido y recompra tarde, pagando 15–17% anual en costos contra 13%; como señal única rinde +17% anual contra +38%.
       No se vuelve a probar sin comisiones < 0.15% por lado
     fuente: '`reports/h9_parabolic_sar_resultado.md`'
+  - id: C100
+    idea: Catálogo 100 — 103 estrategias en 18 familias (momentum transversal y temporal, cruces, Donchian, baja vol, stops ATR, frenos, liquidez, repartos, SPY, altseason, calendario, reversión semanal, ensambles, ML, momentum dual, bandas, vol-régimen)
+    motivo: >-
+      Barrido preregistrado (30-oct): 2 fuera por costos, 101 al barrido, ninguna avanza; p global 0.69 (la mejor
+      ventaja es la esperada por azar entre 101). Mejor por Sharpe: control-topk-2 (1.35) y donchian-55-20-equal (1.34,
+      +53% anual con la mitad de rotación, pero su ventaja está en 2023 y p corregida 0.69). Cruces, tsmom, ML, calendario,
+      reversión y momentum dual rinden claramente peor que el control. Las familias se reabren solo con un dato nuevo
+      (p. ej. un carril hacia adelante)
+    fuente: '`reports/catalogo100_resultado.md`'
   - id: H1
     idea: Banda 4 pp + margen 15% (H1)
     motivo: >-
@@ -194,3 +216,15 @@ bitacora:
       Se conserva el control. H9 a descartadas. Sigue el orden del backlog: H1b (no recomprar en 48 h) en el sprint 03
       del 8-nov; filtro de liquidez/spread por moneda se propone como parte de H6
     enlace: reports/h9_parabolic_sar_resultado.md
+  - sprint: 'C100'
+    fecha: '2026-10-30'
+    hipotesis: 'Catálogo 100: 103 estrategias en 18 familias contra el control, con compuerta de costos y corrección familiar'
+    ids: [C100]
+    resultado: >-
+      Ninguna avanza: p global 0.69; 16 de 103 con Sharpe mayor que el control, ninguna con significancia. Donchian 55/20
+      (+53% anual, Sharpe 1.34, rotación 16) y top 2 (+49%, 1.35) son las más cercanas; las familias de señal nueva
+      (cruces, tsmom, ML, calendario, reversión, dual) rinden peor
+    decision: >-
+      Se conserva el control; 155 intentos acumulados para el Sharpe deflactado. Se propone a Brandon un carril de 4
+      semanas para Donchian 55/20 (H10). Sigue H1b en el sprint 03
+    enlace: reports/catalogo100_resultado.md
