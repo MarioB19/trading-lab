@@ -105,7 +105,11 @@ hipotesis:
     prueba: >-
       Carril en simulado (`research/carriles.yaml`, `lab.lanes`) 4 semanas contra el control; requiere reimplementar la
       regla en `lab.portfolio` con prueba de sin mirar al futuro y un DEC. No cambia el piloto
-    estado: Propuesta a Brandon (30-oct); no se activa sin su sí
+    estado: >-
+      🔬 Carril activo desde el 30-oct-2026 (DEC-037): Brandon lo aprobó; plan `configs/experiments/donchian_lane_v1.yaml`
+      (preregistro `405c3c2d…`), ejecutor separado en la Mac con código congelado y base en «Trading Lab/carriles/carril-1»
+      (`scripts/lanes/run_carril.sh`). Falta que la observación diaria quede en una tarea programada (ver
+      `docs/CARRIL_1_TAREA.md`); 28 días observados → revisión humana
   - id: H6
     orden: 3
     tipo: costo
