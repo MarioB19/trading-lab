@@ -303,6 +303,17 @@ def _report(manifest, state, snapshots, trades, history, now, captures):
             "sleeves": snapshots}
 
 
+def _cost_line(report) -> str:
+    model = (report.get("inputs") or {}).get("cost_model") or report.get("cost_model") or {}
+    parts = []
+    for block, label in (("crypto", "cripto"), ("stocks", "ETFs")):
+        cm = model.get(block)
+        if cm:
+            parts.append(f"{label} {cm['fee'] * 10000:.0f} + {cm['slippage'] * 10000:.0f} bps")
+    return ("Comisión/deslizamiento por orden: " + "; ".join(parts) + "." if parts
+            else "Comisión y deslizamiento por orden según el plan preregistrado.")
+
+
 def _markdown(report):
     lines = ["# Comparación de carteras simuladas", "",
              "Capital virtual inicial: USD 1,000 por cartera; USD 500 por bloque.", "",
@@ -322,7 +333,7 @@ def _markdown(report):
               f"Pendientes: {report['remaining_observed_days']} días con observación y "
               f"{report['remaining_elapsed_days']:.2f} días completos de calendario.",
               f"Estado: {report['status']}. Incidencias pendientes: {report['unresolved_errors']}.", "",
-              "Comisión/deslizamiento por orden: cripto 36 + 9 bps; ETFs 0 + 5 bps.",
+              _cost_line(report),
               "Son costes simulados, no costes medidos en un broker. Cada compra y venta paga su coste.",
               "", report["promotion_note"], "Dinero real autorizado: NO.", ""]
     lines += [f"- {note}" for note in report["limitations"]]
