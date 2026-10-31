@@ -195,6 +195,14 @@ descartadas:
       pero bajando rendimiento; las de más rendimiento (sectores +10.9%, GEM +9.9%) caen 35–50%. El timing en ETFs no paga
       ni con 0.05% de costo. Hallazgos que salen como hipótesis propias: H11 (banda 10 pp) y H12 (kill switch del bloque ETF)
     fuente: '`reports/catalogo2_etf_resultado.md`'
+  - id: C3
+    idea: Catálogo 3 — 33 capas exógenas sobre el control (miedo/codicia, MVRV, BTC en exchanges, direcciones activas, stablecoins, hash ribbon, compuesto)
+    motivo: >-
+      Barrido preregistrado (31-oct): ninguna avanza, p global 0.98. Salir en codicia extrema o MVRV alto destruye
+      rendimiento (+9.7% y +14.5% anual contra +38.3%); on-chain quita 1–6 puntos. La única pista (salir cuando las
+      stablecoins se contraen >1% en 30 días: +40.3%, Sharpe 1.30) es lo que el azar produce entre 33 intentos y tiene datos
+      fiables solo desde 2020-07. No se reabre sin otra fuente de datos exógenos con historia
+    fuente: '`reports/catalogo3_exog_resultado.md`'
   - id: H1
     idea: Banda 4 pp + margen 15% (H1)
     motivo: >-
@@ -271,3 +279,14 @@ bitacora:
       Se conserva el 60/40. H11 (banda 10 pp, costo) y H12 (kill switch del bloque ETF, decisión de Brandon) al backlog.
       261 intentos acumulados
     enlace: reports/catalogo2_etf_resultado.md
+  - sprint: 'C3'
+    fecha: '2026-10-31'
+    hipotesis: 'Catálogo 3: 33 capas con señales exógenas (sentimiento, on-chain, stablecoins) sobre el control de cripto'
+    ids: [C3]
+    resultado: >-
+      Ninguna avanza (p global 0.98); 6 de 33 mejoran el Sharpe por poco, la mayoría destruye rendimiento. Funding rates y
+      open interest descartados por falta de historia (3 meses y 2 años)
+    decision: >-
+      Se conserva el control. Tres catálogos (189 estrategias, 294 intentos) sin ventaja distinguible del azar: la investigación
+      de señales sobre estos datos se da por agotada; siguen los costos (H1b, H4, H6, H11) y los carriles hacia adelante
+    enlace: reports/catalogo3_exog_resultado.md

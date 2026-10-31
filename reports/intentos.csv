@@ -219,3 +219,36 @@ fecha,experimento,variante,tipo,sharpe_diario,veredicto
 2026-10-31,catalogo2-etf (intento 2 sin kill),bondswitch-tlt200,señal,0.04487,descartada en el barrido
 2026-10-31,catalogo2-etf (intento 2 sin kill),control-ddbrake-5-20,señal,0.05465,descartada en el barrido
 2026-10-31,catalogo2-etf (intento 2 sin kill),control-ddbrake-10-30,señal,0.05088,descartada en el barrido
+2026-10-31,catalogo3-exog,fng-cut75,señal,0.02535,descartada en el barrido
+2026-10-31,catalogo3-exog,fng-cut80,señal,0.03870,descartada en el barrido
+2026-10-31,catalogo3-exog,fng-cut90,señal,0.05034,descartada en el barrido
+2026-10-31,catalogo3-exog,fng-half75,señal,0.04801,descartada en el barrido
+2026-10-31,catalogo3-exog,fng-sma7-cut75,señal,0.04329,descartada en el barrido
+2026-10-31,catalogo3-exog,fng-sma7-cut80,señal,0.04555,descartada en el barrido
+2026-10-31,catalogo3-exog,fng-linear,señal,0.03881,descartada en el barrido
+2026-10-31,catalogo3-exog,fng-follow50,señal,0.06213,descartada en el barrido
+2026-10-31,catalogo3-exog,mvrv-cut2.5,señal,0.03340,descartada en el barrido
+2026-10-31,catalogo3-exog,mvrv-cut3,señal,0.05421,descartada en el barrido
+2026-10-31,catalogo3-exog,mvrv-cut3.5,señal,0.06382,descartada en el barrido
+2026-10-31,catalogo3-exog,mvrv-half3,señal,0.05932,descartada en el barrido
+2026-10-31,catalogo3-exog,mvrv-half3.5,señal,0.06308,descartada en el barrido
+2026-10-31,catalogo3-exog,mvrv-linear,señal,0.05587,descartada en el barrido
+2026-10-31,catalogo3-exog,mvrv-z2,señal,0.03035,descartada en el barrido
+2026-10-31,catalogo3-exog,exsup-in30-half,señal,0.05464,descartada en el barrido
+2026-10-31,catalogo3-exog,exsup-in90-half,señal,0.06080,descartada en el barrido
+2026-10-31,catalogo3-exog,exsup-in30-cut2pct,señal,0.05042,descartada en el barrido
+2026-10-31,catalogo3-exog,exsup-z2-cut,señal,0.06184,descartada en el barrido
+2026-10-31,catalogo3-exog,adr-mom30-half,señal,0.05544,descartada en el barrido
+2026-10-31,catalogo3-exog,adr-mom90-half,señal,0.05892,descartada en el barrido
+2026-10-31,catalogo3-exog,adr-drop10-cut,señal,0.05739,descartada en el barrido
+2026-10-31,catalogo3-exog,stab-g30-half,señal,0.06559,descartada en el barrido
+2026-10-31,catalogo3-exog,stab-g90-half,señal,0.06362,descartada en el barrido
+2026-10-31,catalogo3-exog,stab-shrink1pct-cut,señal,0.06829,descartada en el barrido
+2026-10-31,catalogo3-exog,stab-linear,señal,0.06426,descartada en el barrido
+2026-10-31,catalogo3-exog,hash-ribbon-half,señal,0.05683,descartada en el barrido
+2026-10-31,catalogo3-exog,hash-ribbon-cut,señal,0.04704,descartada en el barrido
+2026-10-31,catalogo3-exog,comp-cut-1,señal,0.04347,descartada en el barrido
+2026-10-31,catalogo3-exog,comp-half-05,señal,0.05225,descartada en el barrido
+2026-10-31,catalogo3-exog,comp-linear,señal,0.05011,descartada en el barrido
+2026-10-31,catalogo3-exog,fngbtc-20-80,señal,0.01758,descartada en el barrido
+2026-10-31,catalogo3-exog,fngbtc-25-75,señal,0.00742,descartada en el barrido
