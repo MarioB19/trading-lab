@@ -67,8 +67,8 @@ def mom(C: pd.DataFrame, window: int, skip: int = 0) -> pd.DataFrame:
     return C.shift(skip) / C.shift(skip + window) - 1
 
 
-def ewm_vol(C: pd.DataFrame, halflife: int = 20) -> pd.DataFrame:
-    return np.log(C).diff().ewm(halflife=halflife, min_periods=60).std() * np.sqrt(ANN)
+def ewm_vol(C: pd.DataFrame, halflife: int = 20, ann: int = ANN) -> pd.DataFrame:
+    return np.log(C).diff().ewm(halflife=halflife, min_periods=60).std() * np.sqrt(ann)
 
 
 def btc_regime(M: Market, n: int = 200) -> pd.Series:
@@ -79,11 +79,11 @@ def btc_regime(M: Market, n: int = 200) -> pd.Series:
 
 def risk_weights(mask: pd.DataFrame, C: pd.DataFrame, raw: pd.DataFrame | None = None,
                  vol_target: float | None = VOL_TARGET, max_weight: float = MAX_W,
-                 cov_window: int = 90) -> pd.DataFrame:
+                 cov_window: int = 90, ann: int = ANN) -> pd.DataFrame:
     """Pesos de los activos marcados en `mask`: proporcionales a `raw` (por omisión 1/volatilidad),
     con tope por activo y escalados para no pasar la volatilidad objetivo (misma mecánica que el control)."""
     C = clean(C)
-    vol = ewm_vol(C).values
+    vol = ewm_vol(C, ann=ann).values
     rets = np.log(C).diff().values
     m = mask.reindex_like(C).fillna(False).astype(bool).values
     rawv = (raw.reindex_like(C).values if raw is not None else 1.0 / vol)
@@ -102,7 +102,7 @@ def risk_weights(mask: pd.DataFrame, C: pd.DataFrame, raw: pd.DataFrame | None =
                 window = rets[max(1, t - cov_window + 1): t + 1][:, idx]
                 window = window[np.isfinite(window).all(axis=1)]
                 if len(window) >= 30:
-                    cov = np.atleast_2d(np.cov(window, rowvar=False) * ANN)
+                    cov = np.atleast_2d(np.cov(window, rowvar=False) * ann)
                     sp = float(np.sqrt(max(w @ cov @ w, 1e-12)))
                     w = w * min(1.0, vol_target / sp)
         W[t, idx] = w
@@ -117,7 +117,8 @@ def top_k_mask(score: pd.DataFrame, eligible: pd.DataFrame, k: int, largest: boo
     return (rank <= k) & s.notna()
 
 
-def vol_target_rows(W: pd.DataFrame, C: pd.DataFrame, vol_target: float = VOL_TARGET, cov_window: int = 90) -> pd.DataFrame:
+def vol_target_rows(W: pd.DataFrame, C: pd.DataFrame, vol_target: float = VOL_TARGET, cov_window: int = 90,
+                    ann: int = ANN) -> pd.DataFrame:
     """Escala cada fila de pesos para que la volatilidad esperada del portafolio no pase el objetivo."""
     rets = np.log(clean(C)).diff().values
     Wv = W.values.copy()
@@ -128,7 +129,7 @@ def vol_target_rows(W: pd.DataFrame, C: pd.DataFrame, vol_target: float = VOL_TA
         window = rets[max(1, t - cov_window + 1): t + 1][:, idx]
         window = window[np.isfinite(window).all(axis=1)]
         if len(window) >= 30:
-            cov = np.atleast_2d(np.cov(window, rowvar=False) * ANN)
+            cov = np.atleast_2d(np.cov(window, rowvar=False) * ann)
             sp = float(np.sqrt(max(Wv[t, idx] @ cov @ Wv[t, idx], 1e-12)))
             Wv[t, idx] *= min(1.0, vol_target / sp)
     return pd.DataFrame(Wv, index=W.index, columns=W.columns)
