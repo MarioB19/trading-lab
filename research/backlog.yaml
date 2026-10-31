@@ -3,7 +3,7 @@
 #   python -m lab.backlog render --out "<vault>/00 — Dirección/🧪 Backlog de hipótesis — Trading Lab.md"
 # El panel (pestaña Investigación) lee este mismo archivo. Validar: python -m lab.backlog check
 version: 1
-actualizado: '2026-10-30'
+actualizado: '2026-10-31'
 nota:
   tags: [proyecto, trading, investigación, hipótesis]
   estado: activo
@@ -110,6 +110,27 @@ hipotesis:
       (preregistro `405c3c2d…`), ejecutor separado en la Mac con código congelado y base en «Trading Lab/carriles/carril-1»
       (`scripts/lanes/run_carril.sh`). Falta que la observación diaria quede en una tarea programada (ver
       `docs/CARRIL_1_TAREA.md`); 28 días observados → revisión humana
+  - id: H11
+    orden: 9
+    tipo: costo
+    titulo: Banda de 10 pp en el bloque de ETFs
+    idea: >-
+      Rebalancear el 60/40 solo cuando un ETF se desvía 10 puntos (hoy 5) deja correr al que sube: +9.0% contra +8.5% anual,
+      caída −29.6% contra −31.2%, 10 de 17 años, p sin corregir 0.01 en el Catálogo 2 (no pasó la corrección familiar)
+    evidencia: Catálogo 2 (31-oct), `reports/catalogo2_etf_resultado.md`, variante `control-band-10`
+    prueba: Sprint de costo propio con su barra (mayoría de años, bootstrap de rendimiento ≥ 0.90, caída no peor por 2 pts, estrés)
+    estado: Pendiente (sale del Catálogo 2)
+  - id: H12
+    orden: 10
+    tipo: otro
+    titulo: Kill switch del bloque de ETFs (−25%) habría apagado al 60/40 en 2008
+    idea: >-
+      El 60/40 vigente cayó −31% en 2008–2009; con el kill switch de −25% el bloque se habría quedado en efectivo hasta
+      rearmarlo a mano. 27 de 53 variantes también lo tocan. Decisión de riesgo para Brandon: subir el kill (p. ej. −35%),
+      aceptar el apagado, o pasar a una variante de menor caída (freno 5–20: −23% con 8.1%; vol objetivo 10%: −20% con 7.5%)
+    evidencia: Catálogo 2 (31-oct), `reports/catalogo2_etf_resultado.md`
+    prueba: No es una estrategia; es una decisión de Brandon. Si elige una variante de menor caída, preregistro con barra de costo
+    estado: Propuesta a Brandon (31-oct)
   - id: H6
     orden: 3
     tipo: costo
@@ -167,6 +188,13 @@ descartadas:
       reversión y momentum dual rinden claramente peor que el control. Las familias se reabren solo con un dato nuevo
       (p. ej. un carril hacia adelante)
     fuente: '`reports/catalogo100_resultado.md`'
+  - id: C2
+    idea: Catálogo 2 — 53 estrategias para el bloque de ETFs (mezclas, paridad de riesgo, tendencia, GEM, sectores, clases, vol objetivo, rebalanceo, duración del bono, freno)
+    motivo: >-
+      Barrido preregistrado (31-oct): ninguna supera al 60/40 tras la corrección (p global 0.72). 23 de 53 mejoran el Sharpe
+      pero bajando rendimiento; las de más rendimiento (sectores +10.9%, GEM +9.9%) caen 35–50%. El timing en ETFs no paga
+      ni con 0.05% de costo. Hallazgos que salen como hipótesis propias: H11 (banda 10 pp) y H12 (kill switch del bloque ETF)
+    fuente: '`reports/catalogo2_etf_resultado.md`'
   - id: H1
     idea: Banda 4 pp + margen 15% (H1)
     motivo: >-
@@ -232,3 +260,14 @@ bitacora:
       Se conserva el control; 155 intentos acumulados para el Sharpe deflactado. Se propone a Brandon un carril de 4
       semanas para Donchian 55/20 (H10). Sigue H1b en el sprint 03
     enlace: reports/catalogo100_resultado.md
+  - sprint: 'C2'
+    fecha: '2026-10-31'
+    hipotesis: 'Catálogo 2: 53 estrategias para el bloque de ETFs contra el 60/40'
+    ids: [C2]
+    resultado: >-
+      Intento 1 inválido (kill switch desde 2008 mató al control; registrado). Intento 2: ninguna avanza, p global 0.72;
+      el 60/40 habría tocado −25% en 2008 (−31% de caída). Banda 10 pp: +9.0% vs +8.5% con p sin corregir 0.01
+    decision: >-
+      Se conserva el 60/40. H11 (banda 10 pp, costo) y H12 (kill switch del bloque ETF, decisión de Brandon) al backlog.
+      261 intentos acumulados
+    enlace: reports/catalogo2_etf_resultado.md
