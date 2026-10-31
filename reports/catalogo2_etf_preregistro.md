@@ -58,6 +58,14 @@ Definiciones exactas en `src/lab/catalog_etf.py` (commit de este preregistro). R
 comprar y mantener. Fuera del alcance: la táctica ya descartada, el multi-mercado ya descartado, apalancamiento,
 cortos, bonos individuales y activos sin ETF en el universo del bot.
 
+**Enmienda tras el intento 1 (31-oct, resultados vistos y registrados en `reports/catalogo2_etf_intento1_invalido.json`
+y en `intentos.csv`):** el kill switch de −25% aplicado desde 2008 **mató al propio control 60/40 el 28-oct-2008**
+(caída −25.2%) y a la mayoría de las mezclas, dejando carteras en efectivo 18 años; la comparación medía quién sobrevivió
+a 2008 con un dispositivo pensado para el bloque vivo (que un humano revisa y rearma), no las estrategias. Se repite
+el barrido **sin kill switch en la simulación**; se reporta, informativo, si cada variante habría tocado −25%. Ningún
+otro parámetro ni criterio cambia. Las 53 filas del intento 1 se quedan en `intentos.csv` y cuentan para el Sharpe
+deflactado (castigo conservador por haber mirado).
+
 ## Dos tipos de familia, dos barras
 
 - **Asignación (sin afirmar timing):** E1, E2, E8. Se juzgan con la barra de costo: mayoría de años, bootstrap de
