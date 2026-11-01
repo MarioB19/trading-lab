@@ -66,10 +66,12 @@ hipotesis:
       Simular el control con la comisión de cada opción y el spread medido. **La elección de exchange para
       dinero real es decisión de Brandon** (regulación, depósitos en pesos, custodia)
     estado: >-
-      Simulado el 25-oct (`reports/h7_exchanges_informe.md`): con 0.10% por lado el control rinde +53.7% anual contra
-      +42.7% y la caída máxima baja de −37% a −28%; costo anual 3.7% contra 11%. Operar en pesos en Bitso (0.78%) activa
-      el kill switch. Falta la decisión de Brandon (regulación, pesos, custodia) y 4 semanas en simulado contra el libro
-      del exchange elegido
+      Resimulado el 1-nov con el control vigente y el costo medido (`reports/h7b_exchanges_mexico.md`): Bitso al costo
+      medido del piloto (49 pb) +37.5% anual con −41% de caída (toca el kill con costos ×1.5); exchange global a 0.10%
+      +52.6% con −28% (US$13.2 mil contra US$5.9 mil sobre US$500 en 7.7 años); entrar y salir en pesos por P2P cuesta
+      ≈0.4 puntos al año. Bitso es el único autorizado como ITF; Bybit dejó los pesos el 30-sep; Kraken (0.80% taker) no
+      sirve a este tamaño. Falta la decisión de Brandon (regulación, custodia, fiscal) y 4 semanas en simulado contra el
+      libro del exchange elegido
   - id: H8
     orden: 5
     tipo: costo
@@ -329,3 +331,14 @@ bitacora:
       Se conserva el control; la función queda en `lab.sleeve_rebalance` (no toca el bot). H13 pasa a decisión de riesgo
       de Brandon, junto con H12. Siguiente de costo: H6. 299 intentos acumulados
     enlace: reports/sprint04_h13_rebalanceo_bloques_resultado.md
+  - sprint: 'H7b'
+    fecha: '2026-11-01'
+    hipotesis: 'H7b: el control vigente con la comisión de cada exchange usable desde México (simulación, a petición de Brandon)'
+    ids: [H7]
+    resultado: >-
+      Bitso al costo medido (49 pb) +37.5% anual, caída −41%; global a 0.10% (Binance, OKX, Bybit, Bitget) +52.6%, caída −28%;
+      Binance con BNB +53.9%. Bitso en pesos y Kraken taker tocan el kill switch. Entrada y salida en pesos ≈0.4 puntos al año
+    decision: >-
+      Informativo: no cambia el bot. La comisión sigue siendo la palanca más grande (≈15 puntos al año). La elección de
+      exchange es de Brandon (Bitso es el único ITF en México)
+    enlace: reports/h7b_exchanges_mexico.md
