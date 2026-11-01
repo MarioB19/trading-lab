@@ -3,7 +3,7 @@
 #   python -m lab.backlog render --out "<vault>/00 — Dirección/🧪 Backlog de hipótesis — Trading Lab.md"
 # El panel (pestaña Investigación) lee este mismo archivo. Validar: python -m lab.backlog check
 version: 1
-actualizado: '2026-10-31'
+actualizado: '2026-11-01'
 nota:
   tags: [proyecto, trading, investigación, hipótesis]
   estado: activo
@@ -52,14 +52,6 @@ hipotesis:
       concluyente (0.599). El ahorro de costo es ≈1 punto; el resto es efecto de camino, vecindad consistente
       entre US$24 y US$30
     estado: '✅ Aprobada (sprint 02). En el piloto desde el 25-oct con orden mínima de US$25 (DEC-033); revisión a las 4 semanas'
-  - id: H1b
-    orden: 1
-    tipo: costo
-    titulo: No recomprar en 48 h
-    idea: Cortar las recompras en menos de 48 h (7 en 30 días) con un periodo de espera tras vender
-    evidencia: Revisión del 25-oct; V1 del sprint 01 fue la mejor variante, aunque no concluyente
-    prueba: Backtest con «no recomprar en 2 días» contra el control
-    estado: ⏳ Siguiente (sprint 03, 8-nov)
   - id: H7
     orden: 2
     tipo: externo
@@ -132,7 +124,7 @@ hipotesis:
     prueba: No es una estrategia; es una decisión de Brandon. Si elige una variante de menor caída, preregistro con barra de costo
     estado: Propuesta a Brandon (31-oct)
   - id: H6
-    orden: 3
+    orden: 1
     tipo: costo
     titulo: Universo de ~8 monedas
     idea: Universo líquido de ~8 monedas en vez de 16 reduce el spread pagado
@@ -141,8 +133,10 @@ hipotesis:
       con 22 pb de spread, NEAR 55 pb; BTC y ETH 33 pb con spread de 1–2 pb
     prueba: Medir costo por activo en el piloto y backtest con el universo recortado
     estado: >-
-      Pendiente. Dato nuevo (30-oct): el piloto compró TRX por US$118.89 (40% del bloque) con spread de 2.4% y 165 pb
-      de costo, la única orden con aviso de liquidez; un filtro de spread o liquidez por moneda se evaluaría aquí
+      Pendiente; es la siguiente de costo en cripto. Dato de la revisión del 1-nov: TRX entró el 30-oct (US$118.89, spread
+      2.4%, 165 pb) y salió el 31-oct (US$105.80, spread 2.7%, 197 pb): ≈US$4.05 de los US$4.75 de costos de la semana en una
+      sola ida y vuelta. Propuesta para el sprint: (a) universo recortado a ~8 monedas y (b) filtro que no compra una moneda
+      con spread del libro > 50 pb al momento de operar; (b) necesita historia de spreads por moneda (solo existe la del piloto)
   - id: H5
     orden: 8
     tipo: señal
@@ -156,6 +150,13 @@ hipotesis:
     pausada: true
 
 descartadas:
+  - id: H1b
+    idea: No recomprar una moneda en 2 o 3 días tras una salida total (H1b)
+    motivo: >-
+      Sprint 03 (1-nov): con orden mínima US$25 y US$500 por año, la espera de 2 días rinde +40.9% contra +41.0% anual, gana
+      2 de 6 años, bootstrap 0.45 (umbral 0.95) y pierde 1.1 puntos con estrés; la de 3 días, +39.2%, bootstrap 0.22. El
+      costo baja solo 0.6 puntos (11.2% → 10.6%): ayuda en años bajistas y cuesta en los alcistas (efecto de camino)
+    fuente: '`reports/sprint03_h1b_recompra_resultado.md`'
   - idea: Táctica en ETFs
     motivo: 4.5% anual vs 9.9% del 60/40; timing = azar (p = 0.34)
     fuente: '`reports/multi_informe.md`'
@@ -290,3 +291,14 @@ bitacora:
       Se conserva el control. Tres catálogos (189 estrategias, 294 intentos) sin ventaja distinguible del azar: la investigación
       de señales sobre estos datos se da por agotada; siguen los costos (H1b, H4, H6, H11) y los carriles hacia adelante
     enlace: reports/catalogo3_exog_resultado.md
+  - sprint: '03'
+    fecha: '2026-11-01'
+    hipotesis: 'H1b: bloquear la recompra 2 o 3 días tras una salida total del bloque cripto'
+    ids: [H1b]
+    resultado: >-
+      Descartada: +40.9% (2 días) y +39.2% (3 días) contra +41.0% anual del control, 2 de 6 años, bootstrap 0.45 y 0.22;
+      el costo solo baja 0.6 puntos porque la banda y la orden mínima ya filtraban la mayoría de las reentradas
+    decision: >-
+      Se conserva el control; la regla queda en `lab.reentry` (no toca el bot). Siguiente de costo: H6 (universo y
+      filtro de spread, con el caso TRX de la semana). 296 intentos acumulados
+    enlace: reports/sprint03_h1b_recompra_resultado.md
