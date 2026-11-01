@@ -10,40 +10,40 @@ fuente: "00 — Dirección/🗺️ Plan — Un dominio y estrategia ganadora.md,
 banco: >-
   Walk-forward del 1-ene-2019 al último cierre, 16 monedas con par en USD de Bitso, costo = comisión
   del exchange + spread medido, estrés de costos ×1.5, bloque ETF 60/40 fijo y cartera total 50/50.
-veredicto_control: "No es ganadora: falla en costo (10.9% contra 6%) y faltan M1 y M2 medidos."
+veredicto_control: "No es ganadora (medido el 1-nov, reports/semaforo_s02_medicion_resultado.md). Con Bitso al costo medido falla M1 a M5. Con un exchange a 0.10% cumple M1 a M4 y falla M5 (M2 con estrés: 0.875); M6 pendiente."
 metricas:
   - id: M1
     nombre: Rendimiento neto contra 60/40 (cartera total)
     umbral: Gana al 60/40 en la mayoría de los años y el bootstrap de la diferencia es > 0 con 90% de confianza
-    control: sin dato
-    estado: sin_dato
+    control: "Bitso medido: 4/6 años, bootstrap 0.88 (+25.4% contra +11.0% anual, neto de Railway). Con 0.10%: 5/6, 0.98"
+    estado: falla
   - id: M2
     nombre: Rendimiento neto contra BTC a igual riesgo (bloque cripto)
     umbral: Diferencia > 0 con 90% de confianza contra «BTC + efectivo» con la misma volatilidad
-    control: "sin dato (pista: Sharpe 1.31 contra 0.97 de BTC, pero +42.7% contra +49.2% anual)"
-    estado: sin_dato
+    control: "Bitso medido: bootstrap 0.68 (+37.4% contra +28.2% de 50% BTC + efectivo). Con 0.10%: 0.9035. Contra BTC puro: +49.1% anual, no le gana en ningún escenario"
+    estado: falla
   - id: M3
     nombre: Caída máxima con costos ×1.5
     umbral: Cartera total ≤ 30%; bloque cripto ≤ 40%
-    control: "cripto −36.7%; total sin dato"
-    estado: parcial
+    control: "Bitso medido: total −41.4%, cripto −45.1%. Con 0.10%: −29.4% y −30.3%"
+    estado: falla
   - id: M4
     nombre: Costo anual de operar (comisión + spread, bloque cripto)
     umbral: ≤ 6% al año y ≤ 1/3 de la ganancia bruta
-    control: "10.9%"
+    control: "Bitso medido: 14.0% al año. Con 0.10%: 3.6%"
     estado: falla
   - id: M5
     nombre: Robustez
     umbral: M1 y M2 se sostienen con costos ×1.5; si es cambio de señal, placebo p < 0.05 y Sharpe deflactado ≥ 0.95
-    control: "con estrés: +35.2% anual (M1 y M2 sin dato)"
-    estado: sin_dato
+    control: "Bitso medido: M1 0.52 y M2 0.36 con estrés. Con 0.10%: M1 0.97, M2 0.875"
+    estado: falla
   - id: M6
     nombre: Fidelidad en simulado (4 semanas en el exchange elegido)
     umbral: Replay < 2%; costo medido ≤ modelado + 20%; cero órdenes desconocidas y cero ciclos fallidos sin explicar; kill switch a más de 10 puntos
-    control: el control lleva ~4 semanas sin cambios
-    estado: en_curso
+    control: "Bitso: costo medido 49 pb contra 37 modelados (+32%, umbral +20%); kill a 25 puntos; sin ciclos fallidos"
+    estado: falla
   - id: M7
     nombre: Costo total con US$1,000 (comisión + spread + Railway)
     umbral: Sin umbral propio; entra en M1, medido neto también de Railway
-    control: "Railway US$60 al año = 6%; con Bitso ≈ 11.5% en total"
+    control: "Railway US$60 al año = 6% de US$1,000; resta ≈3 puntos al año a la cartera total (+41.0% → +38.1% con 0.10%)"
     estado: informativa

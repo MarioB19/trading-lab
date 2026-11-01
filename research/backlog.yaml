@@ -342,3 +342,15 @@ bitacora:
       Informativo: no cambia el bot. La comisión sigue siendo la palanca más grande (≈15 puntos al año). La elección de
       exchange es de Brandon (Bitso es el único ITF en México)
     enlace: reports/h7b_exchanges_mexico.md
+  - sprint: 'S02a'
+    fecha: '2026-11-01'
+    hipotesis: 'Semáforo de «ganadora»: el control medido en M1–M5 y M7 con Bitso (costo medido y modelo) y con un exchange a 0.10%'
+    ids: [H7]
+    resultado: >-
+      Con Bitso al costo medido falla M1 a M5 (contra 60/40: 4/6 años, bootstrap 0.88; contra BTC a igual riesgo 0.68; costo
+      14%). Con 0.10% cumple M1 (0.98), M2 (0.9035), M3 (−29% total) y M4 (3.6%), y falla M5 (M2 con estrés: 0.875). Contra
+      BTC puro no gana en rendimiento en ningún escenario; Railway resta ≈3 puntos al año
+    decision: >-
+      El control no es ganadora; no cambia el bot ni los umbrales. Lo que separa «no rentable» de «casi» es el exchange
+      (decisión de Brandon); M5 y M6 solo se resuelven con simulado hacia adelante en ese exchange
+    enlace: reports/semaforo_s02_medicion_resultado.md
