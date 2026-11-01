@@ -123,6 +123,21 @@ hipotesis:
     evidencia: Catálogo 2 (31-oct), `reports/catalogo2_etf_resultado.md`
     prueba: No es una estrategia; es una decisión de Brandon. Si elige una variante de menor caída, preregistro con barra de costo
     estado: Propuesta a Brandon (31-oct)
+  - id: H13
+    orden: 11
+    tipo: otro
+    titulo: Rebalancear entre el bloque cripto y el de ETFs
+    idea: >-
+      Sin traspasos, el «50/50» del piloto deriva hacia el bloque que más crece. Devolverlo a 50/50 con una banda
+      (o una vez al año) cambia el riesgo de la cartera, no qué compra cada bloque
+    evidencia: Sprint 04 (1-nov), `reports/sprint04_h13_rebalanceo_bloques_resultado.md`
+    prueba: >-
+      Sprint 04 (barra de costo, 3 variantes, 2019–2026): no es mejora de rendimiento (+26.9% a +27.9% anual contra +32.1%,
+      1 de 6 años, bootstrap 0.16–0.21). Sí baja el riesgo: caída máxima −25% contra −32%, volatilidad 18% contra 24%,
+      Sharpe 1.43 contra 1.29; sin traspasos el peso de cripto promedió 75% y llegó a 89%
+    estado: >-
+      Decisión de riesgo para Brandon (1-nov): dejar que el reparto derive (más rendimiento si cripto sigue ganando, más
+      caída) o mantener 50/50 con banda de 15 pp (≈1 traspaso cada 2–3 años, que con dinero real haría él a mano)
   - id: H6
     orden: 1
     tipo: costo
@@ -302,3 +317,15 @@ bitacora:
       Se conserva el control; la regla queda en `lab.reentry` (no toca el bot). Siguiente de costo: H6 (universo y
       filtro de spread, con el caso TRX de la semana). 296 intentos acumulados
     enlace: reports/sprint03_h1b_recompra_resultado.md
+  - sprint: '04'
+    fecha: '2026-11-01'
+    hipotesis: 'H13: rebalancear entre bloques a 50/50 (banda 10 pp, banda 15 pp o cada 31-dic), a petición de Brandon'
+    ids: [H13]
+    resultado: >-
+      No aprobada como mejora: +26.9% a +27.9% anual contra +32.1% del control sin traspasos, 1 de 6 años, bootstrap
+      0.16–0.21, pierde 2.3–2.6 puntos con estrés. Baja la caída máxima de −32% a −25% y el Sharpe sube de 1.29 a 1.43;
+      sin traspasos el peso de cripto promedió 75% (máx. 89%)
+    decision: >-
+      Se conserva el control; la función queda en `lab.sleeve_rebalance` (no toca el bot). H13 pasa a decisión de riesgo
+      de Brandon, junto con H12. Siguiente de costo: H6. 299 intentos acumulados
+    enlace: reports/sprint04_h13_rebalanceo_bloques_resultado.md

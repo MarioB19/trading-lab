@@ -254,3 +254,6 @@ fecha,experimento,variante,tipo,sharpe_diario,veredicto
 2026-10-31,catalogo3-exog,fngbtc-25-75,señal,0.00742,descartada en el barrido
 2026-11-01,sprint03-h1b-recompra,h1b-espera2,costo,0.06577,no aprobada
 2026-11-01,sprint03-h1b-recompra,h1b-espera3,costo,0.06478,no aprobada
+2026-11-01,sprint04-h13-rebalanceo-bloques,h13-banda10,costo,0.07477,no aprobada
+2026-11-01,sprint04-h13-rebalanceo-bloques,h13-banda15,costo,0.07477,no aprobada
+2026-11-01,sprint04-h13-rebalanceo-bloques,h13-anual,costo,0.07463,no aprobada
