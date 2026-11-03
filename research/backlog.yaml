@@ -3,7 +3,7 @@
 #   python -m lab.backlog render --out "<vault>/00 — Dirección/🧪 Backlog de hipótesis — Trading Lab.md"
 # El panel (pestaña Investigación) lee este mismo archivo. Validar: python -m lab.backlog check
 version: 1
-actualizado: '2026-11-01'
+actualizado: '2026-11-02'
 nota:
   tags: [proyecto, trading, investigación, hipótesis]
   estado: activo
@@ -69,9 +69,12 @@ hipotesis:
       Resimulado el 1-nov con el control vigente y el costo medido (`reports/h7b_exchanges_mexico.md`): Bitso al costo
       medido del piloto (49 pb) +37.5% anual con −41% de caída (toca el kill con costos ×1.5); exchange global a 0.10%
       +52.6% con −28% (US$13.2 mil contra US$5.9 mil sobre US$500 en 7.7 años); entrar y salir en pesos por P2P cuesta
-      ≈0.4 puntos al año. Bitso es el único autorizado como ITF; Bybit dejó los pesos el 30-sep; Kraken (0.80% taker) no
-      sirve a este tamaño. Falta la decisión de Brandon (regulación, custodia, fiscal) y 4 semanas en simulado contra el
-      libro del exchange elegido
+      ≈0.4 puntos al año. La IFPE de Bitso (NVIO) cubre los pesos y su operación cripto se supervisa en Gibraltar; Binance
+      también tiene IFPE en México (Medá, sep-2025); Bybit dejó los pesos el 30-sep; Kraken (0.80% taker) no sirve a este
+      tamaño. Investigación externa del 2-nov (`reports/investigacion_externa_2026-11-02.md`): ida y vuelta de una orden de
+      US$100 ≈0.8–1.0% en Bitso contra ≈0.16–0.21% en Binance con BNB; la API de Bitso confirma que no hay libros
+      altcoin/BTC (solo tusd_btc). Propuesta: carril sombra del control contra el libro público de Binance u OKX. Falta la
+      decisión de Brandon (regulación, custodia, fiscal) y 4 semanas en simulado contra el libro del exchange elegido
   - id: H8
     orden: 5
     tipo: costo
@@ -85,8 +88,12 @@ hipotesis:
       de 6 años, caída 1.9 puntos menor, bootstrap 1.00. Con la tasa de hoy (4.0%) y 67% de efectivo promedio vale
       ≈+2 puntos al año
     estado: >-
-      Aprobada en backtest; falta dato para operarla: tasa real de la plataforma sobre el efectivo ocioso (Bitso+ paga
-      sobre stablecoins en USD, no sobre USD), retiro inmediato y costo de mover. Se resuelve junto con H7 (exchange)
+      Aprobada en backtest; falta dato para operarla. Tasa real (2-nov, página de soporte de Bitso sin fecha): Bitso
+      Earnings paga 1.6% en USDC con saldo bajo US$250 y 2.2% de US$250 a 999 (USDT 1.1% / 1.7%), cada lunes, y el saldo
+      sigue disponible para operar; OKX ≈3.5% en USDT y Binance ≈3% base. Con 35–65% de efectivo vale ≈+0.5–1.4 puntos al
+      año en el bloque (US$2–7), menos que los +2 del backtest con T-bills. Falta confirmar que el saldo en USD del bot (no
+      USDC) cuenta y que se puede operar por API sin moverlo. El staking de ETH, SOL, ADA y ATOM en Bitso sumaría ≈+0.2–1
+      punto (tasas no publicadas). Se resuelve junto con H7 (exchange)
   - id: H10
     orden: 7
     tipo: señal
@@ -147,13 +154,34 @@ hipotesis:
     idea: Universo líquido de ~8 monedas en vez de 16 reduce el spread pagado
     evidencia: >-
       Costos por moneda en `execution-quality`. Sprint 02 (30 días): LTC 43 pb de promedio con 22 pb de spread, LINK 30 pb
-      con 22 pb de spread, NEAR 55 pb; BTC y ETH 33 pb con spread de 1–2 pb
-    prueba: Medir costo por activo en el piloto y backtest con el universo recortado
+      con 22 pb de spread, NEAR 55 pb; BTC y ETH 33 pb con spread de 1–2 pb. Investigación externa (2-nov): el momentum
+      entre monedas es débil y caro tras costos (Han, Kang & Ryu; Fieberg et al. 2024) y en Concretum el Sharpe casi no
+      cambia entre 5 y 50 monedas. Spreads en Bitso el 2-nov (orden de US$100, una sola foto): BTC 1.4 pb; ETH, XRP y DOGE
+      ≈4; ADA, XLM, LINK, TRX, UNI y LTC 11–16; ATOM 41–47 pb con su libro ≈1.5% fuera del precio global
+    prueba: >-
+      Medir costo y spread por activo en varios días (piloto y libro público) y backtest con el universo recortado
     estado: >-
       Pendiente; es la siguiente de costo en cripto. Dato de la revisión del 1-nov: TRX entró el 30-oct (US$118.89, spread
       2.4%, 165 pb) y salió el 31-oct (US$105.80, spread 2.7%, 197 pb): ≈US$4.05 de los US$4.75 de costos de la semana en una
       sola ida y vuelta. Propuesta para el sprint: (a) universo recortado a ~8 monedas y (b) filtro que no compra una moneda
       con spread del libro > 50 pb al momento de operar; (b) necesita historia de spreads por moneda (solo existe la del piloto)
+  - id: H14
+    orden: 3
+    tipo: costo
+    titulo: Rotación en vivo contra la del backtest
+    idea: >-
+      El costo del bloque cripto en vivo, anualizado, casi duplica el del backtest. Si el piloto rota más que el replay de
+      las mismas fechas, el backtest subestima costos y cualquier recorte de rotación vale más de lo que muestra
+    evidencia: >-
+      Atribución al 2-nov: US$13.15 de costos en 39 días ≈US$123 al año, ≈25% del bloque, contra 11–14% del backtest
+      (≈17% sin la ida y vuelta de TRX). Investigación externa del 2-nov: con 50 pb de costo, una banda de no operar de 20%
+      del peso recupera ≈100 pb al año (Concretum, dentro de muestra); los que más operan ganan menos por costos, no por
+      selección (Barber & Odean 2000)
+    prueba: >-
+      Primero diagnóstico: rotación y costo del piloto desde el 24-sep contra el replay de las mismas fechas
+      (`lab.bot --replay`), separando el arranque, las órdenes de ~US$10 previas a DEC-033 y TRX. Si la brecha se sostiene,
+      preregistrar bandas de no operar como cambio de costo
+    estado: Pendiente (sale de la investigación externa del 2-nov); va antes o junto con H6
   - id: H5
     orden: 8
     tipo: señal
@@ -354,3 +382,18 @@ bitacora:
       El control no es ganadora; no cambia el bot ni los umbrales. Lo que separa «no rentable» de «casi» es el exchange
       (decisión de Brandon); M5 y M6 solo se resuelven con simulado hacia adelante en ese exchange
     enlace: reports/semaforo_s02_medicion_resultado.md
+  - sprint: 'EXT1'
+    fecha: '2026-11-02'
+    hipotesis: >-
+      Investigación externa a petición de Brandon: quién gana con tendencia en cripto, rendimientos sin dirección,
+      realidad de traders y bots minoristas, y costos, rendimiento del efectivo e impuestos en México
+    ids: [H6, H7, H8, H14]
+    resultado: >-
+      La tendencia long-only en cripto compra menos caída, no más rendimiento que BTC; el momentum entre monedas es débil tras
+      costos; 73–97% de los minoristas activos pierde según el estudio y los que ganan de forma constante son el exchange, el
+      market maker y quien vende el curso. Lo que cabe en las reglas sin dirección (efectivo y staking) suma US$3–12 al año;
+      el carry exige cortos y en 2026 paga casi lo mismo que un bono. Bitso no tiene libros altcoin/BTC (verificado en su API)
+    decision: >-
+      No cambia el bot. La palanca sigue siendo el costo: H14 (rotación en vivo contra backtest) entra antes de H6; H8 ya
+      tiene tasa real de Bitso; para H7 se propone un carril sombra contra el libro de Binance u OKX
+    enlace: reports/investigacion_externa_2026-11-02.md
