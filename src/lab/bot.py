@@ -307,8 +307,11 @@ def cover_paper_cash_deficit(orders, positions, prices, fresh, equity, cash, sc,
 
 # ------------------------------------------------------------------ lógica diaria de un bloque
 def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now: pd.Timestamp,
-               mode: str, eq_hist: pd.Series, max_jump: float, *, evidence=None) -> dict:
-    """Decide y ejecuta. Devuelve trades, fila de capital y la foto para el tablero."""
+               mode: str, eq_hist: pd.Series, max_jump: float, *, evidence=None, shadow=None) -> dict:
+    """Decide y ejecuta. Devuelve trades, fila de capital y la foto para el tablero.
+
+    `shadow` (H7c) solo observa: cotiza cada orden en otros exchanges antes de enviarla y nunca cambia la ejecución.
+    """
     candle = prices.index[-1]
     cstr = candle.date().isoformat()
     notes: list[str] = []
@@ -476,6 +479,11 @@ def run_sleeve(name: str, sc: dict, prices: pd.DataFrame, broker, st: dict, now:
 
     def execute(asset, side, qty, price):
         observe("record_request", asset, side, qty, price)
+        if shadow is not None:
+            try:
+                shadow.before_order(name, run_at, asset, side, qty, price)
+            except Exception:  # noqa: BLE001  la sombra nunca cambia ni detiene la orden
+                pass
         return broker.execute(asset, side, qty, price)
 
     def book(f: Fill) -> None:
@@ -738,6 +746,23 @@ def main(argv: list[str] | None = None) -> int:
         return 2
 
 
+def record_shadow(store, shadow, *, run_at: str, panel_universe=None, trigger: str = "cycle") -> None:
+    """Guarda las cotizaciones sombra (H7c) como eventos, después de la corrida. Nunca lanza."""
+    try:
+        if panel_universe:
+            shadow.panel(run_at, list(panel_universe), trigger=trigger)
+        for row in shadow.orders:
+            store.record_event("exchange_shadow", row)
+        for row in shadow.panels:
+            store.record_event("venue_panel", row)
+        shadow.orders, shadow.panels = [], []
+    except Exception as exc:  # noqa: BLE001
+        try:
+            store.record_event("exchange_shadow_error", {"error": type(exc).__name__})
+        except Exception:  # noqa: BLE001
+            pass
+
+
 def _main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description="Bot multi-activo (simulado por defecto)")
     ap.add_argument("--config", default=str(ROOT / "config.yaml"))
@@ -799,11 +824,20 @@ def _main(argv: list[str] | None = None) -> int:
     eq_all = pd.DataFrame(store.rows("equity"), columns=EQUITY_FIELDS) if store else (pd.read_csv(paths["equity"]) if paths["equity"].exists() else pd.DataFrame(columns=EQUITY_FIELDS))
     trades, eq_rows, failures = [], [], 0
     evidence_rows = []
+    shadow = None
+    shadow_cfg = cfg.get("exchange_shadow") or {}
+    if store and mode == "paper" and not args.offline and shadow_cfg.get("enabled"):
+        from .exchange_shadow import ExchangeShadow  # H7c: solo observa, nunca cambia la ejecución
+        shadow = ExchangeShadow(shadow_cfg)
+    statuses: dict[str, str] = {}
     names = [args.sleeve] if args.sleeve else [n for n, s in cfg["sleeves"].items() if s.get("enabled")]
     if args.if_due:
         pending_names = {o["namespace"].rsplit(":", 1)[-1] for o in store.orders(pending_only=True)} if store else set()
         names = [n for n in names if n in pending_names or is_due(cfg["sleeves"][n], state["sleeves"].get(n, {}), now)]
         if not names:
+            if shadow is not None and not store.has_event("venue_panel"):
+                record_shadow(store, shadow, panel_universe=cfg["sleeves"]["crypto"]["universe"],
+                              run_at=now.strftime("%Y-%m-%d %H:%M"), trigger="probe")
             print("Sin velas diarias nuevas: nada que operar.")
             return 0
     for name in names:
@@ -849,11 +883,13 @@ def _main(argv: list[str] | None = None) -> int:
                                                                f"capture initialization: {type(exc).__name__}"))
             if capture is None:
                 broker = make_broker(name, sc, mode, st, notes, store=store)
-                r = run_sleeve(name, sc, P, broker, st, run_now, mode, eq_hist, cfg["max_price_jump"])
+                r = run_sleeve(name, sc, P, broker, st, run_now, mode, eq_hist, cfg["max_price_jump"],
+                               shadow=shadow if name == "crypto" else None)
             else:
                 broker = make_broker(name, sc, mode, st, notes, store=store, evidence=capture)
                 capture.begin(broker, st)
-                r = run_sleeve(name, sc, P, broker, st, run_now, mode, eq_hist, cfg["max_price_jump"], evidence=capture)
+                r = run_sleeve(name, sc, P, broker, st, run_now, mode, eq_hist, cfg["max_price_jump"], evidence=capture,
+                               shadow=shadow if name == "crypto" else None)
         except Exception as exc:  # noqa: BLE001  un bloque que falla no detiene al otro
             # Internal simulation can roll back entirely; external fills are already
             # durable in their journal and are restored by the next reconciliation.
@@ -873,6 +909,7 @@ def _main(argv: list[str] | None = None) -> int:
             except Exception as exc:
                 evidence_rows.append(_unavailable_evidence(name, run_now, P.index[-1],
                                                            f"capture finalization: {type(exc).__name__}"))
+        statuses[name] = r["status"]
         if r["status"] in ("error", "blocked"):
             failures += 1
         r["notes"][:0] = notes
@@ -900,6 +937,10 @@ def _main(argv: list[str] | None = None) -> int:
         except Exception as exc:
             store.record_event("export_failed", {"error": type(exc).__name__})
             print(f"[aviso] export falló; SQLite conserva la corrida: {type(exc).__name__}")
+        if shadow is not None:
+            crypto_ran = statuses.get("crypto") not in (None, "error", "blocked")
+            record_shadow(store, shadow, run_at=now.strftime("%Y-%m-%d %H:%M"),
+                          panel_universe=cfg["sleeves"]["crypto"]["universe"] if crypto_ran else None)
     else:
         save_json(paths["state"], state)
         append_csv(paths["trades"], TRADE_FIELDS, trades)

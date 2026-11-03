@@ -179,6 +179,18 @@ class SQLiteStore:
             return [{"id": row["id"], "kind": row["kind"], "payload": json.loads(row["payload"]), "created_at": row["created_at"]}
                     for row in db.execute('SELECT * FROM events ORDER BY id DESC LIMIT ?', (max(1, min(int(limit), 10000)),))]
 
+    def has_event(self, kind):
+        with self.connect() as db:
+            return db.execute('SELECT 1 FROM events WHERE kind=? LIMIT 1', (kind,)).fetchone() is not None
+
+    def events_of_kind(self, kind, limit=5000):
+        """Eventos de un tipo, del más viejo al más nuevo (los últimos `limit`)."""
+        with self.connect() as db:
+            rows = db.execute('SELECT * FROM events WHERE kind=? ORDER BY id DESC LIMIT ?',
+                              (kind, max(1, min(int(limit), 20000)))).fetchall()
+        return [{"id": row["id"], "kind": row["kind"], "payload": json.loads(row["payload"]),
+                 "created_at": row["created_at"]} for row in reversed(rows)]
+
     def orders(self, namespace=None, pending_only=False):
         query = 'SELECT payload FROM orders WHERE 1=1'
         args = []

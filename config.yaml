@@ -8,6 +8,15 @@ mode: paper
 # solo se puede reducir, nunca comprar.
 max_price_jump: 0.40
 
+# Sombra de ejecución (H7c, reports/h7c_sombra_exchanges_preregistro.md): antes de cada orden cripto el piloto
+# cotiza la misma orden en los libros públicos de Binance y OKX (solo lectura, sin llaves) y una vez por ciclo
+# diario guarda un panel de US$100 por moneda. Nunca cambia la ejecución en Bitso. Se lee en /api/exchange-shadow.
+exchange_shadow:
+  enabled: true
+  venues: [binance, okx]
+  panel_usd: 100
+  panel_budget_s: 90
+
 sleeves:
   # ---------------------------------------------------------------- CRIPTOMONEDAS
   crypto:

@@ -24,7 +24,7 @@ FROZEN_SOURCES = {
     "src/lab/arena_reporting_upgrade.py": "4c6ed319c1e9f4f7d3743615dd7d007dc4170f9b58400c2ef63efaf147bcf593",
     "src/lab/arena_service.py": "9d4acaa84ce08978f6250b598afccccda91953ec8141e2c4f6501cf4b9f69ba5",
     "src/lab/backtest.py": "b301f07e587bf3dd2f336aeabf7f197f9d285a13f28a5ab9b05ecedb7fe5f76f",
-    "src/lab/bot.py": "b4b66c284e63f8990e27cc40ffde026e7e00d12da63d608b4d57d940c4985129",
+    "src/lab/bot.py": "33526c1db194a50626ea0dcd84d94e97df7302989ece8c552f64faf74eb51916",
     "src/lab/broker_tape.py": "50d7e27b1fa14905b72d80d6a54b0c64048cf441644e7a24a98c532d0694e66a",
     "src/lab/brokers.py": "7b0bcde41b31127101f4b13f6177baf8eab6a08d41fe09ba71e02066a1644213",
     "src/lab/btc_bot.py": "4be7b8d1ae23226af55a346f755c54e95d17ea89f79d81ffac4e7e41ebe57370",
@@ -57,8 +57,8 @@ FROZEN_SOURCES = {
     "src/lab/rotation_observer.py": "ff6b6582c2f151712a71cd4dfd0e5a5e7aa7109d3866df97a885a39264d5311b",
     "src/lab/rotation_plan.py": "f3197c92c0d44cecca644b9eeaf04ec6a0dd88fedf4f6c03b6d5c6a311463fd0",
     "src/lab/runtime.py": "66204645e8153ed4d64acca170054efe23f8349f2c44500d210d93b9e6d09cbd",
-    "src/lab/service.py": "8095bbac035feaa437e40fe4dd029a80abd8d563ff6c1c797c2c220b660225ee",
-    "src/lab/storage.py": "e723cbcaf7ea56f4f0cdf2947e3bf8a056a6f5693340dd02527d4caff938df32",
+    "src/lab/service.py": "dc14ee91434ee83b1e333e9001c79834e06b79eb40b4470c843a18399c087cbc",
+    "src/lab/storage.py": "12b87a7c2dbd1d50519807b62530038421d158d6f7298f583a762ac5974d4f0e",
     "src/lab/strategies.py": "8d53e6c608060ebf08aecf7da7e749bac846529d6c77c98b3b9d1d957f6f625f",
     "src/lab/validation.py": "ad9feee608816d548924655a5fd98f3fbf14e8adaec3b79b54c3346eadbaa3c4"
 }

@@ -219,6 +219,21 @@ class Reader:
             fx = None
         return windows(equity, trades, end=end, fx=fx)
 
+    def exchange_shadow(self):
+        """Sombra de ejecución H7c: cotizaciones por orden, paneles diarios y la regla preregistrada."""
+        from .exchange_shadow import summarize
+        if not self.path.exists():
+            return {"error": "Sin datos operativos"}
+        with closing(self.connect()) as db:
+            db.execute("BEGIN")
+            events = {kind: [json.loads(row[0]) for row in db.execute(
+                "SELECT payload FROM events WHERE kind=? ORDER BY id DESC LIMIT 5000", (kind,))][::-1]
+                for kind in ("exchange_shadow", "venue_panel")}
+            trades = [json.loads(row[0]) for row in db.execute("SELECT payload FROM trades ORDER BY rowid")]
+        orders, panels = events["exchange_shadow"], events["venue_panel"]
+        return {"preregistro": "reports/h7c_sombra_exchanges_preregistro.md",
+                "summary": summarize(orders, trades, panels), "orders": orders, "panels": panels[-60:]}
+
     def latest_backup(self, backup_dir: Path | None) -> dict:
         """Solo el último respaldo verificado que registró el supervisor; nunca rutas arbitrarias."""
         if backup_dir is None or not self.path.exists():
@@ -408,6 +423,8 @@ def make_server(data_dir: Path, host="127.0.0.1", port=8080, *, comparison_dir: 
                     if end is not None and not re.fullmatch(r"\d{4}-\d{2}-\d{2}", end):
                         return self.send(400, {"error": "end debe ser AAAA-MM-DD"})
                     return self.send(200, reader.attribution(end))
+                if url.path == "/api/exchange-shadow":
+                    return self.send(200, reader.exchange_shadow())
                 if url.path == "/api/research":
                     return self.send(200, research_status(research_root))
                 if url.path == "/api/candidates":

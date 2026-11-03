@@ -57,7 +57,7 @@ RAILWAY_PROJECT = "24021d85-bbad-4f2c-850c-e1230822e7b0"
 RAILWAY_ENV = "4774e5bf-c72b-402d-ac72-f88e815e5976"
 PILOT_ENDPOINTS = ("status", "performance", "execution-quality", "trades?limit=500",
                    "equity?limit=500", "events?limit=100", "attribution", "research", "candidates",
-                   "backups/latest")
+                   "backups/latest", "exchange-shadow")
 _PILOT_URL: str | None = None
 
 
