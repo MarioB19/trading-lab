@@ -3,7 +3,7 @@
 #   python -m lab.backlog render --out "<vault>/00 — Dirección/🧪 Backlog de hipótesis — Trading Lab.md"
 # El panel (pestaña Investigación) lee este mismo archivo. Validar: python -m lab.backlog check
 version: 1
-actualizado: '2026-11-02'
+actualizado: '2026-11-03'
 nota:
   tags: [proyecto, trading, investigación, hipótesis]
   estado: activo
@@ -73,8 +73,11 @@ hipotesis:
       también tiene IFPE en México (Medá, sep-2025); Bybit dejó los pesos el 30-sep; Kraken (0.80% taker) no sirve a este
       tamaño. Investigación externa del 2-nov (`reports/investigacion_externa_2026-11-02.md`): ida y vuelta de una orden de
       US$100 ≈0.8–1.0% en Bitso contra ≈0.16–0.21% en Binance con BNB; la API de Bitso confirma que no hay libros
-      altcoin/BTC (solo tusd_btc). Propuesta: carril sombra del control contra el libro público de Binance u OKX. Falta la
-      decisión de Brandon (regulación, custodia, fiscal) y 4 semanas en simulado contra el libro del exchange elegido
+      altcoin/BTC (solo tusd_btc). 🔬 Desde el 3-nov (DEC-038, H7c): cada orden cripto del piloto se cotiza en los libros de
+      Binance y OKX en el mismo instante (`/api/exchange-shadow`, preregistro `reports/h7c_sombra_exchanges_preregistro.md`);
+      veredicto el 1-dic-2026 con ≥20 órdenes. Sondeo al arrancar desde Railway: 16 de 16 monedas con libro en los tres;
+      recorrer US$100 cuesta (sin comisión) mediana 9.0 pb en Bitso, 0.7 en Binance y 1.1 en OKX. Falta la decisión de
+      Brandon (regulación, custodia, fiscal)
   - id: H8
     orden: 5
     tipo: costo
@@ -397,3 +400,17 @@ bitacora:
       No cambia el bot. La palanca sigue siendo el costo: H14 (rotación en vivo contra backtest) entra antes de H6; H8 ya
       tiene tasa real de Bitso; para H7 se propone un carril sombra contra el libro de Binance u OKX
     enlace: reports/investigacion_externa_2026-11-02.md
+  - sprint: 'H7c'
+    fecha: '2026-11-03'
+    hipotesis: >-
+      H7c: sombra de ejecución, a petición de Brandon. Las mismas órdenes del piloto cotizadas en Binance y OKX (solo taker)
+      contra el costo real en Bitso, 4 semanas
+    ids: [H7]
+    resultado: >-
+      En curso desde el 3-nov a las 00:01 CDMX. Sondeo al arrancar: 16 de 16 monedas con libro en Bitso, Binance y OKX desde
+      Railway; recorrer US$100 sin comisión cuesta mediana 9.0 pb en Bitso, 0.7 en Binance y 1.1 en OKX (una foto; LTC en
+      Bitso 573 pb por un libro de venta casi vacío)
+    decision: >-
+      No cambia el bot (DEC-038). Veredicto preregistrado el 1-dic-2026: ventaja medida si el límite inferior del IC 90% de la
+      diferencia por orden supera 25 pb
+    enlace: reports/h7c_sombra_exchanges_preregistro.md
